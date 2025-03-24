@@ -42,6 +42,12 @@ public class NetworkTransform : NetworkComponent
         }
     }
 
+    // Start is called before the first frame update
+    void Start()
+    {
+
+    }
+
     public override void NetworkedStart()
     {
         if (IsServer)
@@ -89,13 +95,7 @@ public class NetworkTransform : NetworkComponent
             }
             yield return new WaitForSeconds(MyCore.MasterTimer);
         }
-    }
-
-    // Start is called before the first frame update
-    void Start()
-    {
-
-    }
+    }    
 
     // Update is called once per frame
     void Update()

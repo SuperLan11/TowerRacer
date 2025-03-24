@@ -59,6 +59,13 @@ public class NetworkRB : NetworkComponent
         }
     }
 
+    // Start is called before the first frame update
+    void Start()
+    {
+        // can use Start for non-network related stuff. client/server doesn't matter
+        myRig = GetComponent<Rigidbody>();
+    }
+
     public override void NetworkedStart()
     {
         // don't normally do control code in start        
@@ -110,14 +117,7 @@ public class NetworkRB : NetworkComponent
             }
             yield return new WaitForSeconds(MyCore.MasterTimer);
         }
-    }
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        // can use Start for non-network related stuff. client/server doesn't matter
-        myRig = GetComponent<Rigidbody>();
-    }
+    }  
 
     // Update is called once per frame
     void Update()
