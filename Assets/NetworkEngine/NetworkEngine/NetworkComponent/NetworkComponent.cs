@@ -105,6 +105,11 @@ namespace NETWORK_ENGINE
                     MyId.AddMsg(msg,var, useTcp);
                 }
             }
+            //added by Landon
+            else if (MyCore != null && IsServer)
+            {
+                Debug.LogWarning("tried to SendCommand from server!");
+            }
         }
         public void SendUpdate(string var, string value, bool useTcp = true)
         {
@@ -125,6 +130,11 @@ namespace NETWORK_ENGINE
                     string msg = "UPDATE#" + MyId.NetId + "#" + var + "#" + value;
                     MyId.AddMsg(msg,var, useTcp);
                 }
+            }
+            //added by Landon         
+            else if(MyCore != null && MyCore.IsClient)
+            {
+                Debug.LogWarning("tried to SendUpdate from client!");
             }
         }
     }

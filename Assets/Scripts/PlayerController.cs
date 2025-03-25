@@ -4,12 +4,12 @@ using UnityEngine;
 using NETWORK_ENGINE;
 using UnityEngine.UI;
 
-public class PlayerCharacter : NetworkComponent
+public class PlayerController : NetworkComponent
 {
-    public Text PlayerName;
     private Color[] colors;
-    public int ColorSelected = -1;
-    public string PName = "<Default>";
+    [System.NonSerialized] public Text PlayerName;    
+    [System.NonSerialized] public int ColorSelected = -1;
+    [System.NonSerialized] public string PName = "<Default>";
 
     public static List<string> OTHER_FLAGS = new List<string> { "POS", "VEL", "ROT", "ANG" };
 
@@ -33,7 +33,7 @@ public class PlayerCharacter : NetworkComponent
                 SendUpdate("START", value);
             }
         }
-        else if (flag == "DEBUG")
+        /*else if (flag == "DEBUG")
         {
             Debug.Log(value);
             if (IsClient)
@@ -48,7 +48,7 @@ public class PlayerCharacter : NetworkComponent
             {
                 SendCommand(flag, value);
             }
-        }
+        }*/
     }
 
     // Start is called before the first frame update
@@ -63,19 +63,7 @@ public class PlayerCharacter : NetworkComponent
     public override void NetworkedStart()
     {
 
-    }
-
-    public void InitChar(string nameColor)
-    {
-        if(IsServer)
-        {
-            SendUpdate("START", nameColor);
-        }
-        else if(IsClient)
-        {
-            SendCommand("START", nameColor);
-        }
-    }
+    }    
 
 
     public override IEnumerator SlowUpdate()

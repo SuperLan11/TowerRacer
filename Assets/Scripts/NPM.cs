@@ -45,6 +45,22 @@ public class NPM : NetworkComponent
                 SendUpdate("CHAR", value);
             }
         }
+        /*else if (flag == "DEBUG")
+        {
+            Debug.Log(value);
+            if (IsClient)
+            {
+                SendCommand(flag, value);
+            }
+        }
+        else
+        {
+            Debug.LogWarning(flag + " is not a valid flag in " + this.GetType().Name + ".cs");
+            if (IsClient)
+            {
+                SendCommand(flag, value);
+            }
+        }*/
     }
 
     // Start is called before the first frame update
