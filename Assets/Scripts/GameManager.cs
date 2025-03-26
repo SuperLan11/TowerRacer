@@ -18,6 +18,11 @@ public class GameManager : NetworkComponent
 
     public override void HandleMessage(string flag, string value)
     {
+        if (IsServer)
+        {
+            Debug.Log("server got flag " + flag + " in " + this.GetType().Name);
+        }
+
         if (flag == "GAMESTART")
         {
             if (IsClient)
@@ -75,7 +80,7 @@ public class GameManager : NetworkComponent
     {
         playersReady += change;
         int numPlayers = FindObjectsOfType<NPM>().Length;
-        if (playersReady >= numPlayers && numPlayers > 1)
+        if (playersReady >= numPlayers && numPlayers > 0)
         {
             gameStarted = true;
         }
@@ -114,7 +119,7 @@ public class GameManager : NetworkComponent
                         break;
                 }
 
-                GameObject temp = MyCore.NetCreateObject(0, Owner, spawnPos, Quaternion.identity);
+                GameObject temp = MyCore.NetCreateObject(0, n.Owner, Vector3.zero, Quaternion.identity);
                 temp.GetComponent<PlayerController>().ColorSelected = n.ColorSelected;
                 temp.GetComponent<PlayerController>().PName = n.PName;
                 temp.GetComponentInChildren<Text>().text = n.PName;

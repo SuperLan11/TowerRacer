@@ -13,6 +13,11 @@ public class NPM : NetworkComponent
 
     public override void HandleMessage(string flag, string value)
     {
+        if (IsServer)
+        {
+            Debug.Log("server got flag " + flag + " in " + this.GetType().Name);
+        }
+
         if (flag == "READY")
         {
             IsReady = bool.Parse(value);

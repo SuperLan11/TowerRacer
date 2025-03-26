@@ -20,6 +20,7 @@ public class NetworkTransform : NetworkComponent
 
     public override void HandleMessage(string flag, string value)
     {
+        Debug.Log("flag received: " + flag);
         if (flag == "POS")
         {
             Vector3 temp = NetworkCore.Vector3FromString(value);
