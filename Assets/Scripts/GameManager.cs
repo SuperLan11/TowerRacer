@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-
 using NETWORK_ENGINE;
 
-public class GameMaster : NetworkComponent
+public class GameManager : NetworkComponent
 {
-    public bool gameStarted;
-    public bool gameOver;
-    public int numPlayers = 0;
+    //[System.NonSerialized] public bool gameStarted;
+    [System.NonSerialized] public bool gameOver;
+    public static int playersReady = 0;
+    private static bool gameStarted = false;
 
     private Vector3[] starts = new Vector3[4];
 
@@ -31,6 +31,36 @@ public class GameMaster : NetworkComponent
                 }
             }
         }
+        else if (flag == "DEBUG")
+        {
+            Debug.Log(value);
+            if (IsClient)
+            {
+                SendCommand(flag, value);
+            }
+        }
+        else
+        {
+            Debug.LogWarning(flag + " is not a valid flag in " + this.GetType().Name + ".cs");
+            if (IsClient)
+            {
+                SendCommand(flag, value);
+            }
+        }
+    }
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        GameObject start1 = GameObject.Find("P1Start");
+        GameObject start2 = GameObject.Find("P2Start");
+        GameObject start3 = GameObject.Find("P3Start");
+        GameObject start4 = GameObject.Find("P4Start");
+
+        starts[0] = start1.transform.position;
+        starts[1] = start2.transform.position;
+        starts[2] = start3.transform.position;
+        starts[3] = start4.transform.position;
     }
 
     public override void NetworkedStart()
@@ -38,31 +68,30 @@ public class GameMaster : NetworkComponent
 
     }
 
+    // I'd like to only change static variables through wrapper functions
+    // so we can debug in the function to see its value no matter when or
+    // where we change the variable
+    public static void AdjustReady(int change)
+    {
+        playersReady += change;
+        int numPlayers = FindObjectsOfType<NPM>().Length;
+        if (playersReady >= numPlayers && numPlayers > 1)
+        {
+            gameStarted = true;
+        }
+        //Debug.Log("num players ready: " + playersReady);
+    }
+
     public override IEnumerator SlowUpdate()
     {
         if (IsServer)
         {
-            //innocent until proven guilty! We assume the game has started, but continue the loop if it is not.
-            NPM[] players;
-            bool tempGameStarted = true;
-
-            do
+            while (!gameStarted)
             {
-                players = GameObject.FindObjectsOfType<NPM>();
-                tempGameStarted = true;
-                yield return new WaitForSeconds(0.1f);
+                yield return new WaitForSeconds(0.5f);
+            }
 
-                foreach (NPM n in players)
-                {
-                    if (!n.IsReady)
-                    {
-                        tempGameStarted = false;
-                    }
-                }
-            } while (!tempGameStarted || players.Length < 2);
-
-            players = GameObject.FindObjectsOfType<NPM>();
-            int playerIdx = 0;
+            NPM[] players = GameObject.FindObjectsOfType<NPM>();
             foreach (NPM n in players)
             {
                 //create object and set proper networked variables                
@@ -89,9 +118,7 @@ public class GameMaster : NetworkComponent
                 temp.GetComponent<PlayerController>().ColorSelected = n.ColorSelected;
                 temp.GetComponent<PlayerController>().PName = n.PName;
                 temp.GetComponentInChildren<Text>().text = n.PName;
-                //temp.GetComponent<PlayerController>().InitChar(n.PName + ";" + n.ColorSelected);
                 temp.GetComponent<PlayerController>().SendUpdate("START", n.PName + ";" + n.ColorSelected);
-                playerIdx++;
             }
 
             SendUpdate("GAMESTART", "1");
@@ -113,23 +140,11 @@ public class GameMaster : NetworkComponent
             yield return new WaitForSeconds(30f);
 
             //MyId.NotifyDirty();
-            StartCoroutine(MyCore.DisconnectServer());
+
+            //StartCoroutine(MyCore.DisconnectServer());
+            MyCore.UI_Quit();
         }
         yield return new WaitForSeconds(0.1f);
-    }
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        GameObject start1 = GameObject.Find("P1Start");
-        GameObject start2 = GameObject.Find("P2Start");
-        GameObject start3 = GameObject.Find("P3Start");
-        GameObject start4 = GameObject.Find("P4Start");
-
-        starts[0] = start1.transform.position;
-        starts[1] = start2.transform.position;
-        starts[2] = start3.transform.position;
-        starts[3] = start4.transform.position;
     }
 
     // Update is called once per frame

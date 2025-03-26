@@ -7,17 +7,26 @@ using NETWORK_ENGINE;
 public class NPM : NetworkComponent
 {
     public string PName;
-    public bool IsReady;
-    public int ColorSelected;
-    public int CharSelected;
+    [System.NonSerialized] public bool IsReady;
+    [System.NonSerialized] public int ColorSelected;
+    [System.NonSerialized] public int CharSelected;
 
     public override void HandleMessage(string flag, string value)
     {
         if (flag == "READY")
         {
             IsReady = bool.Parse(value);
+
             if (IsServer)
             {
+                if (IsReady)
+                {
+                    GameManager.AdjustReady(1);
+                }
+                else
+                {
+                    GameManager.AdjustReady(-1);
+                }
                 SendUpdate("READY", value);
             }
         }
@@ -45,7 +54,7 @@ public class NPM : NetworkComponent
                 SendUpdate("CHAR", value);
             }
         }
-        /*else if (flag == "DEBUG")
+        else if (flag == "DEBUG")
         {
             Debug.Log(value);
             if (IsClient)
@@ -60,7 +69,7 @@ public class NPM : NetworkComponent
             {
                 SendCommand(flag, value);
             }
-        }*/
+        }
     }
 
     // Start is called before the first frame update
@@ -84,7 +93,7 @@ public class NPM : NetworkComponent
             SendCommand("READY", r.ToString());
         }
     }
-  
+
     public void UI_NameInput(string s)
     {
         if (IsLocalPlayer)
@@ -128,7 +137,7 @@ public class NPM : NetworkComponent
             }
             yield return new WaitForSeconds(.1f);
         }
-    }    
+    }
 
     // Update is called once per frame
     void Update()

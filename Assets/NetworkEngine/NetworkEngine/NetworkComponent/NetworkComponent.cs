@@ -134,7 +134,8 @@ namespace NETWORK_ENGINE
             //added by Landon         
             else if(MyCore != null && MyCore.IsClient)
             {
-                Debug.LogWarning("tried to SendUpdate from client!");
+                FindObjectOfType<GameManager>().SendCommand("DEBUG", "tried to SendUpdate from client!");
+                //Debug.LogWarning("tried to SendUpdate from client!");
             }
         }
     }

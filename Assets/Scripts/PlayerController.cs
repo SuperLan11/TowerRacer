@@ -33,7 +33,7 @@ public class PlayerController : NetworkComponent
                 SendUpdate("START", value);
             }
         }
-        /*else if (flag == "DEBUG")
+        else if (flag == "DEBUG")
         {
             Debug.Log(value);
             if (IsClient)
@@ -41,14 +41,14 @@ public class PlayerController : NetworkComponent
                 SendCommand(flag, value);
             }
         }
-        else if(!OTHER_FLAGS.Contains(flag))
+        else if (!OTHER_FLAGS.Contains(flag))
         {
             Debug.LogWarning(flag + " is not a valid flag in " + this.GetType().Name + ".cs");
             if (IsClient)
             {
                 SendCommand(flag, value);
             }
-        }*/
+        }
     }
 
     // Start is called before the first frame update
@@ -84,6 +84,10 @@ public class PlayerController : NetworkComponent
     // Update is called once per frame
     void Update()
     {
-        
+        if(IsClient)
+        {
+            Debug.Log("testing SendUpdate from PlayerController...");
+            SendUpdate("DEBUG", "");
+        }
     }
 }
