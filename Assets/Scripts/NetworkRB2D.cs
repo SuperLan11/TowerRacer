@@ -1,3 +1,8 @@
+/*
+@Authors - Landon
+@Description - Translation of Dr. Towle's Networked Rigidbody code to Networked Rigidbody2D
+*/
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
