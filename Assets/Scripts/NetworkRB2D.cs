@@ -8,17 +8,17 @@ using NETWORK_ENGINE;
 public class NetworkRB2D : NetworkComponent
 {
     //synch vars
-    public Vector2 lastPos;
-    public Vector3 lastRot;
-    public Vector2 lastVel;
-    public float lastAngVel;
+    [System.NonSerialized] public Vector2 lastPos;
+    [System.NonSerialized] public Vector3 lastRot;
+    [System.NonSerialized] public Vector2 lastVel;
+    [System.NonSerialized] public float lastAngVel;
 
     //non-synch vars
-    public float threshold;
-    public float eThreshold;
+    [System.NonSerialized] public float threshold;
+    [System.NonSerialized] public float eThreshold;    
+    [System.NonSerialized] public Vector2 adjustVel;
+    [System.NonSerialized] public Rigidbody2D myRig;
     public bool useAdjustVel;
-    public Vector2 adjustVel;
-    public Rigidbody2D myRig;
 
     public Dictionary<string, string> NET_FLAGS = new Dictionary<string, string>()
     {
@@ -29,17 +29,7 @@ public class NetworkRB2D : NetworkComponent
     };
 
     public override void HandleMessage(string flag, string value)
-    {        
-        /*if (IsServer)
-        {
-            Debug.Log("server got flag " + flag + " in " + this.GetType().Name);
-        }
-
-        if(IsClient)
-        {
-            Debug.Log("client got flag " + flag + " in " + this.GetType().Name);
-        }*/
-
+    {                
         if (IsClient && flag == NET_FLAGS["POS2D"])
         {
             //Debug.Log("get Vector2 pos from: " + value);
@@ -76,7 +66,7 @@ public class NetworkRB2D : NetworkComponent
         }
         else if (IsClient && flag == NET_FLAGS["ANG2D"])            
         {
-            //Debug.Log("ang vel is: " + value);
+            //I think this is broken            
             lastAngVel = float.Parse(value);
         }
     }

@@ -215,7 +215,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.05, y: 0.05, z: 0.05}
-  m_ConstrainProportionsScale: 1
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6812457596564556412}
   m_Father: {fileID: 0}
@@ -387,7 +387,7 @@ Rigidbody2D:
   m_LinearDrag: 0
   m_AngularDrag: 0.05
   m_GravityScale: 1.5
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: 005ea51527f12b04890ce6c6670568a9, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -397,7 +397,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 4
 --- !u!114 &2310169775686152334
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -413,15 +413,7 @@ MonoBehaviour:
   MyCore: {fileID: 0}
   MyId: {fileID: 0}
   IsDirty: 0
-  lastPos: {x: 0, y: 0}
-  lastRot: {x: 0, y: 0, z: 0}
-  lastVel: {x: 0, y: 0}
-  lastAngVel: 0
-  threshold: 0
-  eThreshold: 0
   useAdjustVel: 0
-  adjustVel: {x: 0, y: 0}
-  myRig: {fileID: 0}
 --- !u!61 &1091227401733856551
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -454,7 +446,7 @@ BoxCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 2.4091196, y: -11.06549}
+  m_Offset: {x: 2.06, y: -11.06549}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}

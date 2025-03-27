@@ -5,20 +5,24 @@ using NETWORK_ENGINE;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 
-public class PlayerController : NetworkComponent
-{
-    private Color[] colors;
+public class PlayerController : Character
+{    
+    //sync vars
     [System.NonSerialized] public Text PlayerName;    
     [System.NonSerialized] public int ColorSelected = -1;
-    [System.NonSerialized] public string PName = "<Default>";    
-   
+    [System.NonSerialized] public string PName = "<Default>";
+    // May not need these if we use inheritance for player classes
+    //[System.NonSerialized] public SpriteRenderer spriteRender;
+    //[System.NonSerialized] public Sprite sprite;
+
+    //nonsync vars
+    private Color[] colors;
+    private Vector2 lastMoveInput;          
+    [SerializeField] private float jumpStrength = 10f;
     public Dictionary<string, string> NET_FLAGS = new Dictionary<string, string>();
 
-    private Vector2 lastMoveInput;
-    private Rigidbody2D myRig;    
-
-    [SerializeField] private float speed = 5f;
-    [SerializeField] private float jumpStrength = 10f;
+    private string state = "NORMAL";
+    private Rope grabbedRope;
 
 
     public override void HandleMessage(string flag, string value)
@@ -56,11 +60,23 @@ public class PlayerController : NetworkComponent
         }
         else if(flag == "JUMP")
         {
-            if(IsServer)
+            if (state == "SWINGING")
+            {
+                state = "NORMAL";
+                //myRig.velocity += new Vector2()
+            }
+
+            if (IsServer)
             {
                 Debug.Log("jumping!");
-                myRig.velocity += new Vector2(0, jumpStrength);
-            }
+                myRig.velocity += new Vector2(0, jumpStrength);                
+                SendUpdate("JUMP", "");
+            }            
+        }
+        else if(flag == "SWING")
+        {
+            state = "SWINGING";
+            grabbedRope = GameObject.Find(value).GetComponent<Rope>();            
         }
         else if (flag == "DEBUG")
         {
@@ -93,8 +109,8 @@ public class PlayerController : NetworkComponent
 
     public override void NetworkedStart()
     {
-        
-    }    
+        GetComponent<SpriteRenderer>().flipX = true;
+    }
 
     public Vector2 Vector2FromString(string str)
     {
@@ -131,7 +147,18 @@ public class PlayerController : NetworkComponent
             if (jp.started)
             {
                 SendCommand("JUMP", "");
-            }            
+            }
+        }
+    }
+
+    public void GrabRope(Rope rope)
+    {
+        if (IsServer)
+        {
+            state = "SWINGING";
+            this.transform.position = rope.swingLoc.position;
+            grabbedRope = rope;
+            SendUpdate("SWING", rope.name);
         }
     }
 
@@ -153,15 +180,20 @@ public class PlayerController : NetworkComponent
 
     // Update is called once per frame
     void Update()
-    {
-        if(IsClient)
-        {
-            Debug.Log("lastMoveInput: " + lastMoveInput);
-        }
+    {        
         if (IsServer)
         {
+            /*if (state == "SWINGING")
+            {
+                this.transform.position = grabbedRope.swingLoc.position;
+                myRig.velocity = Vector3.zero;
+            }
+            else
+            {
+                myRig.velocity = new Vector3(lastMoveInput.x, 0, 0) * speed + new Vector3(0, myRig.velocity.y, 0);
+            }*/
             myRig.velocity = new Vector3(lastMoveInput.x, 0, 0) * speed + new Vector3(0, myRig.velocity.y, 0);
-            Debug.Log("inputX: " + lastMoveInput.x);
+
         }
         /*if(IsClient)
         {

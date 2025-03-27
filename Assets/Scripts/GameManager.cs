@@ -3,26 +3,27 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using NETWORK_ENGINE;
+using UnityEngine.Tilemaps;
 
 public class GameManager : NetworkComponent
-{
-    //[System.NonSerialized] public bool gameStarted;
+{    
+    //sync vars
     [System.NonSerialized] public bool gameOver;
+    [System.NonSerialized] private static bool gameStarted = false;
     public static int playersReady = 0;
-    private static bool gameStarted = false;
 
+    //non-sync vars
     private Vector3[] starts = new Vector3[4];
-
-    //if player prefabs don't start at 0 in spawn prefab array, you'll need to change this.
-    public const uint offsetFromSpawnPrefabArray = 0;
+    private int roundNum = 0;
+    private PlayerController[] overallPlayerLeaderboard;
+    private PlayerController[] currentPlayerLeaderboard;
+    [SerializeField] private float LOWEST_PIECE_Y = -15f;
+    //these aren't serialized as they could break the game if accidentally changed in the inspector
+    private const int FIRST_LEVEL_PIECE_IDX = 3;
+    private const int NUM_LEVEL_PIECES = 3;    
 
     public override void HandleMessage(string flag, string value)
     {
-        if (IsServer)
-        {
-            Debug.Log("server got flag " + flag + " in " + this.GetType().Name);
-        }
-
         if (flag == "GAMESTART")
         {
             if (IsClient)
@@ -36,22 +37,16 @@ public class GameManager : NetworkComponent
                 }
             }
         }
+        //for objects in scene before clients connect, can't use SendUpdate because
+        //SendUpdate only works if IsLocalPlayer and it's impossible to determine IsLocalPlayer
+        //for an object already in the scene
         else if (flag == "DEBUG")
         {
-            Debug.Log(value);
             if (IsClient)
             {
-                SendCommand(flag, value);
+                Debug.Log(value);
             }
-        }
-        else
-        {
-            Debug.LogWarning(flag + " is not a valid flag in " + this.GetType().Name + ".cs");
-            if (IsClient)
-            {
-                SendCommand(flag, value);
-            }
-        }
+        }        
     }
 
     // Start is called before the first frame update
@@ -70,7 +65,10 @@ public class GameManager : NetworkComponent
 
     public override void NetworkedStart()
     {
-
+        if(IsServer)
+        {
+            RandomizeLevel();
+        }        
     }
 
     // I'd like to only change static variables through wrapper functions
@@ -80,11 +78,27 @@ public class GameManager : NetworkComponent
     {
         playersReady += change;
         int numPlayers = FindObjectsOfType<NPM>().Length;
+        // change to numPlayers > 1 later
         if (playersReady >= numPlayers && numPlayers > 0)
         {
             gameStarted = true;
-        }
-        //Debug.Log("num players ready: " + playersReady);
+        }        
+    }
+
+    //called by server
+    private void RandomizeLevel()
+    {        
+        for (int i = 0; i < NUM_LEVEL_PIECES; i++)
+        {
+            int randIdx = Random.Range(0, NUM_LEVEL_PIECES);
+            MyCore.NetCreateObject(FIRST_LEVEL_PIECE_IDX + randIdx, this.Owner,
+                new Vector3(0, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);
+        }        
+    }
+
+    private void DisableRooms()
+    {
+
     }
 
     public override IEnumerator SlowUpdate()
@@ -125,6 +139,7 @@ public class GameManager : NetworkComponent
                 temp.GetComponentInChildren<Text>().text = n.PName;
                 temp.GetComponent<PlayerController>().SendUpdate("START", n.PName + ";" + n.ColorSelected);
             }
+            MyCore.NetCreateObject(7, Owner, new Vector3(0, -2, 0), Quaternion.identity);
 
             SendUpdate("GAMESTART", "1");
             //stops server from listening, so nobody new can join.
