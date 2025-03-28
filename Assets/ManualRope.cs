@@ -8,7 +8,7 @@ public class ManualRope : MonoBehaviour
     private Rigidbody2D pivotRig;
     public Transform swingPos;
     //private TestPlayer player;
-    private PlayerController player;
+    private TestPlayer player;
     public bool playerPresent = false;
 
     [SerializeField] private GameObject rope;
@@ -25,7 +25,7 @@ public class ManualRope : MonoBehaviour
     void Start()
     {
         //player = FindObjectOfType<TestPlayer>();
-        player = FindObjectOfType<PlayerController>();
+        player = FindObjectOfType<TestPlayer>();
         pivot = transform.GetChild(0).gameObject;
         pivotRig = pivot.GetComponent<Rigidbody2D>();
     }
