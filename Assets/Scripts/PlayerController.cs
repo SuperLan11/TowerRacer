@@ -23,6 +23,7 @@ public class PlayerController : Character
 
     private string state = "NORMAL";
     private Rope grabbedRope;
+    public string holdingDir = "";
 
 
     public override void HandleMessage(string flag, string value)
@@ -52,18 +53,23 @@ public class PlayerController : Character
         }
         else if (flag == "MOVE")
         {
+            lastMoveInput = Vector2FromString(value);
+            if (lastMoveInput.x > 0)
+                holdingDir = "right";
+            else if (lastMoveInput.x < 0)
+                holdingDir = "left";
+
             if (IsServer)
             {
-                Debug.Log("server got move input: " + value);
-                lastMoveInput = Vector2FromString(value);
+                Debug.Log("server got move input: " + value);                
+                SendUpdate("MOVE", value);
             }
         }
         else if(flag == "JUMP")
         {
             if (state == "SWINGING")
             {
-                state = "NORMAL";
-                //myRig.velocity += new Vector2()
+                state = "NORMAL";                
             }
 
             if (IsServer)
