@@ -12,7 +12,8 @@ public abstract class Character : NetworkComponent
     //non-sync vars
     protected int attackCooldown;
     protected int maxAttackCooldown;
-    protected Rigidbody2D myRig;
+    // public for testing
+    public Rigidbody2D myRig;
 
     protected void Attack()
     {

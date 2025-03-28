@@ -11,28 +11,26 @@ public class PlayerController : Character
     [System.NonSerialized] public Text PlayerName;    
     [System.NonSerialized] public int ColorSelected = -1;
     [System.NonSerialized] public string PName = "<Default>";
+    public string state = "NORMAL";
+    public NetRope grabbedRope;
+    public string holdingDir = "";
+    private bool canGrabRope = false;
+    public Transform swingPos;
+    public Vector2 launchVec;
+    private bool isGrounded = true;
     // May not need these if we use inheritance for player classes
     //[System.NonSerialized] public SpriteRenderer spriteRender;
     //[System.NonSerialized] public Sprite sprite;
 
-    //nonsync vars
+    //nonsync vars    
     private Color[] colors;
     private Vector2 lastMoveInput;          
-    [SerializeField] private float jumpStrength = 10f;
-    public Dictionary<string, string> NET_FLAGS = new Dictionary<string, string>();
-
-    private string state = "NORMAL";
-    private Rope grabbedRope;
-    public string holdingDir = "";
+    public float jumpStrength = 10f;
+    public Dictionary<string, string> NET_FLAGS = new Dictionary<string, string>();    
 
 
     public override void HandleMessage(string flag, string value)
     {
-        if (IsServer)
-        {
-            Debug.Log("server got flag " + flag + " in " + this.GetType().Name);
-        }
-
         if (flag == "START")
         {
             if (IsClient)
@@ -61,28 +59,54 @@ public class PlayerController : Character
 
             if (IsServer)
             {
-                Debug.Log("server got move input: " + value);                
                 SendUpdate("MOVE", value);
             }
         }
-        else if(flag == "JUMP")
+        else if (flag == "JUMP")
         {
+            isGrounded = false;
+            //initially called on server
             if (state == "SWINGING")
             {
-                state = "NORMAL";                
+                state = "FLYING";
+                canGrabRope = false;
+                state = "LAUNCHING";
+
+                grabbedRope.BoostPlayer(this);
+                grabbedRope.playerPresent = false;
+                grabbedRope = null;
             }
 
             if (IsServer)
             {
-                Debug.Log("jumping!");
-                myRig.velocity += new Vector2(0, jumpStrength);                
+                StartCoroutine(GrabCooldown(1f));
+                myRig.velocity += new Vector2(0, jumpStrength);
                 SendUpdate("JUMP", "");
-            }            
+            }
         }
-        else if(flag == "SWING")
+        else if (flag == "SWING")
         {
             state = "SWINGING";
-            grabbedRope = GameObject.Find(value).GetComponent<Rope>();            
+            grabbedRope = GameObject.Find(value).GetComponent<NetRope>();
+        }
+        else if(flag == "GRAB")
+        {
+            if(IsClient)
+            {
+                //improve later
+                GameObject.Find(value).GetComponentInParent<NetRope>().GrabRope(this);
+            }
+        }
+        else if(flag == "CANGRAB")
+        {
+            if (IsClient)
+            {
+                canGrabRope = true;
+            }
+        }
+        else if(flag == "GROUNDED")
+        {
+            isGrounded = true;
         }
         else if (flag == "DEBUG")
         {
@@ -129,6 +153,45 @@ public class PlayerController : Character
             );
     }
 
+    private void OnCollisionEnter2D(Collision2D collision)
+    {               
+        if(IsServer)
+        {
+            if(collision.gameObject.name.Contains("Floor"))
+            {                
+                isGrounded = true;
+                //is this necessary?
+                SendUpdate("GROUNDED", "");
+            }
+        }
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {        
+        if (IsServer)
+        {
+            if (collision.gameObject.name.Contains("Floor"))
+            {                
+                isGrounded = true;
+                //is this necessary?
+                SendUpdate("GROUNDED", "");
+            }
+        }
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (IsServer)
+        {
+            if (collision.gameObject.name.Contains("Rope") && canGrabRope)
+            {
+                //using a wrapper so all rope variables can be modified on the rope script
+                collision.gameObject.GetComponentInParent<NetRope>().GrabRope(this);
+                SendUpdate("GRAB", collision.gameObject.name);
+            }
+        }
+    }
+
     public void Mover(InputAction.CallbackContext mv)
     {
         if (IsLocalPlayer)
@@ -153,19 +216,26 @@ public class PlayerController : Character
             if (jp.started)
             {
                 SendCommand("JUMP", "");
-            }
+            }            
         }
     }
 
-    public void GrabRope(Rope rope)
+    public void GrabRope(NetRope rope)
     {
         if (IsServer)
         {
             state = "SWINGING";
-            this.transform.position = rope.swingLoc.position;
+            this.transform.position = rope.swingPos.position;
             grabbedRope = rope;
             SendUpdate("SWING", rope.name);
         }
+    }
+
+    private IEnumerator GrabCooldown(float seconds)
+    {
+        yield return new WaitForSeconds(seconds);        
+        canGrabRope = true;
+        SendUpdate("CANGRAB", "");
     }
 
 
@@ -186,25 +256,28 @@ public class PlayerController : Character
 
     // Update is called once per frame
     void Update()
-    {        
+    {
         if (IsServer)
         {
-            /*if (state == "SWINGING")
+            if (state == "SWINGING")
             {
-                this.transform.position = grabbedRope.swingLoc.position;
                 myRig.velocity = Vector3.zero;
+                transform.position = swingPos.position;
             }
-            else
+            else if (state == "LAUNCHING")
             {
-                myRig.velocity = new Vector3(lastMoveInput.x, 0, 0) * speed + new Vector3(0, myRig.velocity.y, 0);
-            }*/
-            myRig.velocity = new Vector3(lastMoveInput.x, 0, 0) * speed + new Vector3(0, myRig.velocity.y, 0);
+                Vector2 newVel = myRig.velocity;
+                newVel.x += lastMoveInput.x;
+                //launchVec.x = Mathf.Max(launchVec.x, speed);
+                float allowedXSpeed = Mathf.Max(launchVec.x, speed);
+                newVel.x = Mathf.Clamp(newVel.x, -allowedXSpeed, allowedXSpeed);
 
+                myRig.velocity = newVel;
+            }
+            else if(state == "NORMAL")
+            {
+                myRig.velocity = new Vector2(lastMoveInput.x, 0) * speed + new Vector2(0, myRig.velocity.y);
+            }
         }
-        /*if(IsClient)
-        {
-            Debug.Log("testing SendUpdate from PlayerController...");
-            SendUpdate("DEBUG", "");
-        }*/
-    }
+    }       
 }

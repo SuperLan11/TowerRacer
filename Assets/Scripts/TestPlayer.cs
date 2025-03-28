@@ -6,7 +6,7 @@ using UnityEngine;
 public class TestPlayer : MonoBehaviour
 {
     public Rigidbody2D rig;
-    public ManualRope grabbedRope = null;
+    public Rope grabbedRope = null;
     public string state = "NORMAL";
     [SerializeField] private float speed = 5f;
     
@@ -38,7 +38,7 @@ public class TestPlayer : MonoBehaviour
         if (collision.gameObject.name.Contains("Rope") && canGrabRope)
         {
             //using a wrapper so all rope variables can be modified on the rope script
-            collision.gameObject.GetComponentInParent<ManualRope>().GrabRope(this);
+            collision.gameObject.GetComponentInParent<Rope>().GrabRope(this);
         }
     }
 

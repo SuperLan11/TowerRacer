@@ -1,5 +1,4 @@
 /*
-@Authors - Landon
 @Description - Translation of Dr. Towle's Networked Rigidbody code to Networked Rigidbody2D
 */
 
@@ -19,11 +18,13 @@ public class NetworkRB2D : NetworkComponent
     [System.NonSerialized] public float lastAngVel;
 
     //non-synch vars
-    [System.NonSerialized] public float threshold;
-    [System.NonSerialized] public float eThreshold;    
+    public float threshold;
+    public float eThreshold;    
     [System.NonSerialized] public Vector2 adjustVel;
+    [System.NonSerialized] public float adjustAngVel;
     [System.NonSerialized] public Rigidbody2D myRig;
     public bool useAdjustVel;
+    public bool useAdjustAngVel;
 
     public Dictionary<string, string> NET_FLAGS = new Dictionary<string, string>()
     {
@@ -69,23 +70,41 @@ public class NetworkRB2D : NetworkComponent
                 adjustVel = Vector3.zero;
             }
         }
-        else if (IsClient && flag == NET_FLAGS["ANG2D"])            
+        else if(flag == "DEBUG")
         {
-            //I think this is broken            
+            Debug.Log(value);
+            if(IsClient)
+            {
+                SendCommand("DEBUG", value);
+            }
+        }
+        else if (IsClient && flag == NET_FLAGS["ANG2D"])            
+        {                           
             lastAngVel = float.Parse(value);
+            /*if (useAdjustAngVel)
+            {
+                adjustAngVel = lastAngVel - myRig.angularVelocity;
+            }
+            if (Mathf.Abs(lastAngVel - myRig.angularVelocity) > eThreshold)
+            {
+                myRig.transform.eulerAngles = lastRot;
+                adjustAngVel = 0f;
+            }*/            
         }
     }
 
     // Start is called before the first frame update
     void Start()
     {
-        // can use Start for non-network related stuff. client/server doesn't matter
+        //thought: could you drag in a different rigidbody than the one on this script to network it?
         myRig = GetComponent<Rigidbody2D>();
+        if(GetComponent<NetRope>() != null)
+            myRig = transform.GetChild(0).GetComponent<Rigidbody2D>();
     }
 
     public override void NetworkedStart()
     {
-        // don't normally do control code in start        
+        // don't normally do control code in start
     }
 
     public Vector2 Vector2FromString(string str)
@@ -107,32 +126,29 @@ public class NetworkRB2D : NetworkComponent
             if (IsServer)
             {
                 if ((myRig.position - lastPos).magnitude > threshold)
-                {
-                    // transform.position is basically same as myRig.position
+                {                    
                     SendUpdate("POS2D", myRig.position.ToString());
                     lastPos = myRig.position;
                 }
 
                 if ((myRig.transform.eulerAngles - lastRot).magnitude > threshold)
-                {
-                    // transform.position is basically same as myRig.position
+                {                    
                     SendUpdate("ROT2D", myRig.transform.eulerAngles.ToString());
                     lastRot = myRig.transform.eulerAngles;
                 }
 
                 if ((myRig.velocity - lastVel).magnitude > threshold)
-                {
-                    // transform.position is basically same as myRig.position
+                {                    
                     SendUpdate("VEL2D", myRig.velocity.ToString());
-                    lastVel = myRig.velocity;                    
+                    lastVel = myRig.velocity;
                 }
-
-                if (myRig.angularVelocity - lastAngVel > threshold)
+                
+                if (Mathf.Abs(myRig.angularVelocity - lastAngVel) > threshold)
                 {
-                    // transform.position is basically same as myRig.position
+                    //Debug.Log("SendUpdate, angDiff = " + (myRig.angularVelocity - lastAngVel));                    
                     SendUpdate("ANG2D", myRig.angularVelocity.ToString());
                     lastAngVel = myRig.angularVelocity;
-                }
+                }               
 
                 if (IsDirty)
                 {
@@ -156,8 +172,12 @@ public class NetworkRB2D : NetworkComponent
             if (useAdjustVel)
             {
                 myRig.velocity += adjustVel;
-            }
+            }            
             myRig.angularVelocity = lastAngVel;
+            /*if (useAdjustAngVel)
+            {
+                myRig.angularVelocity += adjustAngVel;
+            }*/
         }
     }
 }
