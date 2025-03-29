@@ -11,15 +11,17 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 using NETWORK_ENGINE;
+using System;
 
 /*
 TODO
-    1. Wrap collision with IsServer
     2. Send Updates for sync vars if dirty
-    3. 
+    3. Look through skeleton code for things like animations
+    4. start programming different abilities
 */
 
 public class Player : NetworkComponent {
+    //!If you add a variable to this, you are responsible for making sure it goes in the IsDirty check in SlowUpdate()
     #region SyncVars
 
     private Vector2 moveVelocity;
@@ -69,7 +71,7 @@ public class Player : NetworkComponent {
     
     //these values will probably need to change based on the size of the Player
     
-    private const float GROUND_DETECTION_RAY_LENGTH = 0.02f, HEAD_DETECTION_RAY_LENGTH = 0.02f;
+    private const float COLLISION_RAYCAST_LENGTH = 0.02f;
 
     private const float JUMP_HEIGHT = 6.5f;
     private const float JUMP_HEIGHT_COMPENSATION_FACTOR = 1.054f;
@@ -135,7 +137,8 @@ public class Player : NetworkComponent {
             }
         }
         else{      //!Ask Landon later to do this part!
-            
+            //something like...
+            Debug.Log("Thine flag name is INCORRECT!");
         }
     }
 
@@ -158,12 +161,8 @@ public class Player : NetworkComponent {
     void Start()
     {
         rigidbody = GetComponent<Rigidbody2D>();
+        rigidbody.gravityScale = 0f;
     }
-
-    // private void Awake()
-    // {
-
-    // }
 
     //go watch the GDC talk if you want know why this math works
     private void CalculateInitialConditions(){
@@ -178,6 +177,7 @@ public class Player : NetworkComponent {
         initialJumpVelocity = Mathf.Abs(gravity);
     }
 
+    //only gets called in server
     private void SetApexVariables(){
         if (!isPastApexThreshold){
             isPastApexThreshold = true;
@@ -192,6 +192,7 @@ public class Player : NetworkComponent {
         }
     }
 
+    //only gets called in server
     private void GravityOnAscending(){
         verticalVelocity += gravity * Time.deltaTime;
 
@@ -200,6 +201,7 @@ public class Player : NetworkComponent {
         }
     }
 
+    //only gets called in server
     private void TurnCheck(){
         bool turnRight;
 
@@ -212,6 +214,7 @@ public class Player : NetworkComponent {
         }
     }
 
+    //only gets called in server
     private void Turn(bool turnRight){
         isFacingRight = turnRight;
 
@@ -223,35 +226,47 @@ public class Player : NetworkComponent {
     }
 
     private bool CheckForGround(){
-        Vector2 tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y - GROUND_DETECTION_RAY_LENGTH);
-        RaycastHit2D hit = Physics2D.Raycast(tempPos, Vector2.down, GROUND_DETECTION_RAY_LENGTH, ~0);
-        //DrawDebugNormal(tempPos, Vector2.down, GROUND_DETECTION_RAY_LENGTH, false);
+        if (IsServer){
+            Vector2 tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y - COLLISION_RAYCAST_LENGTH);
+            RaycastHit2D hit = Physics2D.Raycast(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+            //DrawDebugNormal(tempPos, Vector2.down, GROUND_DETECTION_RAY_LENGTH, false);
 
-        return (hit.collider != null && (hit.normal == upNormal));
+            return (hit.collider != null && (hit.normal == upNormal));
+        }
+        
+        return false;
     }
 
     private bool CheckForCeiling(){
-        Vector2 tempPos = new Vector2(bodyCollider.bounds.center.x, bodyCollider.bounds.max.y + GROUND_DETECTION_RAY_LENGTH);
-        RaycastHit2D hit = Physics2D.Raycast(tempPos, Vector2.up, GROUND_DETECTION_RAY_LENGTH, ~0);
-        //DrawDebugNormal(tempPos, Vector2.up, GROUND_DETECTION_RAY_LENGTH, false);
+        if (IsServer){
+            Vector2 tempPos = new Vector2(bodyCollider.bounds.center.x, bodyCollider.bounds.max.y + COLLISION_RAYCAST_LENGTH);
+            RaycastHit2D hit = Physics2D.Raycast(tempPos, Vector2.up, COLLISION_RAYCAST_LENGTH, ~0);
+            //DrawDebugNormal(tempPos, Vector2.up, GROUND_DETECTION_RAY_LENGTH, false);
 
-        return (hit.collider != null && (hit.normal == downNormal));
+            return (hit.collider != null && (hit.normal == downNormal));
+        }
+
+        return false;
     }
 
     //if we want a function for just the left or right wall, we'll want to modify this function and then create two new helper functions
     private bool CheckForWalls(){
-        Vector2 leftTempPos = new Vector2(bodyCollider.bounds.min.x - GROUND_DETECTION_RAY_LENGTH, bodyCollider.bounds.center.y);
-        RaycastHit2D leftHit = Physics2D.Raycast(leftTempPos, Vector2.left, GROUND_DETECTION_RAY_LENGTH, ~0);
-        //DrawDebugNormal(leftTempPos, Vector2.left, GROUND_DETECTION_RAY_LENGTH, true);
-        
-        Vector2 rightTempPos = new Vector2(bodyCollider.bounds.max.x + GROUND_DETECTION_RAY_LENGTH, bodyCollider.bounds.center.y);
-        RaycastHit2D rightHit = Physics2D.Raycast(rightTempPos, Vector2.right, GROUND_DETECTION_RAY_LENGTH, ~0);
-        //DrawDebugNormal(rightTempPos, Vector2.right, GROUND_DETECTION_RAY_LENGTH, true);
+        if (IsServer){
+            Vector2 leftTempPos = new Vector2(bodyCollider.bounds.min.x - COLLISION_RAYCAST_LENGTH, bodyCollider.bounds.center.y);
+            RaycastHit2D leftHit = Physics2D.Raycast(leftTempPos, Vector2.left, COLLISION_RAYCAST_LENGTH, ~0);
+            //DrawDebugNormal(leftTempPos, Vector2.left, GROUND_DETECTION_RAY_LENGTH, true);
+            
+            Vector2 rightTempPos = new Vector2(bodyCollider.bounds.max.x + COLLISION_RAYCAST_LENGTH, bodyCollider.bounds.center.y);
+            RaycastHit2D rightHit = Physics2D.Raycast(rightTempPos, Vector2.right, COLLISION_RAYCAST_LENGTH, ~0);
+            //DrawDebugNormal(rightTempPos, Vector2.right, GROUND_DETECTION_RAY_LENGTH, true);
 
-        bool leftCollision = (leftHit.collider != null && (leftHit.normal == (Vector2)rightNormal));
-        bool rightCollision = (rightHit.collider != null && (rightHit.normal == leftNormal));
+            bool leftCollision = (leftHit.collider != null && (leftHit.normal == (Vector2)rightNormal));
+            bool rightCollision = (rightHit.collider != null && (rightHit.normal == leftNormal));
 
-        return (leftCollision || rightCollision);
+            return (leftCollision || rightCollision);
+        }
+
+        return false;
     }
 
     //!You must be in scene view for this to show up
@@ -304,13 +319,11 @@ public class Player : NetworkComponent {
                 SendCommand("JUMP_PRESSED", "GoodMorning");
             }else if (context.canceled){
                 SendCommand("JUMP_RELEASED", "GoodMorning");
-                
-                //jumpPressed = false;
-                //jumpReleased = true;
             }
         }
     }
 
+    //only gets called on server
     private void JumpVariableCleanup(){
         fastFallTime = 0f;
         isPastApexThreshold = false;
@@ -318,6 +331,7 @@ public class Player : NetworkComponent {
         numJumpsUsed = 0;
     }
 
+    //only gets called on server
     private void InitiateJump(int jumps){
         if (!IsJumping()){
             currentMovementState = movementState.JUMPING;
@@ -334,12 +348,13 @@ public class Player : NetworkComponent {
     //we're checking collision here rather than in any of the OnCollision() Unity methods
     void Update()
     {    
+        //Debug.Log("CurrentMovementState: " + currentMovementState);
+        //Debug.Log("Move input" + moveInput);
+        
         if (!MyId.IsInit){
             return;
         }
 
-        Debug.Log("CurrentMovementState: " + currentMovementState);
-        Debug.Log("Move input" + moveInput);
 
         if (IsServer){
             //"Update"
