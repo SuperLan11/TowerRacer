@@ -1118,6 +1118,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9061440336144195108, guid: ae4fb5f6aab5845458566c4171104888, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9061440336144195108, guid: ae4fb5f6aab5845458566c4171104888, type: 3}
       propertyPath: playerTorque
       value: 0.9
       objectReference: {fileID: 0}

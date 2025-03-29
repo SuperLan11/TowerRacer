@@ -67,7 +67,7 @@ public class GameManager : NetworkComponent
     {
         if(IsServer)
         {
-            RandomizeLevel();
+            //RandomizeLevel();
         }        
     }
 
@@ -139,7 +139,7 @@ public class GameManager : NetworkComponent
                 temp.GetComponentInChildren<Text>().text = n.PName;
                 temp.GetComponent<PlayerController>().SendUpdate("START", n.PName + ";" + n.ColorSelected);
             }
-            MyCore.NetCreateObject(7, Owner, new Vector3(0, -2, 0), Quaternion.identity);
+            MyCore.NetCreateObject(7, Owner, new Vector3(4, 0, 0), Quaternion.identity);
 
             SendUpdate("GAMESTART", "1");
             //stops server from listening, so nobody new can join.
@@ -151,7 +151,7 @@ public class GameManager : NetworkComponent
                 //turn-based logic
                 //maintain score
                 //maintain metrics
-                yield return new WaitForSeconds(0.1f);
+                yield return new WaitForSeconds(0.5f);
             }
             //wait until game ends...
             SendUpdate("GAMEOVER", "");
@@ -162,6 +162,7 @@ public class GameManager : NetworkComponent
             //MyId.NotifyDirty();
 
             //StartCoroutine(MyCore.DisconnectServer());
+            Debug.Log("QUITTING GAME");
             MyCore.UI_Quit();
         }
         yield return new WaitForSeconds(0.1f);

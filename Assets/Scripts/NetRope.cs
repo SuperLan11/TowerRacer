@@ -20,6 +20,7 @@ public class NetRope : NetworkComponent
     [SerializeField] private float initialTorqueMult = 12f;
     [SerializeField] private float xJumpForce = 0.07f;
     [SerializeField] private float extraYJumpForce = 0.02f;
+    [SerializeField] private float baseYJumpForce = 4f;
 
     public override void HandleMessage(string flag, string value)
     {
@@ -42,8 +43,8 @@ public class NetRope : NetworkComponent
     public void GrabRope(PlayerController player)
     {
         player.grabbedRope = this;
-        player.grabbedRope.playerPresent = true;
-        transform.GetChild(0).GetComponent<Rigidbody2D>().AddTorque(player.myRig.velocity.x * initialTorqueMult);
+        playerPresent = true;
+        pivotRig.AddTorque(player.myRig.velocity.x * initialTorqueMult);
         //this needs to be in this order to prevent null error in player Update!!
         player.swingPos = swingPos;
         player.state = "SWINGING";
@@ -57,8 +58,9 @@ public class NetRope : NetworkComponent
             pivotRotZ -= 180f;
 
         float xJumpVel = Mathf.Cos(pivotRotZ * Mathf.Deg2Rad) * xJumpForce * ropeAngSpeed;
-        float yJumpVel = player.jumpStrength + Mathf.Sin(pivotRotZ * Mathf.Deg2Rad) * extraYJumpForce * ropeAngSpeed;
-        Vector2 launchVector = new Vector2(xJumpVel, yJumpVel);
+        float yJumpVel = baseYJumpForce + Mathf.Sin(pivotRotZ * Mathf.Deg2Rad) * extraYJumpForce * ropeAngSpeed;
+        //Debug.Log("xJumpVel: " + xJumpForce);
+        Vector2 launchVector = new Vector2(xJumpVel, yJumpVel);        
 
         player.myRig.velocity += launchVector;
         player.launchVec = launchVector;
@@ -68,7 +70,7 @@ public class NetRope : NetworkComponent
         while (IsConnected)
         {
             if (IsServer)
-            {
+            {                
                 IsDirty = false;
             }
             yield return new WaitForSeconds(0.05f);
@@ -94,11 +96,13 @@ public class NetRope : NetworkComponent
             {
                 angFromCenter = ropeRotZ - 360f;
                 pivotRig.AddTorque(fallStrength - (angFromCenter * heightFallInfluence));
-            }
-            pivotRig.angularVelocity *= (1 - (Time.deltaTime * slowdownMult));
+            }                        
 
             if (player == null)
                 return;
+
+            if (!playerPresent)
+                pivotRig.angularVelocity *= (1 - (Time.deltaTime * slowdownMult));
 
             if (player.holdingDir == "left" && playerPresent)
             {

@@ -547,9 +547,9 @@ MonoBehaviour:
   DisconnectScreen: {fileID: 0}
   ObjectCounter: 0
   SpawnPrefab:
-  - {fileID: 3115436199796182571, guid: 6aa04897036dae743b9f785b598f522e, type: 3}
-  - {fileID: 2277379359762873865, guid: 4da00e43f67683a42a93180cce75bb12, type: 3}
-  NetworkPlayerManager: {fileID: 1905081651418222142, guid: 6aa04897036dae743b9f785b598f522e, type: 3}
+  - {fileID: 2277379359762873865, guid: 9cf0e0f89859caa4eb5f67bf2efab167, type: 3}
+  - {fileID: 4049193131052807408, guid: f0dd60c353a417b4c8e4674ea26be070, type: 3}
+  NetworkPlayerManager: {fileID: 9081308585381561560, guid: 9cf0e0f89859caa4eb5f67bf2efab167, type: 3}
   DefaultReturnScene: 0
 --- !u!4 &408156394
 Transform:

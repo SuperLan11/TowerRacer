@@ -194,11 +194,11 @@ GameObject:
   - component: {fileID: 2277379359762873865}
   - component: {fileID: 7104285125774254201}
   - component: {fileID: 3910952303593092910}
-  - component: {fileID: 2310169775686152334}
   - component: {fileID: 4098073042792592083}
   - component: {fileID: 1091227401733856551}
+  - component: {fileID: 9009269601427147119}
   m_Layer: 0
-  m_Name: 2DTestPlayer
+  m_Name: TransformPlayer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -369,7 +369,7 @@ MonoBehaviour:
   MyCore: {fileID: 0}
   MyId: {fileID: 0}
   IsDirty: 0
-  speed: 7
+  speed: 5
   myRig: {fileID: 0}
   state: NORMAL
   grabbedRope: {fileID: 0}
@@ -377,25 +377,6 @@ MonoBehaviour:
   swingPos: {fileID: 0}
   launchVec: {x: 0, y: 0}
   jumpStrength: 8
---- !u!114 &2310169775686152334
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9081308585381561560}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8195bf53f12f43146843bf50be7bb978, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  MyCore: {fileID: 0}
-  MyId: {fileID: 0}
-  IsDirty: 0
-  threshold: 0.01
-  eThreshold: 0.01
-  useAdjustVel: 0
-  useAdjustAngVel: 0
 --- !u!50 &4098073042792592083
 Rigidbody2D:
   serializedVersion: 4
@@ -422,7 +403,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 4
 --- !u!61 &1091227401733856551
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -468,3 +449,23 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 28.14567, y: 26.877909}
   m_EdgeRadius: 0
+--- !u!114 &9009269601427147119
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9081308585381561560}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e454d83bb78ce8546b83fe24f2ba72bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MyCore: {fileID: 0}
+  MyId: {fileID: 0}
+  IsDirty: 0
+  lastPosition: {x: 0, y: 0, z: 0}
+  lastRotation: {x: 0, y: 0, z: 0}
+  threshold: 0.01
+  emergencyThreshold: 0.02
+  speed: 200

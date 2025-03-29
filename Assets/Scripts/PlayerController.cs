@@ -26,7 +26,7 @@ public class PlayerController : Character
     private Color[] colors;
     private Vector2 lastMoveInput;          
     public float jumpStrength = 10f;
-    public Dictionary<string, string> NET_FLAGS = new Dictionary<string, string>();    
+    public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();        
 
 
     public override void HandleMessage(string flag, string value)
@@ -56,6 +56,8 @@ public class PlayerController : Character
                 holdingDir = "right";
             else if (lastMoveInput.x < 0)
                 holdingDir = "left";
+            else
+                holdingDir = "";
 
             if (IsServer)
             {
@@ -67,14 +69,12 @@ public class PlayerController : Character
             isGrounded = false;
             //initially called on server
             if (state == "SWINGING")
-            {
-                state = "FLYING";
+            {                
                 canGrabRope = false;
-                state = "LAUNCHING";
-
+                state = "LAUNCHING";              
                 grabbedRope.BoostPlayer(this);
                 grabbedRope.playerPresent = false;
-                grabbedRope = null;
+                grabbedRope = null;                
             }
 
             if (IsServer)
@@ -86,8 +86,11 @@ public class PlayerController : Character
         }
         else if (flag == "SWING")
         {
-            state = "SWINGING";
-            grabbedRope = GameObject.Find(value).GetComponent<NetRope>();
+            if (IsClient)
+            {
+                state = "SWINGING";
+                grabbedRope = GameObject.Find(value).GetComponent<NetRope>();                                
+            }
         }
         else if(flag == "GRAB")
         {
@@ -107,6 +110,7 @@ public class PlayerController : Character
         else if(flag == "GROUNDED")
         {
             isGrounded = true;
+            state = "NORMAL";
         }
         else if (flag == "DEBUG")
         {
@@ -116,7 +120,7 @@ public class PlayerController : Character
                 SendCommand(flag, value);
             }
         }
-        else if (!NET_FLAGS.ContainsKey(flag))
+        else if (!OTHER_FLAGS.ContainsKey(flag))
         {
             Debug.LogWarning(flag + " is not a valid flag in " + this.GetType().Name + ".cs");
             if (IsClient)
@@ -127,10 +131,19 @@ public class PlayerController : Character
     }
 
     // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
+        if (GetComponent<NetworkRB2D>() != null)
+            OTHER_FLAGS = GetComponent<NetworkRB2D>().FLAGS;
+        else if (GetComponentInChildren<NetworkRB2D>() != null)
+            OTHER_FLAGS = GetComponentInChildren<NetworkRB2D>().FLAGS;
+
+        if (GetComponent<NetworkTransform>() != null)
+            OTHER_FLAGS = GetComponent<NetworkTransform>().FLAGS;
+        else if (GetComponentInChildren<NetworkTransform>() != null)
+            OTHER_FLAGS = GetComponentInChildren<NetworkTransform>().FLAGS;
+
         myRig = GetComponent<Rigidbody2D>();
-        NET_FLAGS = GetComponent<NetworkRB2D>().NET_FLAGS;
         colors = new Color[3];
         colors[0] = new Color(255, 0, 0, 255); //red
         colors[1] = new Color(0, 0, 255, 255); //blue
@@ -160,6 +173,7 @@ public class PlayerController : Character
             if(collision.gameObject.name.Contains("Floor"))
             {                
                 isGrounded = true;
+                state = "NORMAL";
                 //is this necessary?
                 SendUpdate("GROUNDED", "");
             }
@@ -173,6 +187,7 @@ public class PlayerController : Character
             if (collision.gameObject.name.Contains("Floor"))
             {                
                 isGrounded = true;
+                state = "NORMAL";
                 //is this necessary?
                 SendUpdate("GROUNDED", "");
             }
@@ -187,6 +202,7 @@ public class PlayerController : Character
             {
                 //using a wrapper so all rope variables can be modified on the rope script
                 collision.gameObject.GetComponentInParent<NetRope>().GrabRope(this);
+                state = "SWINGING";                
                 SendUpdate("GRAB", collision.gameObject.name);
             }
         }
@@ -226,7 +242,7 @@ public class PlayerController : Character
         {
             state = "SWINGING";
             this.transform.position = rope.swingPos.position;
-            grabbedRope = rope;
+            grabbedRope = rope;            
             SendUpdate("SWING", rope.name);
         }
     }
@@ -267,9 +283,11 @@ public class PlayerController : Character
             else if (state == "LAUNCHING")
             {
                 Vector2 newVel = myRig.velocity;
-                newVel.x += lastMoveInput.x;
+                newVel.x += lastMoveInput.x * Time.deltaTime;
                 //launchVec.x = Mathf.Max(launchVec.x, speed);
-                float allowedXSpeed = Mathf.Max(launchVec.x, speed);
+
+                float absLaunchX = Mathf.Abs(launchVec.x);
+                float allowedXSpeed = Mathf.Max(absLaunchX, speed);                
                 newVel.x = Mathf.Clamp(newVel.x, -allowedXSpeed, allowedXSpeed);
 
                 myRig.velocity = newVel;
@@ -277,7 +295,7 @@ public class PlayerController : Character
             else if(state == "NORMAL")
             {
                 myRig.velocity = new Vector2(lastMoveInput.x, 0) * speed + new Vector2(0, myRig.velocity.y);
-            }
+            }            
         }
     }       
 }

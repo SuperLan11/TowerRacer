@@ -19,7 +19,8 @@ public class Rope : MonoBehaviour
     [SerializeField] private float heightFallInfluence = 1f;
     [SerializeField] private float initialTorqueMult = 12f;
     [SerializeField] private float xJumpForce = 0.07f;
-    [SerializeField] private float extraYJumpForce = 0.02f;    
+    [SerializeField] private float extraYJumpForce = 0.02f;
+    [SerializeField] private float baseYJumpForce = 2f;
 
     // Start is called before the first frame update
     void Start()
@@ -48,7 +49,7 @@ public class Rope : MonoBehaviour
             pivotRotZ -= 180f;
 
         float xJumpVel = Mathf.Cos(pivotRotZ * Mathf.Deg2Rad) * xJumpForce * ropeAngSpeed;
-        float yJumpVel = player.jumpStrength + Mathf.Sin(pivotRotZ * Mathf.Deg2Rad) * extraYJumpForce * ropeAngSpeed;
+        float yJumpVel = baseYJumpForce + Mathf.Sin(pivotRotZ * Mathf.Deg2Rad) * extraYJumpForce * ropeAngSpeed;
         Vector2 launchVector = new Vector2(xJumpVel, yJumpVel);
 
         player.rig.velocity += launchVector;
@@ -73,7 +74,9 @@ public class Rope : MonoBehaviour
             angFromCenter = ropeRotZ - 360f;            
             pivotRig.AddTorque(fallStrength - (angFromCenter * heightFallInfluence));
         }        
-        pivotRig.angularVelocity *= (1 - (Time.deltaTime*slowdownMult));
+
+        if(!playerPresent)
+            pivotRig.angularVelocity *= (1 - (Time.deltaTime*slowdownMult));
 
         if(player.holdingDir == "left" && playerPresent)
         {

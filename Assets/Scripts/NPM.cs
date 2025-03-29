@@ -12,12 +12,7 @@ public class NPM : NetworkComponent
     [System.NonSerialized] public int CharSelected;
 
     public override void HandleMessage(string flag, string value)
-    {
-        if (IsServer)
-        {
-            Debug.Log("server got flag " + flag + " in " + this.GetType().Name);
-        }
-
+    {        
         if (flag == "READY")
         {
             IsReady = bool.Parse(value);
