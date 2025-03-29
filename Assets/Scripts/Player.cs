@@ -10,17 +10,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+using NETWORK_ENGINE;
+
 /*
 TODO
-    3. Figure out wtf is going on with double jumps
-    5. Use surface normals for collision detection
+    1. Network this script
 */
 
-public class Player : MonoBehaviour {
+public class Player : NetworkComponent {
     #region SyncVars
 
     private Vector2 moveVelocity;
-    private Vector2 moveInput;
     
     private float verticalVelocity;
     
@@ -40,7 +40,7 @@ public class Player : MonoBehaviour {
     private bool jumpPressed = false;
     private bool jumpReleased = false;
 
-    //I doubt we'll want this, but it's here just in case
+    //I doubt we'll want run button in our game, but it's here just in case
     private bool holdingRun = false;
 
     [SerializeField] private movementState currentMovementState;
@@ -75,6 +75,7 @@ public class Player : MonoBehaviour {
     private const float TIME_TILL_JUMP_APEX = 0.35f;
     private const float GRAVITY_RELEASE_MULTIPLIER = 2f;
     private const float MAX_FALL_SPEED = 26f;
+    //no need to have canDoubleJump or anything like that since we have this int
     private const int MAX_JUMPS = 2;
 
     private const float TIME_FOR_UP_CANCEL = 0.027f;
@@ -85,6 +86,13 @@ public class Player : MonoBehaviour {
     private float gravity;
     private float initialJumpVelocity;
     private float adjustedJumpHeight;
+
+    private Vector2 moveInput;
+
+    private Vector2 upNormal = new Vector2(0, 1f);    
+    private Vector2 downNormal = new Vector2(0, -1f); 
+    private Vector2 leftNormal = new Vector2(-1f, 0);
+    private Vector3 rightNormal = new Vector2(1f, 0);
 
     private enum movementState
     {
@@ -100,17 +108,54 @@ public class Player : MonoBehaviour {
     
 
 
-    //add networking bullcrap here
+
+    //!For the else {} debug to work, you NEED to check IsServer or IsClient INSIDE of the flag if statement!
+    public override void HandleMessage(string flag, string value)
+    {
+        if (flag == "MOVE"){
+            if (IsServer){
+                //not a sync var, but still needs to be set on the server
+                moveInput = Player.Vector2FromString(value);
+            }
+        }else if (flag == "JUMP_PRESSED"){
+            jumpPressed = true;
+            jumpReleased = false;
+            
+            if (IsServer){
+                SendUpdate("JUMP_PRESSED", "GoodMorning");
+            }
+        }else if (flag == "JUMP_RELEASED"){
+            jumpPressed = false;
+            jumpReleased = true;
+            
+            if (IsServer){
+                SendUpdate("JUMP_RELEASED", "GoodMorning");
+            }
+        }
+        else{      //!Ask Landon later to do this part!
+            
+        }
+    }
+
+    public static Vector2 Vector2FromString(string v)
+    {
+        string raw = v.Trim('(').Trim(')');
+        string [] args = raw.Split(',');
+        return new Vector2(float.Parse(args[0].Trim()), float.Parse(args[1].Trim()));
+    }
+
+    public override void NetworkedStart()
+    {
+        CalculateInitialConditions();
+        
+    }
 
     private void Awake()
     {
         isFacingRight = true;
         rigidbody = GetComponent<Rigidbody2D>();
-    }
 
-    void Start()
-    {
-        CalculateInitialConditions();
+        currentMovementState = movementState.GROUND;
     }
 
     //go watch the GDC talk if you want know why this math works
@@ -131,7 +176,7 @@ public class Player : MonoBehaviour {
             isPastApexThreshold = true;
             timePastApexThreshold = 0f;
         }else{
-            timePastApexThreshold += Time.fixedDeltaTime;
+            timePastApexThreshold += Time.deltaTime;
             if (timePastApexThreshold < APEX_HANG_TIME){
                 verticalVelocity = 0f;
             }else{
@@ -141,7 +186,7 @@ public class Player : MonoBehaviour {
     }
 
     private void GravityOnAscending(){
-        verticalVelocity += gravity * Time.fixedDeltaTime;
+        verticalVelocity += gravity * Time.deltaTime;
 
         if (isPastApexThreshold){
             isPastApexThreshold = false;
@@ -171,22 +216,44 @@ public class Player : MonoBehaviour {
     }
 
     private bool CheckForGround(){
-        Vector2 boxOrigin = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y);
-        Vector2 boxSize = new Vector2(feetCollider.bounds.size.x, GROUND_DETECTION_RAY_LENGTH);
+        Vector2 tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y - GROUND_DETECTION_RAY_LENGTH);
+        RaycastHit2D hit = Physics2D.Raycast(tempPos, Vector2.down, GROUND_DETECTION_RAY_LENGTH, ~0);
+        //DrawDebugNormal(tempPos, Vector2.down, GROUND_DETECTION_RAY_LENGTH, false);
 
-        RaycastHit2D groundHit = Physics2D.BoxCast(boxOrigin, boxSize, 0, Vector2.down, GROUND_DETECTION_RAY_LENGTH, groundLayer);
-
-        return (!(groundHit.collider == null));
+        return (hit.collider != null && (hit.normal == upNormal));
     }
 
     private bool CheckForCeiling(){
-        //doing a little bit of math cause we don't have the head collider directly
-        Vector2 boxOrigin = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.max.y);
-        Vector2 boxSize = new Vector2(feetCollider.bounds.size.x, HEAD_DETECTION_RAY_LENGTH);
+        Vector2 tempPos = new Vector2(bodyCollider.bounds.center.x, bodyCollider.bounds.max.y + GROUND_DETECTION_RAY_LENGTH);
+        RaycastHit2D hit = Physics2D.Raycast(tempPos, Vector2.up, GROUND_DETECTION_RAY_LENGTH, ~0);
+        //DrawDebugNormal(tempPos, Vector2.up, GROUND_DETECTION_RAY_LENGTH, false);
 
-        RaycastHit2D headHit = Physics2D.BoxCast(boxOrigin, boxSize, 0, Vector2.up, HEAD_DETECTION_RAY_LENGTH, groundLayer);
+        return (hit.collider != null && (hit.normal == downNormal));
+    }
 
-        return (!(headHit.collider == null));
+    //if we want a function for just the left or right wall, we'll want to modify this function and then create two new helper functions
+    private bool CheckForWalls(){
+        Vector2 leftTempPos = new Vector2(bodyCollider.bounds.min.x - GROUND_DETECTION_RAY_LENGTH, bodyCollider.bounds.center.y);
+        RaycastHit2D leftHit = Physics2D.Raycast(leftTempPos, Vector2.left, GROUND_DETECTION_RAY_LENGTH, ~0);
+        //DrawDebugNormal(leftTempPos, Vector2.left, GROUND_DETECTION_RAY_LENGTH, true);
+        
+        Vector2 rightTempPos = new Vector2(bodyCollider.bounds.max.x + GROUND_DETECTION_RAY_LENGTH, bodyCollider.bounds.center.y);
+        RaycastHit2D rightHit = Physics2D.Raycast(rightTempPos, Vector2.right, GROUND_DETECTION_RAY_LENGTH, ~0);
+        //DrawDebugNormal(rightTempPos, Vector2.right, GROUND_DETECTION_RAY_LENGTH, true);
+
+        bool leftCollision = (leftHit.collider != null && (leftHit.normal == (Vector2)rightNormal));
+        bool rightCollision = (rightHit.collider != null && (rightHit.normal == leftNormal));
+
+        return (leftCollision || rightCollision);
+    }
+
+    //!You must be in scene view for this to show up
+    private void DrawDebugNormal(Vector2 pos, Vector2 unitVector, float length, bool makeLargeForVisibility = true){
+        if (makeLargeForVisibility){
+            length *= 20f;
+        }
+
+        Debug.DrawRay(pos, unitVector * length, Color.red);
     }
 
     private bool IsGrounded(){
@@ -212,6 +279,37 @@ public class Player : MonoBehaviour {
     private bool InTheAir(){
         return (IsJumping() || IsFallingInTheAir());
     }
+    public void MoveAction(InputAction.CallbackContext context){
+        if (IsLocalPlayer){
+            if (context.started || context.performed){
+                moveInput = context.ReadValue<Vector2>();
+                SendCommand("MOVE", moveInput.ToString());
+            }else if (context.canceled){
+                moveInput = Vector2.zero;
+                SendCommand("MOVE", moveInput.ToString());
+            }
+        }
+    }
+
+    public void JumpAction(InputAction.CallbackContext context){
+        if (IsLocalPlayer){
+            if (context.started || context.performed){
+                SendCommand("JUMP_PRESSED", "GoodMorning");
+            }else if (context.canceled){
+                SendCommand("JUMP_RELEASED", "GoodMorning");
+                
+                //jumpPressed = false;
+                //jumpReleased = true;
+            }
+        }
+    }
+
+    private void JumpVariableCleanup(){
+        fastFallTime = 0f;
+        isPastApexThreshold = false;
+        verticalVelocity = 0f;
+        numJumpsUsed = 0;
+    }
 
     private void InitiateJump(int jumps){
         if (!IsJumping()){
@@ -225,169 +323,165 @@ public class Player : MonoBehaviour {
         rigidbody.velocity = new Vector2(rigidbody.velocity.x, verticalVelocity);
     }
 
-    private void JumpVariableCleanup(){
-        fastFallTime = 0f;
-        isPastApexThreshold = false;
-        verticalVelocity = 0f;
-        numJumpsUsed = 0;
-    }
-
-    public void MoveAction(InputAction.CallbackContext context){
-        if (context.started || context.performed){
-            moveInput = context.ReadValue<Vector2>();
-        }else if (context.canceled){
-            moveInput = Vector2.zero;
-        }
-    }
-
-    public void JumpAction(InputAction.CallbackContext context){
-        if (context.started || context.performed){
-            jumpPressed = true;
-            jumpReleased = false;
-        }else if (context.canceled){
-            jumpPressed = false;
-            jumpReleased = true;
-        }
-    }
-
-
-    void Update()
-    {
-        jumpBufferTimer -= Time.deltaTime;
-
-        if (!CheckForGround()){
-            coyoteTimer -= Time.deltaTime;
-        }else{
-            coyoteTimer = MAX_JUMP_COYOTE_TIME;
-        }
-
-
-        if (jumpPressed){
-            jumpBufferTimer = MAX_JUMP_BUFFER_TIME;
-            jumpReleasedDuringBuffer = false;
-        }
-        
-        if (jumpReleased){
-            if (jumpBufferTimer > 0f){
-                jumpReleasedDuringBuffer = true;
-            }
-
-            //letting go of jump while still moving upwards is what causes fast falling
-            if (IsJumping() && verticalVelocity > 0f){
-                currentMovementState = movementState.FAST_FALLING;
-                
-                if (isPastApexThreshold){
-                    isPastApexThreshold = false;
-                    fastFallTime = TIME_FOR_UP_CANCEL;
-                    verticalVelocity = 0;
-                }else{
-                    fastFallReleaseSpeed = verticalVelocity;
-                }
-            }
-        }
-
-        //no need to check for isJumpPressed since that's what jumpBufferTimer is doing
-        bool normalJump = (jumpBufferTimer > 0f && !IsJumping() && (CheckForGround() || coyoteTimer > 0f));
-        //double jumps use jumpPressed cause they cause a bug with jumpBufferTimer. Shouldn't be needed cause there's no need to buffer jumps in
-        //the air
-        //bool doubleJump = (jumpPressed && IsFastFalling() && (numJumpsUsed < MAX_JUMPS));
-        bool extraJump = (jumpBufferTimer > 0f && IsFastFalling() && (numJumpsUsed < MAX_JUMPS));
-        bool airJump = (jumpBufferTimer > 0f && IsFallingInTheAir() && (numJumpsUsed < MAX_JUMPS - 1));
-    
-        if (normalJump){
-            InitiateJump(1);
-            
-            if (jumpReleasedDuringBuffer){
-                currentMovementState = movementState.FAST_FALLING;
-                fastFallReleaseSpeed = verticalVelocity;
-            }
-        }else if (extraJump){
-            InitiateJump(1);
-        }else if (airJump){
-            //forces player to only get one jump when they're falling, so they can't fall off a ledge and then jump twice.
-            InitiateJump(2);
-            
-            currentMovementState = movementState.FAST_FALLING;
-        }
-
-        bool landed = (IsJumping() || IsFallingInTheAir()) && CheckForGround() && (verticalVelocity <= 0f);
-        if (landed){
-            currentMovementState = movementState.GROUND;
-            JumpVariableCleanup();
-        }
-    }
-
     //order is going to matter a lot here
     //we're checking collision here rather than in any of the OnCollision() Unity methods
-    void FixedUpdate()
-    {
-        Debug.Log("Num Jumps Used: " + numJumpsUsed);
-        bool onGround = CheckForGround();
+    void Update()
+    {    
+        if (!MyId.IsInit){
+            return;
+        }
 
-        //Vertical Velocity
-        if (IsJumping()){
-            if (CheckForCeiling()){
+        if (IsServer){
+            //"Update"
+            jumpBufferTimer -= Time.deltaTime;
+
+            if (!CheckForGround()){
+                coyoteTimer -= Time.deltaTime;
+            }else{
+                coyoteTimer = MAX_JUMP_COYOTE_TIME;
+            }
+
+
+            if (jumpPressed){
+                jumpBufferTimer = MAX_JUMP_BUFFER_TIME;
+                jumpReleasedDuringBuffer = false;
+            }
+            
+            if (jumpReleased){
+                if (jumpBufferTimer > 0f){
+                    jumpReleasedDuringBuffer = true;
+                }
+
+                //letting go of jump while still moving upwards is what causes fast falling
+                if (IsJumping() && verticalVelocity > 0f){
+                    currentMovementState = movementState.FAST_FALLING;
+                    
+                    if (isPastApexThreshold){
+                        isPastApexThreshold = false;
+                        fastFallTime = TIME_FOR_UP_CANCEL;
+                        verticalVelocity = 0;
+                    }else{
+                        fastFallReleaseSpeed = verticalVelocity;
+                    }
+                }
+            }
+
+            //no need to check for isJumpPressed since that's what jumpBufferTimer is doing
+            bool normalJump = (jumpBufferTimer > 0f && !IsJumping() && (CheckForGround() || coyoteTimer > 0f));
+            //double jumps use jumpPressed cause they cause a bug with jumpBufferTimer. Shouldn't be needed cause there's no need to buffer jumps in
+            //the air
+            //bool doubleJump = (jumpPressed && IsFastFalling() && (numJumpsUsed < MAX_JUMPS));
+            bool extraJump = (jumpBufferTimer > 0f && IsFastFalling() && (numJumpsUsed < MAX_JUMPS));
+            bool airJump = (jumpBufferTimer > 0f && IsFallingInTheAir() && (numJumpsUsed < MAX_JUMPS - 1));
+        
+            if (normalJump){
+                InitiateJump(1);
+                
+                if (jumpReleasedDuringBuffer){
+                    currentMovementState = movementState.FAST_FALLING;
+                    fastFallReleaseSpeed = verticalVelocity;
+                }
+            }else if (extraJump){
+                InitiateJump(1);
+            }else if (airJump){
+                //forces player to only get one jump when they're falling, so they can't fall off a ledge and then jump twice.
+                InitiateJump(2);
+                
                 currentMovementState = movementState.FAST_FALLING;
             }
 
-            if (verticalVelocity >= 0f){
-                apexPoint = Mathf.InverseLerp(initialJumpVelocity, 0f, verticalVelocity);
-                if (apexPoint > APEX_THRESHOLD){
-                    SetApexVariables();
-                }else{
-                    GravityOnAscending();;
+            bool justLanded = (IsJumping() || IsFallingInTheAir()) && CheckForGround() && (verticalVelocity <= 0f);
+            if (justLanded){
+                currentMovementState = movementState.GROUND;
+                JumpVariableCleanup();
+            }
+
+
+            //"FixedUpdate"
+            bool onGround = CheckForGround();
+
+            //Vertical Velocity
+            if (IsJumping()){
+                //! If we want our air movement to feel more float, we'll probably want to comment this out. This is a question for Mr. Game Design
+                if (CheckForCeiling()){
+                    currentMovementState = movementState.FAST_FALLING;
                 }
-            }else if (!IsFastFalling()){
-                verticalVelocity += gravity * GRAVITY_RELEASE_MULTIPLIER * Time.fixedDeltaTime;
-            }else if (verticalVelocity < 0f){
+
+                if (verticalVelocity >= 0f){
+                    apexPoint = Mathf.InverseLerp(initialJumpVelocity, 0f, verticalVelocity);
+                    if (apexPoint > APEX_THRESHOLD){
+                        SetApexVariables();
+                    }else{
+                        GravityOnAscending();;
+                    }
+                }else if (!IsFastFalling()){
+                    verticalVelocity += gravity * GRAVITY_RELEASE_MULTIPLIER * Time.deltaTime;
+                }else if (verticalVelocity < 0f){
+                    if (!IsFallingInTheAir()){
+                        currentMovementState = movementState.FALLING;
+                    }
+                }
+            }
+
+            if (IsFastFalling()){
+                if (fastFallTime >= TIME_FOR_UP_CANCEL){
+                    verticalVelocity += gravity * GRAVITY_RELEASE_MULTIPLIER * Time.deltaTime;
+                }else if (fastFallTime < TIME_FOR_UP_CANCEL){
+                    verticalVelocity = Mathf.Lerp(fastFallReleaseSpeed, 0f, (fastFallTime / TIME_FOR_UP_CANCEL));
+                }
+
+                fastFallTime += Time.deltaTime;
+            }
+
+            if (!CheckForGround() && !IsJumping()){
                 if (!IsFallingInTheAir()){
                     currentMovementState = movementState.FALLING;
                 }
-            }
-        }
 
-        if (IsFastFalling()){
-            if (fastFallTime >= TIME_FOR_UP_CANCEL){
-                verticalVelocity += gravity * GRAVITY_RELEASE_MULTIPLIER * Time.fixedDeltaTime;
-            }else if (fastFallTime < TIME_FOR_UP_CANCEL){
-                verticalVelocity = Mathf.Lerp(fastFallReleaseSpeed, 0f, (fastFallTime / TIME_FOR_UP_CANCEL));
+                verticalVelocity += gravity * Time.deltaTime;
             }
 
-            fastFallTime += Time.fixedDeltaTime;
-        }
+            verticalVelocity = Mathf.Clamp(verticalVelocity, -MAX_FALL_SPEED, 50f);
+            rigidbody.velocity = new Vector2(rigidbody.velocity.x, verticalVelocity);
 
-        if (!CheckForGround() && !IsJumping()){
-            if (!IsFallingInTheAir()){
-                currentMovementState = movementState.FALLING;
+
+            //Horizontal Velocity
+            if (onGround){
+                currentMovementState = movementState.GROUND;
+                JumpVariableCleanup();
             }
 
-            verticalVelocity += gravity * Time.fixedDeltaTime;
-        }
-
-        verticalVelocity = Mathf.Clamp(verticalVelocity, -MAX_FALL_SPEED, 50f);
-        rigidbody.velocity = new Vector2(rigidbody.velocity.x, verticalVelocity);
-
-
-        //Horizontal Velocity
-        if (onGround){
-            currentMovementState = movementState.GROUND;
-            JumpVariableCleanup();
-        }
-
-        float currentAcceleration = (IsGrounded() ? GROUND_ACCELERATION : AIR_ACCELERATION);
-        float currentDeceleration = (IsGrounded() ? GROUND_DECELERATION : AIR_DECELERATION);
-        
-        if (moveInput != Vector2.zero){     //accelerate
-            TurnCheck();
+            float currentAcceleration = (IsGrounded() ? GROUND_ACCELERATION : AIR_ACCELERATION);
+            float currentDeceleration = (IsGrounded() ? GROUND_DECELERATION : AIR_DECELERATION);
             
-            Vector2 targetVelocity = new Vector2(moveInput.x, 0);
-            targetVelocity *= (holdingRun ? MAX_RUN_SPEED : MAX_WALK_SPEED);
+            if (moveInput != Vector2.zero){     //accelerate
+                TurnCheck();
+                
+                Vector2 targetVelocity = new Vector2(moveInput.x, 0);
+                targetVelocity *= (holdingRun ? MAX_RUN_SPEED : MAX_WALK_SPEED);
 
-            moveVelocity = Vector2.Lerp(moveVelocity, targetVelocity, currentAcceleration * Time.fixedDeltaTime);
-            rigidbody.velocity = new Vector2(moveVelocity.x, rigidbody.velocity.y);
-        }else{      //decelerate
-            moveVelocity = Vector2.Lerp(moveVelocity, Vector2.zero, currentDeceleration * Time.fixedDeltaTime);
-            rigidbody.velocity = new Vector2(moveVelocity.x, rigidbody.velocity.y);
+                moveVelocity = Vector2.Lerp(moveVelocity, targetVelocity, currentAcceleration * Time.deltaTime);
+                rigidbody.velocity = new Vector2(moveVelocity.x, rigidbody.velocity.y);
+            }else{      //decelerate
+                moveVelocity = Vector2.Lerp(moveVelocity, Vector2.zero, currentDeceleration * Time.deltaTime);
+                rigidbody.velocity = new Vector2(moveVelocity.x, rigidbody.velocity.y);
+            }
+        }
+    }
+
+    public override IEnumerator SlowUpdate()
+    {
+        while (IsConnected){
+            if (IsServer){
+
+                if (IsDirty){
+                    //SendUpdate for all of sync vars
+
+                    IsDirty = false;
+                }
+            }
+
+            yield return new WaitForSeconds(MyCore.MasterTimer);
         }
     }
 }
