@@ -12,35 +12,23 @@ using UnityEngine.InputSystem;
 
 using NETWORK_ENGINE;
 using System;
+using Unity.VisualScripting;
 
 /*
 TODO
-    2. Send Updates for sync vars if dirty
-    3. Look through skeleton code for things like animations
+    2. Look through skeleton code for things like animations
+    3. Camera code
     4. start programming different abilities
+    ...
+    5. Test IsDirty stuff once we have movement states other than ground that aren't dependent on input (climbing, swinging, etc)
 */
 
 public class Player : NetworkComponent {
     //!If you add a variable to this, you are responsible for making sure it goes in the IsDirty check in SlowUpdate()
     #region SyncVars
 
-    private Vector2 moveVelocity;
-    
-    private float verticalVelocity;
-    
     private bool isFacingRight;
-
-    private float fastFallTime;
-    private float fastFallReleaseSpeed;
-
-    private int numJumpsUsed;
-    private float apexPoint;
-    private float timePastApexThreshold;
-    private bool isPastApexThreshold;
-    private float jumpBufferTimer;
-    private bool jumpReleasedDuringBuffer;
-    private float coyoteTimer;
-
+    
     private bool jumpPressed = false;
     private bool jumpReleased = false;
 
@@ -50,9 +38,6 @@ public class Player : NetworkComponent {
     [SerializeField] private movementState currentMovementState;
 
     #endregion
-
-
-
 
 
 
@@ -91,7 +76,21 @@ public class Player : NetworkComponent {
     private float initialJumpVelocity;
     private float adjustedJumpHeight;
 
+    private float verticalVelocity;
+    private Vector2 moveVelocity;
     private Vector2 moveInput;
+
+    private float fastFallTime;
+    private float fastFallReleaseSpeed;
+
+    private int numJumpsUsed;
+    private float apexPoint;
+    private float timePastApexThreshold;
+    private bool isPastApexThreshold;
+
+    private float jumpBufferTimer;
+    private bool jumpReleasedDuringBuffer;
+    private float coyoteTimer;
 
     private Vector2 upNormal = new Vector2(0, 1f);    
     private Vector2 downNormal = new Vector2(0, -1f); 
@@ -135,22 +134,76 @@ public class Player : NetworkComponent {
             if (IsServer){
                 SendUpdate("JUMP_RELEASED", "GoodMorning");
             }
+        }else if (flag == "IS_FACING_RIGHT"){
+            isFacingRight = bool.Parse(value);
+        }else if (flag == "HOLDING_RUN"){
+            holdingRun = bool.Parse(value);
+        }else if (flag == "CURRENT_MOVEMENT_STATE"){
+            //doing this for performance reasons since Enum.Parse<>() is apparently performance-intensive
+            switch(value){
+                case "GROUND":
+                    currentMovementState = movementState.GROUND;
+                    break;
+                case "JUMPING":
+                    currentMovementState = movementState.JUMPING;
+                    break;
+                case "FALLING":
+                    currentMovementState = movementState.FALLING;
+                    break;
+                case "FAST_FALLING":
+                    currentMovementState = movementState.FAST_FALLING;
+                    break;
+                case "SWINGING":
+                    currentMovementState = movementState.SWINGING;
+                    break;
+                case "CLIMBING":
+                    currentMovementState = movementState.CLIMBING;
+                    break;
+            }
         }
-        else{      //!Ask Landon later to do this part!
+        
+        //anything with a cooldown is gonna look something like this
+        /*else if (flag == "ATTACK"){
+            if (IsServer){
+                SendUpdate("ATTACK", "GoodMorning");
+            }else{
+                animator.Play("Attack1h1", 0);
+            }
+        }*/
+        
+        else{      //!Ask Landon to do this part later!
             //something like...
             Debug.Log("Thine flag name is INCORRECT!");
         }
     }
 
-    public static Vector2 Vector2FromString(string v)
-    {
+    public static Vector2 Vector2FromString(string v){
         string raw = v.Trim('(').Trim(')');
         string [] args = raw.Split(',');
         return new Vector2(float.Parse(args[0].Trim()), float.Parse(args[1].Trim()));
     }
 
-    public override void NetworkedStart()
-    {
+    //this is technically a bad way to do it, but it'll be better for performance
+    private string MovementStateToString(movementState value){
+        switch(value){
+                case movementState.GROUND:
+                    return "GROUND";
+                case movementState.JUMPING:
+                    return "JUMPING";
+                case movementState.FALLING:
+                    return "FALLING";
+                case movementState.FAST_FALLING:
+                    return "FAST_FALLING";
+                case movementState.SWINGING:
+                    return "SWINGING";
+                case movementState.CLIMBING:
+                    return "CLIMBING";
+                default:
+                    return "GROUND";
+            }
+    }
+
+    public override void NetworkedStart(){
         CalculateInitialConditions();
         
         isFacingRight = true;
@@ -158,9 +211,18 @@ public class Player : NetworkComponent {
         currentMovementState = movementState.GROUND;
     }
 
-    void Start()
-    {
+    void Start(){
         rigidbody = GetComponent<Rigidbody2D>();
+        if (rigidbody == null){
+            Debug.LogError("Thine rigidbody is missing, good sir!");
+        }
+
+        //add this back in when we start doing player spawn eggs
+        /*
+        GameObject temp = GameObject.Find("SpawnPoint");
+        rigidbody.position = temp.transform.position;\
+        */
+
         rigidbody.gravityScale = 0f;
     }
 
@@ -301,6 +363,7 @@ public class Player : NetworkComponent {
     private bool InTheAir(){
         return (IsJumping() || IsFallingInTheAir());
     }
+
     public void MoveAction(InputAction.CallbackContext context){
         if (IsLocalPlayer){
             if (context.started || context.performed){
@@ -344,6 +407,23 @@ public class Player : NetworkComponent {
         rigidbody.velocity = new Vector2(rigidbody.velocity.x, verticalVelocity);
     }
 
+    public override IEnumerator SlowUpdate(){
+        while (IsConnected){
+            if (IsServer){
+
+                if (IsDirty){
+                    SendUpdate("IS_FACING_RIGHT", isFacingRight.ToString());
+                    SendUpdate("HOLDING_RUN", holdingRun.ToString());
+                    SendUpdate("CURRENT_MOVEMENT_STATE", MovementStateToString(currentMovementState));
+                    
+                    IsDirty = false;
+                }
+            }
+
+            yield return new WaitForSeconds(MyCore.MasterTimer);
+        }
+    }
+
     //order is going to matter a lot here
     //we're checking collision here rather than in any of the OnCollision() Unity methods
     void Update()
@@ -353,6 +433,17 @@ public class Player : NetworkComponent {
         
         if (!MyId.IsInit){
             return;
+        }
+
+        //this may be how we do walking animation code
+        if (IsClient){
+            // float tempSpeed = this.rigidbody.velocity.magnitude;
+            
+            // if (tempSpeed <= 0.01f){
+            //     animator.SetFloat("speedh", 0);
+            // }else{
+            //     animator.SetFloat("speedh", Mathf.Abs(tempSpeed));
+            // }
         }
 
 
@@ -491,22 +582,6 @@ public class Player : NetworkComponent {
                 moveVelocity = Vector2.Lerp(moveVelocity, Vector2.zero, currentDeceleration * Time.deltaTime);
                 rigidbody.velocity = new Vector2(moveVelocity.x, rigidbody.velocity.y);
             }
-        }
-    }
-
-    public override IEnumerator SlowUpdate()
-    {
-        while (IsConnected){
-            if (IsServer){
-
-                if (IsDirty){
-                    //SendUpdate for all of sync vars
-
-                    IsDirty = false;
-                }
-            }
-
-            yield return new WaitForSeconds(MyCore.MasterTimer);
         }
     }
 }
