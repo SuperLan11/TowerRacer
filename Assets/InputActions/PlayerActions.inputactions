@@ -49,6 +49,17 @@
                 },
                 {
                     "name": "up",
+                    "id": "d7a66038-988a-4ec3-8848-bf2702d2c9a5",
+                    "path": "<Keyboard>/upArrow",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "up",
                     "id": "8dd509f8-d4ca-408c-b0f9-77bd267958f3",
                     "path": "<Joystick>/stick/up",
                     "interactions": "",
@@ -73,6 +84,17 @@
                     "name": "down",
                     "id": "3a7366e8-7917-4518-9f5d-884657fb5c40",
                     "path": "<Keyboard>/s",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "down",
+                    "id": "2e6b3e14-edcf-466f-b186-7f7e4c973c90",
+                    "path": "<Keyboard>/downArrow",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -115,6 +137,17 @@
                 },
                 {
                     "name": "left",
+                    "id": "45baead0-ba88-4879-83a1-d5b92089dafb",
+                    "path": "<Keyboard>/leftArrow",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "left",
                     "id": "b52ea9ba-da85-4317-ac2c-785acefedfa7",
                     "path": "<Joystick>/stick/left",
                     "interactions": "",
@@ -139,6 +172,17 @@
                     "name": "right",
                     "id": "14f3734d-de5b-49f4-afc9-ad3feccc3cf3",
                     "path": "<Keyboard>/d",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "right",
+                    "id": "33334950-86d5-4154-9cdd-d0431c9025d5",
+                    "path": "<Keyboard>/rightArrow",
                     "interactions": "",
                     "processors": "",
                     "groups": "",

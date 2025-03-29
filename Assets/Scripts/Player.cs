@@ -14,7 +14,9 @@ using NETWORK_ENGINE;
 
 /*
 TODO
-    1. Network this script
+    1. Wrap collision with IsServer
+    2. Send Updates for sync vars if dirty
+    3. 
 */
 
 public class Player : NetworkComponent {
@@ -76,7 +78,7 @@ public class Player : NetworkComponent {
     private const float GRAVITY_RELEASE_MULTIPLIER = 2f;
     private const float MAX_FALL_SPEED = 26f;
     //no need to have canDoubleJump or anything like that since we have this int
-    private const int MAX_JUMPS = 2;
+    private const int MAX_JUMPS = 1;
 
     private const float TIME_FOR_UP_CANCEL = 0.027f;
     private const float APEX_THRESHOLD = 0.97f, APEX_HANG_TIME = 0.075f;
@@ -148,15 +150,20 @@ public class Player : NetworkComponent {
     {
         CalculateInitialConditions();
         
-    }
-
-    private void Awake()
-    {
         isFacingRight = true;
-        rigidbody = GetComponent<Rigidbody2D>();
 
         currentMovementState = movementState.GROUND;
     }
+
+    void Start()
+    {
+        rigidbody = GetComponent<Rigidbody2D>();
+    }
+
+    // private void Awake()
+    // {
+
+    // }
 
     //go watch the GDC talk if you want know why this math works
     private void CalculateInitialConditions(){
@@ -330,6 +337,9 @@ public class Player : NetworkComponent {
         if (!MyId.IsInit){
             return;
         }
+
+        Debug.Log("CurrentMovementState: " + currentMovementState);
+        Debug.Log("Move input" + moveInput);
 
         if (IsServer){
             //"Update"
