@@ -403,7 +403,7 @@ public class GenCore : WebSocketBehavior
         if (owner.IsServer)
         {
             try
-            {
+            {                
                 SendAsync((string)msg.Clone(), (x) => { });
             }
             catch(InvalidOperationException e)

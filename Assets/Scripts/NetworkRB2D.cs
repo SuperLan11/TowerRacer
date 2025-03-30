@@ -37,8 +37,7 @@ public class NetworkRB2D : NetworkComponent
     public override void HandleMessage(string flag, string value)
     {                        
         if (IsClient && flag == FLAGS["POS2D"])
-        {
-            //Debug.Log("get Vector2 pos from: " + value);
+        {            
             lastPos = Vector2FromString(value);
             if (useAdjustVel)
             {
@@ -54,8 +53,7 @@ public class NetworkRB2D : NetworkComponent
         }
         else if (IsClient && flag == FLAGS["ROT2D"])
         {                        
-            lastRot = float.Parse(value);            
-
+            lastRot = float.Parse(value);
             if (Mathf.Abs(lastRot - myRig.rotation) > eThreshold)
             {                
                 myRig.rotation = lastRot;

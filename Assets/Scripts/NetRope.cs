@@ -43,14 +43,17 @@ public class NetRope : NetworkComponent
     }
 
     public void GrabRope(PlayerController player)
-    {
+    {                
         player.grabbedRope = this;
+        player.swingPos = ClosestSwingPos(player);        
         playerPresent = true;
-        pivotRig.AddTorque(player.myRig.velocity.x * initialTorqueMult);
-        //this needs to be in this order to prevent null error in player Update!!
-        //player.swingPos = swingPos;
-        player.swingPos = ClosestSwingPos(player);
-        player.state = "SWINGING";
+
+        //calculate initial torque using player speed variables. don't use player rigidbody velocity since that's used to connect to rope
+        float playerTorque = Mathf.Max(player.GetSpeed(), Mathf.Abs(player.launchVec.x));
+        if (player.myRig.velocity.x < 0)
+            playerTorque *= -1;
+        
+        pivotRig.angularVelocity += playerTorque * initialTorqueMult;
     }
 
     private Transform ClosestSwingPos(PlayerController player)
@@ -68,6 +71,8 @@ public class NetRope : NetworkComponent
                 minDistIdx = i;
             }
         }
+        //to make player have less velocity the higher they are on the rope, use the index of the swingPos as a multiplier
+        player.swingPosHeight = minDistIdx;
         return pivot.transform.GetChild(minDistIdx);
     }
     
@@ -77,12 +82,13 @@ public class NetRope : NetworkComponent
         float pivotRotZ = player.grabbedRope.transform.GetChild(0).localEulerAngles.z;
         if (pivotRotZ > 180f)
             pivotRotZ -= 180f;
+        
+        // if at lowest height (height=1), multiply by 1. if at 2nd lowest (height=2), get 90% speed, then 80%, etc
+        float xJumpVel = (Mathf.Cos(pivotRotZ * Mathf.Deg2Rad) * xJumpForce * ropeAngSpeed) * (1.1f - 0.1f * player.swingPosHeight);
+        float yJumpVel = baseYJumpForce + (Mathf.Sin(pivotRotZ * Mathf.Deg2Rad) * extraYJumpForce * ropeAngSpeed * (1.1f - 0.1f * player.swingPosHeight));        
+        Vector2 launchVector = new Vector2(xJumpVel, yJumpVel);
 
-        float xJumpVel = Mathf.Cos(pivotRotZ * Mathf.Deg2Rad) * xJumpForce * ropeAngSpeed;
-        float yJumpVel = baseYJumpForce + Mathf.Sin(pivotRotZ * Mathf.Deg2Rad) * extraYJumpForce * ropeAngSpeed;
-        //Debug.Log("xJumpVel: " + xJumpForce);
-        Vector2 launchVector = new Vector2(xJumpVel, yJumpVel);        
-
+        player.swingPosHeight = 0;
         player.myRig.velocity = launchVector;
         player.launchVec = launchVector;
     }
@@ -111,29 +117,29 @@ public class NetRope : NetworkComponent
             if (ropeRotZ > deadzoneLength && ropeRotZ < 180f)
             {
                 angFromCenter = ropeRotZ;                
-                pivotRig.AddTorque(-fallStrength - (angFromCenter * heightFallInfluence));
+                pivotRig.angularVelocity += -fallStrength - (angFromCenter * heightFallInfluence);
             }
             // rope on left side
             else if (ropeRotZ > 180f && ropeRotZ < (360 - deadzoneLength))
             {
-                angFromCenter = ropeRotZ - 360f;                
-                pivotRig.AddTorque(fallStrength - (angFromCenter * heightFallInfluence));
+                angFromCenter = ropeRotZ - 360f;                                
+                pivotRig.angularVelocity += fallStrength - (angFromCenter * heightFallInfluence);
             }            
 
             if (player == null)
                 return;
 
-            if (!playerPresent)
-                pivotRig.angularVelocity *= (1 - (Time.deltaTime * slowdownMult));
+            if (!playerPresent || player.holdingDir == "none")            
+                pivotRig.angularVelocity *= (1 - (Time.deltaTime * slowdownMult));            
 
             if (player.holdingDir == "left" && playerPresent)
-            {
-                pivotRig.AddTorque(-playerTorque);
+            {                
+                pivotRig.angularVelocity += -playerTorque;
             }
             else if (player.holdingDir == "right" && playerPresent)
-            {
-                pivotRig.AddTorque(playerTorque);
-            }
+            {                
+                pivotRig.angularVelocity += playerTorque;
+            }            
         }        
     }            
 }

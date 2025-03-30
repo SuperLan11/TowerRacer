@@ -214,7 +214,18 @@
                 },
                 {
                     "name": "",
-                    "id": "76329547-dc4f-4c57-aa82-61134f0f2249",
+                    "id": "d83b63ac-8f5f-4b92-9b75-4d24da6c48c7",
+                    "path": "<Keyboard>/j",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Jump",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "5c1f06af-1721-481b-b211-624c68f04c80",
                     "path": "<Keyboard>/space",
                     "interactions": "",
                     "processors": "",
