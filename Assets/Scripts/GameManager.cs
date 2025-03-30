@@ -1,9 +1,17 @@
-﻿using System.Collections;
+﻿/*
+@Authors - Landon, Patrick
+@Description - General game management, and also potentially level generation
+*/
+
+//!Ask Towle if we should make this a singleton that has DontDestroyOnLoad(), or if that'd be pointless considering we're not scene switching
+
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using NETWORK_ENGINE;
 using UnityEngine.Tilemaps;
+using UnityEngine.InputSystem.LowLevel;
 
 public class GameManager : NetworkComponent
 {    
@@ -11,6 +19,7 @@ public class GameManager : NetworkComponent
     [System.NonSerialized] public bool gameOver;
     [System.NonSerialized] private static bool gameStarted = false;
     public static int playersReady = 0;
+    public static gameState currentGameState;
 
     //non-sync vars
     private Vector3[] starts = new Vector3[4];
@@ -21,7 +30,16 @@ public class GameManager : NetworkComponent
     //these aren't serialized as they could break the game if accidentally changed in the inspector
     private const int FIRST_LEVEL_PIECE_IDX = 3;
     private const int NUM_LEVEL_PIECES = 3;
+
+    public static double levelTime;
     public static bool debugMode = false;    
+
+    public enum gameState {
+        LOBBY,
+        GAME,
+        BETWEEN_ROUNDS,
+        GAME_OVER,
+    }
 
     public override void HandleMessage(string flag, string value)
     {
@@ -68,6 +86,7 @@ public class GameManager : NetworkComponent
     {
         if(IsServer)
         {
+            levelTime = 0;
             //RandomizeLevel();
         }        
     }
@@ -100,6 +119,29 @@ public class GameManager : NetworkComponent
     private void DisableRooms()
     {
 
+    }
+
+    public Enemy[] GetAllEnemies(){
+        return GameObject.FindObjectsOfType<Enemy>();
+    }
+
+    public void DestroyAllEnemies(Enemy[] enemies){
+        foreach (Enemy enemy in enemies){
+            MyCore.NetDestroyObject(enemy.NetId);
+        }
+    }
+
+    public IEnumerator GameUpdate(){
+        if (debugMode)
+            {
+                Enemy[] enemies = GetAllEnemies();
+                DestroyAllEnemies(enemies);
+            }
+            //game is playing
+            //turn-based logic
+            //maintain score
+            //maintain metrics
+            yield return new WaitForSeconds(0.5f);
     }
 
     public override IEnumerator SlowUpdate()
@@ -149,16 +191,7 @@ public class GameManager : NetworkComponent
             //this is basically our regular Update()
             while (!gameOver)
             {
-                if (debugMode)
-                {
-                    // Enemy[] enemies = GetAllEnemies();
-                    // DestroyAllEnemies(enemies);
-                }
-                //game is playing
-                //turn-based logic
-                //maintain score
-                //maintain metrics
-                yield return new WaitForSeconds(0.5f);
+                GameUpdate();
             }
             //wait until game ends...
             SendUpdate("GAMEOVER", "");
