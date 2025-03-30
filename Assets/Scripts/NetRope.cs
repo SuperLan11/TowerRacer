@@ -6,7 +6,7 @@ using NETWORK_ENGINE;
 public class NetRope : NetworkComponent
 {
     private GameObject pivot;
-    private Rigidbody2D pivotRig;
+    public Rigidbody2D pivotRig;
     public Transform swingPos;    
     private PlayerController player;
     public bool playerPresent = false;
@@ -21,6 +21,8 @@ public class NetRope : NetworkComponent
     [SerializeField] private float xJumpForce = 0.07f;
     [SerializeField] private float extraYJumpForce = 0.02f;
     [SerializeField] private float baseYJumpForce = 4f;
+    [SerializeField] public float swingSnapMult = 1f;
+    [SerializeField] public float dirChangeTorque = 2f;
 
     public override void HandleMessage(string flag, string value)
     {
@@ -62,7 +64,7 @@ public class NetRope : NetworkComponent
         //Debug.Log("xJumpVel: " + xJumpForce);
         Vector2 launchVector = new Vector2(xJumpVel, yJumpVel);        
 
-        player.myRig.velocity += launchVector;
+        player.myRig.velocity = launchVector;
         player.launchVec = launchVector;
     }
     public override IEnumerator SlowUpdate()
@@ -88,15 +90,15 @@ public class NetRope : NetworkComponent
             // rope on right side
             if (ropeRotZ > deadzoneLength && ropeRotZ < 180f)
             {
-                angFromCenter = ropeRotZ;
+                angFromCenter = ropeRotZ;                
                 pivotRig.AddTorque(-fallStrength - (angFromCenter * heightFallInfluence));
             }
             // rope on left side
             else if (ropeRotZ > 180f && ropeRotZ < (360 - deadzoneLength))
             {
-                angFromCenter = ropeRotZ - 360f;
+                angFromCenter = ropeRotZ - 360f;                
                 pivotRig.AddTorque(fallStrength - (angFromCenter * heightFallInfluence));
-            }                        
+            }            
 
             if (player == null)
                 return;

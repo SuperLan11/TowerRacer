@@ -265,6 +265,7 @@ MonoBehaviour:
   MyCore: {fileID: 0}
   MyId: {fileID: 0}
   IsDirty: 0
+  pivotRig: {fileID: 0}
   swingPos: {fileID: 4216778973624229162}
   playerPresent: 0
   rope: {fileID: 4419812542326389598}
@@ -275,8 +276,10 @@ MonoBehaviour:
   heightFallInfluence: 0.2
   initialTorqueMult: 12
   xJumpForce: 0.06
-  extraYJumpForce: 0.02
+  extraYJumpForce: 0.03
   baseYJumpForce: 2
+  swingSnapMult: 30
+  dirChangeTorque: 10
 --- !u!114 &5496633899286058446
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -293,7 +296,7 @@ MonoBehaviour:
   MyId: {fileID: 0}
   IsDirty: 0
   threshold: 0.01
-  eThreshold: 0.3
+  eThreshold: 0.5
   useAdjustVel: 0
   useAdjustAngVel: 0
 --- !u!1 &3859887289474162826

@@ -139,7 +139,7 @@ public class GameManager : NetworkComponent
                 temp.GetComponentInChildren<Text>().text = n.PName;
                 temp.GetComponent<PlayerController>().SendUpdate("START", n.PName + ";" + n.ColorSelected);
             }
-            MyCore.NetCreateObject(7, Owner, new Vector3(4, 0, 0), Quaternion.identity);
+            MyCore.NetCreateObject(7, Owner, new Vector3(4, -0.5f, 0), Quaternion.identity);
 
             SendUpdate("GAMESTART", "1");
             //stops server from listening, so nobody new can join.

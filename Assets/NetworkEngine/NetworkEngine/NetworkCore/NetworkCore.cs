@@ -125,6 +125,7 @@ public class NetworkCore     : GenericCore_Web
         }
         if(!IsConnected && !IsServer)
         {
+            Debug.Log("load scene2");
             SceneManager.LoadScene(DefaultReturnScene);      
         }
     }
@@ -441,6 +442,7 @@ public class NetworkCore     : GenericCore_Web
         }
         if(GameObject.FindObjectOfType<LobbyManager2>() == null && !IsServer)
         {
+            Debug.Log("load scene3");
             SceneManager.LoadScene(0);
         }
 

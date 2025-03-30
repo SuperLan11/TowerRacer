@@ -13,7 +13,7 @@ public class NetworkRB2D : NetworkComponent
 {
     //synch vars
     [System.NonSerialized] public Vector2 lastPos;
-    [System.NonSerialized] public Vector3 lastRot;
+    [System.NonSerialized] public float lastRot;
     [System.NonSerialized] public Vector2 lastVel;
     [System.NonSerialized] public float lastAngVel;
 
@@ -31,7 +31,7 @@ public class NetworkRB2D : NetworkComponent
         { "POS2D","POS2D" },
         { "ROT2D","ROT2D" },
         { "VEL2D", "VEL2D" },
-        { "ANG2D", "ANG2D"}
+        { "ANG2D", "ANG2D" }
     };
 
     public override void HandleMessage(string flag, string value)
@@ -53,17 +53,16 @@ public class NetworkRB2D : NetworkComponent
             }
         }
         else if (IsClient && flag == FLAGS["ROT2D"])
-        {
-            //Debug.Log("get Vector2 rot from: " + value);
-            lastRot = Vector2FromString(value);
-            if ((lastRot - transform.eulerAngles).magnitude > eThreshold)
-            {
-                transform.rotation = Quaternion.Euler(lastRot);
+        {                        
+            lastRot = float.Parse(value);            
+
+            if (Mathf.Abs(lastRot - myRig.rotation) > eThreshold)
+            {                
+                myRig.rotation = lastRot;
             }
         }
         else if (IsClient && flag == FLAGS["VEL2D"])
-        {
-            //Debug.Log("get Vector2 vel from: " + value);
+        {            
             lastVel = Vector2FromString(value);
             if (lastVel.magnitude < 0.01f)
             {
@@ -131,10 +130,10 @@ public class NetworkRB2D : NetworkComponent
                     lastPos = myRig.position;
                 }
 
-                if ((myRig.transform.eulerAngles - lastRot).magnitude > threshold)
+                if (Mathf.Abs(myRig.rotation - lastRot) > threshold)
                 {                    
-                    SendUpdate("ROT2D", myRig.transform.eulerAngles.ToString());
-                    lastRot = myRig.transform.eulerAngles;
+                    SendUpdate("ROT2D", myRig.rotation.ToString());
+                    lastRot = myRig.rotation;
                 }
 
                 if ((myRig.velocity - lastVel).magnitude > threshold)
@@ -153,7 +152,7 @@ public class NetworkRB2D : NetworkComponent
                 if (IsDirty)
                 {
                     SendUpdate("POS2D", myRig.position.ToString());
-                    SendUpdate("ROT2D", myRig.transform.eulerAngles.ToString());
+                    SendUpdate("ROT2D", myRig.rotation.ToString());
                     SendUpdate("VEL2D", myRig.velocity.ToString());
                     SendUpdate("ANG2D", myRig.angularVelocity.ToString());
                     IsDirty = false;

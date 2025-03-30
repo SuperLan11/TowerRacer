@@ -189,6 +189,7 @@ public class LobbyManager2 : NetworkCore
     {
         if(!gameCore.IsConnected && !IsServer && !isGameServer)
         {
+            Debug.Log("load scene1");
             SceneManager.LoadScene(0);
         }
     }

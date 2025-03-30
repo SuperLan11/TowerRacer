@@ -496,12 +496,14 @@ public class GenericCore_Web : MonoBehaviour
             }
             foreach (int i in badC)
             {
+                Debug.Log("disconnect 1");
                 Disconnect(i);
             }
         }
         //Are you the client?  Are you closing?
         if (IsClient && Connections.ContainsKey(0) && Connections[0].Closing)
         {
+            Debug.Log("disconnect 2");
             Disconnect(0);
         }
         //Necessary for non-webgl to manage the websocket.
@@ -619,6 +621,7 @@ public class GenericCore_Web : MonoBehaviour
             }
             else if(FindObjectOfType<LobbyManager2>()== null)
             {
+                Debug.Log("disconnect 3");
                 Disconnect(0);
             }
         }   
@@ -710,6 +713,7 @@ public class GenericCore_Web : MonoBehaviour
             IsClient = false;
             try
             {
+                Debug.Log("disconnect higher");
                 StartCoroutine(OnClientDisconnect(id));
                 OnClientDisconnectCleanup(id);
             }
@@ -731,6 +735,7 @@ public class GenericCore_Web : MonoBehaviour
                 else
                 {
                     Connections.Remove(id);
+                    Debug.Log("disconnect lower");
                     StartCoroutine(OnClientDisconnect(id));
                     OnClientDisconnectCleanup(id);
                 }
@@ -759,6 +764,7 @@ public class GenericCore_Web : MonoBehaviour
         yield return new WaitForSeconds(.1f);
         foreach (KeyValuePair<int,GenCore> pair in Connections)
         {
+            Debug.Log("disconnect 4");
             Disconnect(pair.Key);
         }
         yield return new WaitForSeconds(1);
@@ -826,6 +832,7 @@ public class GenericCore_Web : MonoBehaviour
     {
         if(IsClient)
         {
+            Debug.Log("disconnect 5");
             Disconnect(0);
         }
         else if(IsServer)

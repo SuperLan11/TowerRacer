@@ -26,13 +26,15 @@ public class PlayerController : Character
     private Color[] colors;
     private Vector2 lastMoveInput;          
     public float jumpStrength = 10f;
-    public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();        
+    private float launchCorrectionSpeed = 8f;
+    private float airSlowdownMult = 1f;
+    public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
 
 
     public override void HandleMessage(string flag, string value)
     {
         if (flag == "START")
-        {
+        {            
             if (IsClient)
             {
                 PName = value.Split(";")[0];
@@ -47,34 +49,40 @@ public class PlayerController : Character
             else if (IsServer)
             {
                 SendUpdate("START", value);
-            }
+            }            
         }
         else if (flag == "MOVE")
-        {
+        {            
             lastMoveInput = Vector2FromString(value);
-            if (lastMoveInput.x > 0)
-                holdingDir = "right";
-            else if (lastMoveInput.x < 0)
-                holdingDir = "left";
-            else
-                holdingDir = "";
 
-            if (IsServer)
+            if (lastMoveInput.x > 0)
             {
-                SendUpdate("MOVE", value);
+                if (holdingDir == "left" && grabbedRope != null)
+                {
+                    grabbedRope.pivotRig.AddTorque(grabbedRope.dirChangeTorque);
+                }
+                holdingDir = "right";
             }
+            else if (lastMoveInput.x < 0)
+            {
+                if (holdingDir == "right" && grabbedRope != null)
+                {
+                    grabbedRope.pivotRig.AddTorque(-grabbedRope.dirChangeTorque);
+                }
+                holdingDir = "left";
+            }            
         }
         else if (flag == "JUMP")
-        {
+        {            
             isGrounded = false;
             //initially called on server
             if (state == "SWINGING")
-            {                
+            {
                 canGrabRope = false;
-                state = "LAUNCHING";              
+                state = "LAUNCHING";
                 grabbedRope.BoostPlayer(this);
                 grabbedRope.playerPresent = false;
-                grabbedRope = null;                
+                grabbedRope = null;
             }
 
             if (IsServer)
@@ -82,52 +90,56 @@ public class PlayerController : Character
                 StartCoroutine(GrabCooldown(1f));
                 myRig.velocity += new Vector2(0, jumpStrength);
                 SendUpdate("JUMP", "");
-            }
+            }           
         }
         else if (flag == "SWING")
-        {
+        {            
             if (IsClient)
             {
                 state = "SWINGING";
-                grabbedRope = GameObject.Find(value).GetComponent<NetRope>();                                
-            }
+                grabbedRope = GameObject.Find(value).GetComponent<NetRope>();
+            }            
         }
-        else if(flag == "GRAB")
-        {
-            if(IsClient)
+        else if (flag == "GRAB")
+        {            
+            if (IsClient)
             {
                 //improve later
                 GameObject.Find(value).GetComponentInParent<NetRope>().GrabRope(this);
-            }
+            }            
         }
-        else if(flag == "CANGRAB")
-        {
+        else if (flag == "CANGRAB")
+        {            
             if (IsClient)
             {
                 canGrabRope = true;
-            }
+            }         
         }
-        else if(flag == "GROUNDED")
-        {
+        else if (flag == "GROUNDED")
+        {            
             isGrounded = true;
-            state = "NORMAL";
+            state = "NORMAL";            
         }
         else if (flag == "DEBUG")
-        {
+        {            
             Debug.Log(value);
             if (IsClient)
             {
                 SendCommand(flag, value);
-            }
+            }            
         }
-        else if (!OTHER_FLAGS.ContainsKey(flag))
+        /*else
         {
-            Debug.LogWarning(flag + " is not a valid flag in " + this.GetType().Name + ".cs");
-            if (IsClient)
+            Debug.Log("checking if " + flag +  " is a bad flag...");
+            if (!OTHER_FLAGS.ContainsKey(flag))
             {
-                SendCommand(flag, value);
+                Debug.LogWarning(flag + " is not a valid flag in " + this.GetType().Name + ".cs");
+                if (IsClient)
+                {
+                    SendCommand(flag, value);
+                }
             }
-        }
+        }*/
     }
 
     // Start is called before the first frame update
@@ -142,6 +154,7 @@ public class PlayerController : Character
             OTHER_FLAGS = GetComponent<NetworkTransform>().FLAGS;
         else if (GetComponentInChildren<NetworkTransform>() != null)
             OTHER_FLAGS = GetComponentInChildren<NetworkTransform>().FLAGS;
+
 
         myRig = GetComponent<Rigidbody2D>();
         colors = new Color[3];
@@ -276,19 +289,21 @@ public class PlayerController : Character
         if (IsServer)
         {
             if (state == "SWINGING")
-            {
-                myRig.velocity = Vector3.zero;
-                transform.position = swingPos.position;
+            {                
+                myRig.velocity = (swingPos.position - transform.position) * grabbedRope.swingSnapMult;                                
             }
             else if (state == "LAUNCHING")
             {
                 Vector2 newVel = myRig.velocity;
-                newVel.x += lastMoveInput.x * Time.deltaTime;
-                //launchVec.x = Mathf.Max(launchVec.x, speed);
+                newVel.x += lastMoveInput.x * Time.deltaTime * launchCorrectionSpeed;
+                if (lastMoveInput.x == 0)
+                    newVel.x *= 1 - (Time.deltaTime * airSlowdownMult);
+                
+                if(Mathf.Abs(newVel.x) < Mathf.Abs(launchVec.x))
+                    launchVec.x = newVel.x;
 
-                float absLaunchX = Mathf.Abs(launchVec.x);
-                float allowedXSpeed = Mathf.Max(absLaunchX, speed);                
-                newVel.x = Mathf.Clamp(newVel.x, -allowedXSpeed, allowedXSpeed);
+                float allowedXSpeed = Mathf.Max(Mathf.Abs(launchVec.x), speed);
+                newVel.x = Mathf.Clamp(newVel.x, -Mathf.Abs(allowedXSpeed), Mathf.Abs(allowedXSpeed));
 
                 myRig.velocity = newVel;
             }
