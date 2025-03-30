@@ -9,16 +9,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
-
-using NETWORK_ENGINE;
 using System;
 using Unity.VisualScripting;
 
+using NETWORK_ENGINE;
+
+using Vector2 = UnityEngine.Vector2;
+using Vector3 = UnityEngine.Vector3;
+
 /*
 TODO
-    2. Look through skeleton code for things like animations
-    3. Camera code
     4. start programming different abilities
+    3. Camera code
     ...
     5. Test IsDirty stuff once we have movement states other than ground that aren't dependent on input (climbing, swinging, etc)
 */
@@ -207,6 +209,11 @@ public class Player : NetworkComponent {
         CalculateInitialConditions();
         
         isFacingRight = true;
+        
+        if (!GameManager.debugMode){
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
 
         currentMovementState = movementState.GROUND;
     }
