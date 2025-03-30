@@ -87,6 +87,11 @@ public class GameManager : NetworkComponent
         if(IsServer)
         {
             levelTime = 0;
+
+            if (debugMode){
+                Enemy[] enemies = GetAllEnemies();
+                DestroyAllEnemies(enemies);
+            }
             //RandomizeLevel();
         }        
     }
@@ -132,16 +137,11 @@ public class GameManager : NetworkComponent
     }
 
     public IEnumerator GameUpdate(){
-        if (debugMode)
-            {
-                Enemy[] enemies = GetAllEnemies();
-                DestroyAllEnemies(enemies);
-            }
-            //game is playing
-            //turn-based logic
-            //maintain score
-            //maintain metrics
-            yield return new WaitForSeconds(0.5f);
+        //game is playing
+        //turn-based logic
+        //maintain score
+        //maintain metrics
+        yield return new WaitForSeconds(0.5f);
     }
 
     public override IEnumerator SlowUpdate()
@@ -191,7 +191,11 @@ public class GameManager : NetworkComponent
             //this is basically our regular Update()
             while (!gameOver)
             {
-                GameUpdate();
+                //game is playing
+                //turn-based logic
+                //maintain score
+                //maintain metrics
+                yield return new WaitForSeconds(0.5f);
             }
             //wait until game ends...
             SendUpdate("GAMEOVER", "");
