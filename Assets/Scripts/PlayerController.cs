@@ -26,7 +26,7 @@ public class PlayerController : Character
     private Color[] colors;
     private Vector2 lastMoveInput;          
     public float jumpStrength = 10f;
-    private float launchCorrectionSpeed = 8f;
+    [SerializeField] private float launchCorrectionSpeed = 8f;
     private float airSlowdownMult = 1f;
     public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
 

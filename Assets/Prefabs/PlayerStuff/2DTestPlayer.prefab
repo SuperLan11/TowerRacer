@@ -377,6 +377,7 @@ MonoBehaviour:
   swingPos: {fileID: 0}
   launchVec: {x: 0, y: 0}
   jumpStrength: 8
+  launchCorrectionSpeed: 10
 --- !u!114 &2310169775686152334
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -393,7 +394,7 @@ MonoBehaviour:
   MyId: {fileID: 0}
   IsDirty: 0
   threshold: 0.01
-  eThreshold: 0.01
+  eThreshold: 0.5
   useAdjustVel: 0
   useAdjustAngVel: 0
 --- !u!50 &4098073042792592083

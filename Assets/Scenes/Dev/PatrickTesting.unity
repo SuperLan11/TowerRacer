@@ -548,6 +548,7 @@ MonoBehaviour:
   ObjectCounter: 0
   SpawnPrefab:
   - {fileID: 1504742809329571919, guid: d1add614afd080040b433128824ef641, type: 3}
+  - {fileID: 6711198667271264467, guid: cec0322b612f0c04d84db8f4e6d66574, type: 3}
   NetworkPlayerManager: {fileID: 5403542797868829238, guid: d1add614afd080040b433128824ef641, type: 3}
   DefaultReturnScene: 0
 --- !u!4 &408156394

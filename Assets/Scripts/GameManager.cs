@@ -76,10 +76,10 @@ public class GameManager : NetworkComponent
         GameObject start3 = GameObject.Find("P3Start");
         GameObject start4 = GameObject.Find("P4Start");
 
-        starts[0] = start1.transform.position;
+        /*starts[0] = start1.transform.position;
         starts[1] = start2.transform.position;
         starts[2] = start3.transform.position;
-        starts[3] = start4.transform.position;
+        starts[3] = start4.transform.position;*/
     }
 
     public override void NetworkedStart()
@@ -101,7 +101,7 @@ public class GameManager : NetworkComponent
         // change to numPlayers > 1 later
         if (playersReady >= numPlayers && numPlayers > 0)
         {
-            gameStarted = true;
+            gameStarted = true;            
         }        
     }
 
@@ -134,9 +134,9 @@ public class GameManager : NetworkComponent
     public IEnumerator GameUpdate(){
         if (debugMode)
             {
-                Enemy[] enemies = GetAllEnemies();
-                DestroyAllEnemies(enemies);
-            }
+            /*Enemy[] enemies = GetAllEnemies();
+            DestroyAllEnemies(enemies);*/
+        }
             //game is playing
             //turn-based logic
             //maintain score
@@ -152,6 +152,7 @@ public class GameManager : NetworkComponent
             {
                 yield return new WaitForSeconds(0.5f);
             }
+            Debug.Log("starting game");
 
             NPM[] players = GameObject.FindObjectsOfType<NPM>();
             foreach (NPM n in players)
@@ -191,7 +192,8 @@ public class GameManager : NetworkComponent
             //this is basically our regular Update()
             while (!gameOver)
             {
-                GameUpdate();
+                //StartCoroutine(GameUpdate());
+                yield return new WaitForSeconds(0.5f);
             }
             //wait until game ends...
             SendUpdate("GAMEOVER", "");

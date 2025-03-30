@@ -48,8 +48,27 @@ public class NetRope : NetworkComponent
         playerPresent = true;
         pivotRig.AddTorque(player.myRig.velocity.x * initialTorqueMult);
         //this needs to be in this order to prevent null error in player Update!!
-        player.swingPos = swingPos;
+        //player.swingPos = swingPos;
+        player.swingPos = ClosestSwingPos(player);
         player.state = "SWINGING";
+    }
+
+    private Transform ClosestSwingPos(PlayerController player)
+    {
+        float minDist = Mathf.Infinity;
+        int minDistIdx = -1;                
+
+        //assuming rope is at idx 0
+        for (int i = 1; i < pivot.transform.childCount; i++)
+        {
+            float distToPos = Vector2.Distance(player.transform.position, pivot.transform.GetChild(i).position);
+            if (distToPos < minDist)
+            {
+                minDist = distToPos;
+                minDistIdx = i;
+            }
+        }
+        return pivot.transform.GetChild(minDistIdx);
     }
     
     public void BoostPlayer(PlayerController player)
@@ -67,6 +86,7 @@ public class NetRope : NetworkComponent
         player.myRig.velocity = launchVector;
         player.launchVec = launchVector;
     }
+
     public override IEnumerator SlowUpdate()
     {
         while (IsConnected)
