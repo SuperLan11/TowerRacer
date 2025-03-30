@@ -20,7 +20,8 @@ public class GameManager : NetworkComponent
     [SerializeField] private float LOWEST_PIECE_Y = -15f;
     //these aren't serialized as they could break the game if accidentally changed in the inspector
     private const int FIRST_LEVEL_PIECE_IDX = 3;
-    private const int NUM_LEVEL_PIECES = 3;    
+    private const int NUM_LEVEL_PIECES = 3;
+    public static bool debugMode = false;    
 
     public override void HandleMessage(string flag, string value)
     {
@@ -145,8 +146,14 @@ public class GameManager : NetworkComponent
             //stops server from listening, so nobody new can join.
             MyCore.NotifyGameStart();
 
+            //this is basically our regular Update()
             while (!gameOver)
             {
+                if (debugMode)
+                {
+                    // Enemy[] enemies = GetAllEnemies();
+                    // DestroyAllEnemies(enemies);
+                }
                 //game is playing
                 //turn-based logic
                 //maintain score
@@ -166,11 +173,5 @@ public class GameManager : NetworkComponent
             MyCore.UI_Quit();
         }
         yield return new WaitForSeconds(0.1f);
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
     }
 }
