@@ -68,6 +68,9 @@ public class Player : NetworkComponent {
     private const float MAX_FALL_SPEED = 26f;
     //no need to have canDoubleJump or anything like that since we have this int
     private const int MAX_JUMPS = 1;
+    private const int MAX_WALL_JUMPS = 1;
+
+    private uint wallJumpCounter = 0;
 
     private const float TIME_FOR_UP_CANCEL = 0.027f;
     private const float APEX_THRESHOLD = 0.97f, APEX_HANG_TIME = 0.075f;
@@ -296,7 +299,7 @@ public class Player : NetworkComponent {
 
     private bool CheckForGround(){
         if (IsServer){
-            Vector2 tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y/* - COLLISION_RAYCAST_LENGTH*/);
+            Vector2 tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y - COLLISION_RAYCAST_LENGTH);
             RaycastHit2D hit = Physics2D.Raycast(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
             //DrawDebugNormal(tempPos, Vector2.down, GROUND_DETECTION_RAY_LENGTH, false);
 
@@ -316,6 +319,38 @@ public class Player : NetworkComponent {
         }
 
         return false;
+    }
+
+    private bool CanLeftWallJump(){
+        if (IsServer){
+            Vector2 leftTempPos = new Vector2(bodyCollider.bounds.min.x - COLLISION_RAYCAST_LENGTH, bodyCollider.bounds.center.y);
+            RaycastHit2D leftHit = Physics2D.Raycast(leftTempPos, Vector2.left, COLLISION_RAYCAST_LENGTH, ~0);
+
+            bool leftCollision = (leftHit.collider != null && (leftHit.normal == (Vector2)rightNormal));
+            bool movingLeft = (moveInput.x < 0f);
+
+            return (leftCollision && movingLeft);
+        }
+
+        return false;
+    }
+
+    private bool CanRightWallJump(){
+        if (IsServer){
+            Vector2 rightTempPos = new Vector2(bodyCollider.bounds.max.x + COLLISION_RAYCAST_LENGTH, bodyCollider.bounds.center.y);
+            RaycastHit2D rightHit = Physics2D.Raycast(rightTempPos, Vector2.right, COLLISION_RAYCAST_LENGTH, ~0);
+
+            bool rightCollision = (rightHit.collider != null && (rightHit.normal == leftNormal));
+            bool movingRight = (moveInput.x > 0f);
+
+            return (rightCollision && movingRight);
+        }
+
+        return false;
+    }
+
+    private bool CanWallJump(){
+        return (CanLeftWallJump() || CanRightWallJump() && (wallJumpCounter < MAX_WALL_JUMPS));
     }
 
     //if we want a function for just the left or right wall, we'll want to modify this function and then create two new helper functions
@@ -393,12 +428,13 @@ public class Player : NetworkComponent {
         }
     }
 
-    //only gets called on server
+    //only gets called on server and when grounded
     private void JumpVariableCleanup(){
         fastFallTime = 0f;
         isPastApexThreshold = false;
         verticalVelocity = 0f;
         numJumpsUsed = 0;
+        wallJumpCounter = 0;
     }
 
     //only gets called on server
@@ -409,6 +445,17 @@ public class Player : NetworkComponent {
 
         jumpBufferTimer = 0;
         numJumpsUsed += jumps;
+        verticalVelocity = initialJumpVelocity;
+
+        rigidbody.velocity = new Vector2(rigidbody.velocity.x, verticalVelocity);
+    }
+
+    private void InitiateWallJump(){
+        if (!IsJumping()){
+            currentMovementState = movementState.JUMPING;
+        }
+
+        //we may want to give a horizontal velopcity boost in the opposite direction
         verticalVelocity = initialJumpVelocity;
 
         rigidbody.velocity = new Vector2(rigidbody.velocity.x, verticalVelocity);
@@ -491,6 +538,7 @@ public class Player : NetworkComponent {
 
             //no need to check for isJumpPressed since that's what jumpBufferTimer is doing
             bool normalJump = (jumpBufferTimer > 0f && !IsJumping() && (CheckForGround() || coyoteTimer > 0f));
+            bool wallJump = (jumpPressed && CanWallJump());
             //double jumps use jumpPressed cause they cause a bug with jumpBufferTimer. Shouldn't be needed cause there's no need to buffer jumps in
             //the air
             //bool doubleJump = (jumpPressed && IsFastFalling() && (numJumpsUsed < MAX_JUMPS));
@@ -504,6 +552,8 @@ public class Player : NetworkComponent {
                     currentMovementState = movementState.FAST_FALLING;
                     fastFallReleaseSpeed = verticalVelocity;
                 }
+            }else if (wallJump){
+                InitiateWallJump();
             }else if (extraJump){
                 InitiateJump(1);
             }else if (airJump){
@@ -535,7 +585,7 @@ public class Player : NetworkComponent {
                     if (apexPoint > APEX_THRESHOLD){
                         SetApexVariables();
                     }else{
-                        GravityOnAscending();;
+                        GravityOnAscending();
                     }
                 }else if (!IsFastFalling()){
                     verticalVelocity += gravity * GRAVITY_RELEASE_MULTIPLIER * Time.deltaTime;
