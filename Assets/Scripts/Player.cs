@@ -296,7 +296,7 @@ public class Player : NetworkComponent {
 
     private bool CheckForGround(){
         if (IsServer){
-            Vector2 tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y - COLLISION_RAYCAST_LENGTH);
+            Vector2 tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y/* - COLLISION_RAYCAST_LENGTH*/);
             RaycastHit2D hit = Physics2D.Raycast(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
             //DrawDebugNormal(tempPos, Vector2.down, GROUND_DETECTION_RAY_LENGTH, false);
 

@@ -32,7 +32,7 @@ public class GameManager : NetworkComponent
     private const int NUM_LEVEL_PIECES = 3;
 
     public static double levelTime;
-    public static bool debugMode = false;    
+    public static bool debugMode = true;    
 
     public enum gameState {
         LOBBY,
