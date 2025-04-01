@@ -38,6 +38,7 @@ public class Player : NetworkComponent {
     private bool holdingRun = false;
 
     [SerializeField] private movementState currentMovementState;
+    [SerializeField] private characterClass selectedCharacterClass;
 
     #endregion
 
@@ -53,12 +54,14 @@ public class Player : NetworkComponent {
     private const float MAX_WALK_SPEED = 12.5f;
     private const float GROUND_ACCELERATION = 5f, GROUND_DECELERATION = 20f;
     private const float AIR_ACCELERATION = 5f, AIR_DECELERATION = 5f;
+    private const float WALL_JUMP_ACCELERATION = AIR_ACCELERATION * 4f;     //totally fine if we want to make it independent
 
     private const float MAX_RUN_SPEED = 20f;
     
     //these values will probably need to change based on the size of the Player
     
     private const float COLLISION_RAYCAST_LENGTH = 0.02f;
+    private const float WALL_COLLISION_RAYCAST_LENGTH = COLLISION_RAYCAST_LENGTH + 0.01f;
 
     private const float JUMP_HEIGHT = 6.5f;
     private const float JUMP_HEIGHT_COMPENSATION_FACTOR = 1.054f;
@@ -68,11 +71,18 @@ public class Player : NetworkComponent {
     private const float MAX_FALL_SPEED = 26f;
     //no need to have canDoubleJump or anything like that since we have this int
     private const int MAX_JUMPS = 1;
+    private const int MAX_WALL_JUMPS = 1;
+    private const float WALL_JUMP_HORIZONTAL_BOOST = 15f;
+
+
+    private uint wallJumpCounter = 0;
+    private bool inWallJump = false;
 
     private const float TIME_FOR_UP_CANCEL = 0.027f;
     private const float APEX_THRESHOLD = 0.97f, APEX_HANG_TIME = 0.075f;
     private const float MAX_JUMP_BUFFER_TIME = 0.125f;
     private const float MAX_JUMP_COYOTE_TIME = 0.1f;
+    private const float MAX_WALL_JUMP_TIME = 0.2f;
 
     private float gravity;
     private float initialJumpVelocity;
@@ -93,6 +103,7 @@ public class Player : NetworkComponent {
     private float jumpBufferTimer;
     private bool jumpReleasedDuringBuffer;
     private float coyoteTimer;
+    private float wallJumpTimer;
 
     private Vector2 upNormal = new Vector2(0, 1f);    
     private Vector2 downNormal = new Vector2(0, -1f); 
@@ -108,6 +119,14 @@ public class Player : NetworkComponent {
             SWINGING,
             CLIMBING
     };
+
+    private enum characterClass
+    {
+            ARCHER,
+            MAGE,
+            BANDIT,
+            KNIGHT
+    }
 
     #endregion
     
@@ -162,6 +181,22 @@ public class Player : NetworkComponent {
                     currentMovementState = movementState.CLIMBING;
                     break;
             }
+        }else if (flag == "SELECTED_CHARACTER_CLASS"){
+            //doing this for performance reasons since Enum.Parse<>() is apparently performance-intensive
+                switch(value){
+                    case "ARCHER":
+                        selectedCharacterClass = characterClass.ARCHER;
+                        break;
+                    case "MAGE":
+                        selectedCharacterClass = characterClass.MAGE;
+                        break;
+                    case "BANDIT":
+                        selectedCharacterClass = characterClass.BANDIT;
+                        break;
+                    case "KNIGHT":
+                        selectedCharacterClass = characterClass.KNIGHT;
+                        break;
+                }
         }
         
         //anything with a cooldown is gonna look something like this
@@ -188,21 +223,36 @@ public class Player : NetworkComponent {
     //this is technically a bad way to do it, but it'll be better for performance
     private string MovementStateToString(movementState value){
         switch(value){
-                case movementState.GROUND:
-                    return "GROUND";
-                case movementState.JUMPING:
-                    return "JUMPING";
-                case movementState.FALLING:
-                    return "FALLING";
-                case movementState.FAST_FALLING:
-                    return "FAST_FALLING";
-                case movementState.SWINGING:
-                    return "SWINGING";
-                case movementState.CLIMBING:
-                    return "CLIMBING";
-                default:
-                    return "GROUND";
-            }
+            case movementState.GROUND:
+                return "GROUND";
+            case movementState.JUMPING:
+                return "JUMPING";
+            case movementState.FALLING:
+                return "FALLING";
+            case movementState.FAST_FALLING:
+                return "FAST_FALLING";
+            case movementState.SWINGING:
+                return "SWINGING";
+            case movementState.CLIMBING:
+                return "CLIMBING";
+            default:
+                return "GROUND";
+        }
+    }
+
+    private string CharacterClassToString(characterClass value){
+        switch(value){
+            case characterClass.ARCHER:
+                    return "ARCHER";
+            case characterClass.MAGE:
+                return "MAGE";
+            case characterClass.BANDIT:
+                return "BANDIT";
+            case characterClass.KNIGHT:
+                return "KNIGHT";
+            default:
+                return "THOU HAS SELECTED THE WRONG CLASS";
+        }
     }
 
     public override void NetworkedStart(){
@@ -300,7 +350,7 @@ public class Player : NetworkComponent {
             RaycastHit2D hit = Physics2D.Raycast(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
             //DrawDebugNormal(tempPos, Vector2.down, GROUND_DETECTION_RAY_LENGTH, false);
 
-            return (hit.collider != null && (hit.normal == upNormal));
+            return ((hit.collider != null) && (hit.normal == upNormal) && !hit.collider.isTrigger);
         }
         
         return false;
@@ -316,6 +366,41 @@ public class Player : NetworkComponent {
         }
 
         return false;
+    }
+
+    private bool CanLeftWallJump(){
+        if (IsServer){
+            Vector2 leftTempPos = new Vector2(bodyCollider.bounds.min.x - COLLISION_RAYCAST_LENGTH, bodyCollider.bounds.center.y);
+            RaycastHit2D leftHit = Physics2D.Raycast(leftTempPos, Vector2.left, WALL_COLLISION_RAYCAST_LENGTH, ~0);
+
+            bool leftCollision = (leftHit.collider != null && (leftHit.normal == (Vector2)rightNormal));
+            //bool movingLeft = (moveInput.x < 0f);
+            bool movingRight = (moveInput.x > 0f);
+
+
+            return (leftCollision && movingRight);
+        }
+
+        return false;
+    }
+
+    private bool CanRightWallJump(){
+        if (IsServer){
+            Vector2 rightTempPos = new Vector2(bodyCollider.bounds.max.x + COLLISION_RAYCAST_LENGTH, bodyCollider.bounds.center.y);
+            RaycastHit2D rightHit = Physics2D.Raycast(rightTempPos, Vector2.right, WALL_COLLISION_RAYCAST_LENGTH, ~0);
+
+            bool rightCollision = (rightHit.collider != null && (rightHit.normal == leftNormal));
+            //bool movingRight = (moveInput.x > 0f);
+            bool movingLeft = (moveInput.x < 0f);
+
+            return (rightCollision && movingLeft);
+        }
+
+        return false;
+    }
+
+    private bool CanWallJump(){
+        return (CanLeftWallJump() || CanRightWallJump() && (wallJumpCounter < MAX_WALL_JUMPS));
     }
 
     //if we want a function for just the left or right wall, we'll want to modify this function and then create two new helper functions
@@ -393,12 +478,13 @@ public class Player : NetworkComponent {
         }
     }
 
-    //only gets called on server
+    //only gets called on server and when grounded
     private void JumpVariableCleanup(){
         fastFallTime = 0f;
         isPastApexThreshold = false;
         verticalVelocity = 0f;
         numJumpsUsed = 0;
+        wallJumpCounter = 0;
     }
 
     //only gets called on server
@@ -414,6 +500,20 @@ public class Player : NetworkComponent {
         rigidbody.velocity = new Vector2(rigidbody.velocity.x, verticalVelocity);
     }
 
+    private void InitiateWallJump(){
+        if (!IsJumping()){
+            currentMovementState = movementState.JUMPING;
+        }
+
+        isFacingRight = (moveInput.x > 0f);
+
+        //we're gonna give the horizontal boost in Update() cause that's where we change horizontal velocity
+        inWallJump = true;
+        verticalVelocity = initialJumpVelocity;
+
+        rigidbody.velocity = new Vector2(rigidbody.velocity.x, verticalVelocity);
+    }
+
     public override IEnumerator SlowUpdate(){
         while (IsConnected){
             if (IsServer){
@@ -422,6 +522,7 @@ public class Player : NetworkComponent {
                     SendUpdate("IS_FACING_RIGHT", isFacingRight.ToString());
                     SendUpdate("HOLDING_RUN", holdingRun.ToString());
                     SendUpdate("CURRENT_MOVEMENT_STATE", MovementStateToString(currentMovementState));
+                    SendUpdate("SELECTED_CHARACTER_CLASS", CharacterClassToString(selectedCharacterClass));
                     
                     IsDirty = false;
                 }
@@ -455,7 +556,7 @@ public class Player : NetworkComponent {
 
 
         if (IsServer){
-            //"Update"
+            //Jumping
             jumpBufferTimer -= Time.deltaTime;
 
             if (!CheckForGround()){
@@ -463,7 +564,6 @@ public class Player : NetworkComponent {
             }else{
                 coyoteTimer = MAX_JUMP_COYOTE_TIME;
             }
-
 
             if (jumpPressed){
                 jumpBufferTimer = MAX_JUMP_BUFFER_TIME;
@@ -491,6 +591,7 @@ public class Player : NetworkComponent {
 
             //no need to check for isJumpPressed since that's what jumpBufferTimer is doing
             bool normalJump = (jumpBufferTimer > 0f && !IsJumping() && (CheckForGround() || coyoteTimer > 0f));
+            bool wallJump = (jumpPressed && CanWallJump());
             //double jumps use jumpPressed cause they cause a bug with jumpBufferTimer. Shouldn't be needed cause there's no need to buffer jumps in
             //the air
             //bool doubleJump = (jumpPressed && IsFastFalling() && (numJumpsUsed < MAX_JUMPS));
@@ -504,6 +605,8 @@ public class Player : NetworkComponent {
                     currentMovementState = movementState.FAST_FALLING;
                     fastFallReleaseSpeed = verticalVelocity;
                 }
+            }else if (wallJump){
+                InitiateWallJump();
             }else if (extraJump){
                 InitiateJump(1);
             }else if (airJump){
@@ -520,10 +623,9 @@ public class Player : NetworkComponent {
             }
 
 
-            //"FixedUpdate"
+            //Vertical Velocity
             bool onGround = CheckForGround();
 
-            //Vertical Velocity
             if (IsJumping()){
                 //! If we want our air movement to feel more float, we'll probably want to comment this out. This is a question for Mr. Game Design
                 if (CheckForCeiling()){
@@ -535,7 +637,7 @@ public class Player : NetworkComponent {
                     if (apexPoint > APEX_THRESHOLD){
                         SetApexVariables();
                     }else{
-                        GravityOnAscending();;
+                        GravityOnAscending();
                     }
                 }else if (!IsFastFalling()){
                     verticalVelocity += gravity * GRAVITY_RELEASE_MULTIPLIER * Time.deltaTime;
@@ -568,7 +670,28 @@ public class Player : NetworkComponent {
             rigidbody.velocity = new Vector2(rigidbody.velocity.x, verticalVelocity);
 
 
-            //Horizontal Velocity
+            //Horizontal Velocity! You MUST set it here!
+            if (inWallJump){
+                if (wallJumpTimer > 0f){
+                    wallJumpTimer -= Time.deltaTime;
+                }else{
+                    wallJumpTimer = MAX_WALL_JUMP_TIME;
+                    inWallJump = false;
+                }
+
+                //can't do moveInput.x cause that would be using player input
+                float xDirection = (isFacingRight ? 1f : -1f);
+
+                Vector2 targetVelocity = new Vector2(xDirection * WALL_JUMP_HORIZONTAL_BOOST, 0f);
+
+                //rigidbody.velocity = new Vector2(xDirection * WALL_JUMP_BOOST, rigidbody.velocity.y);
+                moveVelocity = Vector2.Lerp(new Vector2(xDirection/10f, 0f), targetVelocity, WALL_JUMP_ACCELERATION * Time.deltaTime);
+                rigidbody.velocity = new Vector2(moveVelocity.x, rigidbody.velocity.y);
+                
+                //returning to temporarily take away horizontal control from the player
+                return;
+            }
+
             if (onGround){
                 currentMovementState = movementState.GROUND;
                 JumpVariableCleanup();
@@ -576,6 +699,7 @@ public class Player : NetworkComponent {
 
             float currentAcceleration = (IsGrounded() ? GROUND_ACCELERATION : AIR_ACCELERATION);
             float currentDeceleration = (IsGrounded() ? GROUND_DECELERATION : AIR_DECELERATION);
+
             
             if (moveInput != Vector2.zero){     //accelerate
                 TurnCheck();
