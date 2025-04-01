@@ -15,6 +15,9 @@ public abstract class Character : NetworkComponent
     // public for testing
     public Rigidbody2D myRig;
 
+    protected Sprite sprite;
+    protected SpriteRenderer spriteRender;    
+
     protected void Attack()
     {
         //do something

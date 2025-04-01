@@ -32,7 +32,7 @@ public class PlayerController : Character
     
     [SerializeField] private float launchCorrectionSpeed = 8f;
     public float jumpStrength = 10f;
-    private float airSlowdownMult = 1f;
+    [SerializeField] private float airSlowdownMult = 1f;
 
     public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
 

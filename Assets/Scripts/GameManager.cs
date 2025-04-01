@@ -16,8 +16,8 @@ using UnityEngine.InputSystem.LowLevel;
 public class GameManager : NetworkComponent
 {    
     //sync vars
-    [System.NonSerialized] public bool gameOver;
-    [System.NonSerialized] private static bool gameStarted = false;
+    public static bool gameOver;
+    private static bool gameStarted = false;
     public static int playersReady = 0;
     public static gameState currentGameState;
 
@@ -56,6 +56,16 @@ public class GameManager : NetworkComponent
                 }
             }
         }
+        else if(flag == "SCORE")
+        {
+            Text roundScoreText = GameObject.FindGameObjectWithTag("SCORE").GetComponentInChildren<Text>();
+            roundScoreText.enabled = true;
+            PlayerController[] players = FindObjectsOfType<PlayerController>();
+            for (int i = 0; i < players.Length; i++)
+            {
+                roundScoreText.text += "Player " + (i + 1) + " score: " + Random.Range(0, 5) + '\n';
+            }
+        }
         //for objects in scene before clients connect, can't use SendUpdate because
         //SendUpdate only works if IsLocalPlayer and it's impossible to determine IsLocalPlayer
         //for an object already in the scene
@@ -67,6 +77,7 @@ public class GameManager : NetworkComponent
             }
         }        
     }
+    
 
     // Start is called before the first frame update
     void Start()
@@ -94,6 +105,24 @@ public class GameManager : NetworkComponent
             }
             //RandomizeLevel();
         }        
+    }
+    private IEnumerator WaitToDisplayScores(float seconds)
+    {
+        yield return new WaitForSeconds(seconds);
+
+        Text roundScoreText = GameObject.FindGameObjectWithTag("SCORE").GetComponentInChildren<Text>();
+        roundScoreText.enabled = true;
+        PlayerController[] players = FindObjectsOfType<PlayerController>();
+        for (int i = 0; i < players.Length; i++)
+        {
+            roundScoreText.text += "Player " + (i + 1) + " score: " + Random.Range(0, 5) + '\n';
+        }
+
+        if (IsServer)
+        {
+            gameOver = true;
+            SendUpdate("SCORE", "");            
+        }
     }
 
     // I'd like to only change static variables through wrapper functions
@@ -140,7 +169,7 @@ public class GameManager : NetworkComponent
         //game is playing
         //turn-based logic
         //maintain score
-        //maintain metrics
+        //maintain metrics        
         yield return new WaitForSeconds(0.5f);
     }
 
@@ -182,11 +211,12 @@ public class GameManager : NetworkComponent
                 temp.GetComponentInChildren<Text>().text = n.PName;
                 temp.GetComponent<PlayerController>().SendUpdate("START", n.PName + ";" + n.ColorSelected);
             }
-            MyCore.NetCreateObject(7, Owner, new Vector3(4, -0.5f, 0), Quaternion.identity);
+            //MyCore.NetCreateObject(7, Owner, Vector3.zero, Quaternion.identity);
+            //MyCore.NetCreateObject(1, Owner, new Vector3(4, 3f, 0), Quaternion.identity);
 
             SendUpdate("GAMESTART", "1");
             //stops server from listening, so nobody new can join.
-            MyCore.NotifyGameStart();
+            MyCore.NotifyGameStart();            
 
             //this is basically our regular Update()
             while (!gameOver)
@@ -194,19 +224,19 @@ public class GameManager : NetworkComponent
                 //game is playing
                 //turn-based logic
                 //maintain score
-                //maintain metrics
-                yield return new WaitForSeconds(0.5f);
+                //maintain metrics                
+                yield return GameUpdate();
             }
-            //wait until game ends...
+            Debug.Log("GAME OVER");            
             SendUpdate("GAMEOVER", "");
+            //wait until game ends...
             //disable controls or delete player
             //Show scores
-            yield return new WaitForSeconds(30f);
-
-            //MyId.NotifyDirty();
-
-            //StartCoroutine(MyCore.DisconnectServer());
+            yield return new WaitForSeconds(5f);
+            
             Debug.Log("QUITTING GAME");
+            gameStarted = false;
+            MyId.NotifyDirty();
             MyCore.UI_Quit();
         }
         yield return new WaitForSeconds(0.1f);
