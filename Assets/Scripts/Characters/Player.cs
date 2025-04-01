@@ -38,6 +38,7 @@ public class Player : NetworkComponent {
     private bool holdingRun = false;
 
     [SerializeField] private movementState currentMovementState;
+    [SerializeField] private characterClass selectedCharacterClass;
 
     #endregion
 
@@ -179,6 +180,22 @@ public class Player : NetworkComponent {
                     currentMovementState = movementState.CLIMBING;
                     break;
             }
+        }else if (flag == "SELECTED_CHARACTER_CLASS"){
+            //doing this for performance reasons since Enum.Parse<>() is apparently performance-intensive
+                switch(value){
+                    case "ARCHER":
+                        selectedCharacterClass = characterClass.ARCHER;
+                        break;
+                    case "MAGE":
+                        selectedCharacterClass = characterClass.MAGE;
+                        break;
+                    case "BANDIT":
+                        selectedCharacterClass = characterClass.BANDIT;
+                        break;
+                    case "KNIGHT":
+                        selectedCharacterClass = characterClass.KNIGHT;
+                        break;
+                }
         }
         
         //anything with a cooldown is gonna look something like this
@@ -205,21 +222,36 @@ public class Player : NetworkComponent {
     //this is technically a bad way to do it, but it'll be better for performance
     private string MovementStateToString(movementState value){
         switch(value){
-                case movementState.GROUND:
-                    return "GROUND";
-                case movementState.JUMPING:
-                    return "JUMPING";
-                case movementState.FALLING:
-                    return "FALLING";
-                case movementState.FAST_FALLING:
-                    return "FAST_FALLING";
-                case movementState.SWINGING:
-                    return "SWINGING";
-                case movementState.CLIMBING:
-                    return "CLIMBING";
-                default:
-                    return "GROUND";
-            }
+            case movementState.GROUND:
+                return "GROUND";
+            case movementState.JUMPING:
+                return "JUMPING";
+            case movementState.FALLING:
+                return "FALLING";
+            case movementState.FAST_FALLING:
+                return "FAST_FALLING";
+            case movementState.SWINGING:
+                return "SWINGING";
+            case movementState.CLIMBING:
+                return "CLIMBING";
+            default:
+                return "GROUND";
+        }
+    }
+
+    private string CharacterClassToString(characterClass value){
+        switch(value){
+            case characterClass.ARCHER:
+                    return "ARCHER";
+            case characterClass.MAGE:
+                return "MAGE";
+            case characterClass.BANDIT:
+                return "BANDIT";
+            case characterClass.KNIGHT:
+                return "KNIGHT";
+            default:
+                return "THOU HAS SELECTED THE WRONG CLASS";
+        }
     }
 
     public override void NetworkedStart(){
@@ -489,7 +521,7 @@ public class Player : NetworkComponent {
                     SendUpdate("IS_FACING_RIGHT", isFacingRight.ToString());
                     SendUpdate("HOLDING_RUN", holdingRun.ToString());
                     SendUpdate("CURRENT_MOVEMENT_STATE", MovementStateToString(currentMovementState));
-                    //SendUpdate("SELECTED_CHARACTER_CLASS", CharacterClassToString(selectedCharacterClass));
+                    SendUpdate("SELECTED_CHARACTER_CLASS", CharacterClassToString(selectedCharacterClass));
                     
                     IsDirty = false;
                 }
