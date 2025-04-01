@@ -53,6 +53,7 @@ public class Player : NetworkComponent {
     private const float MAX_WALK_SPEED = 12.5f;
     private const float GROUND_ACCELERATION = 5f, GROUND_DECELERATION = 20f;
     private const float AIR_ACCELERATION = 5f, AIR_DECELERATION = 5f;
+    private const float WALL_JUMP_ACCELERATION = AIR_ACCELERATION * 4f;     //totally fine if we want to make it independent
 
     private const float MAX_RUN_SPEED = 20f;
     
@@ -69,6 +70,8 @@ public class Player : NetworkComponent {
     //no need to have canDoubleJump or anything like that since we have this int
     private const int MAX_JUMPS = 1;
     private const int MAX_WALL_JUMPS = 1;
+    private const float WALL_JUMP_HORIZONTAL_BOOST = 15f;
+
 
     private uint wallJumpCounter = 0;
     private bool inWallJump = false;
@@ -77,6 +80,7 @@ public class Player : NetworkComponent {
     private const float APEX_THRESHOLD = 0.97f, APEX_HANG_TIME = 0.075f;
     private const float MAX_JUMP_BUFFER_TIME = 0.125f;
     private const float MAX_JUMP_COYOTE_TIME = 0.1f;
+    private const float MAX_WALL_JUMP_TIME = 0.2f;
 
     private float gravity;
     private float initialJumpVelocity;
@@ -97,6 +101,7 @@ public class Player : NetworkComponent {
     private float jumpBufferTimer;
     private bool jumpReleasedDuringBuffer;
     private float coyoteTimer;
+    private float wallJumpTimer;
 
     private Vector2 upNormal = new Vector2(0, 1f);    
     private Vector2 downNormal = new Vector2(0, -1f); 
@@ -112,6 +117,14 @@ public class Player : NetworkComponent {
             SWINGING,
             CLIMBING
     };
+
+    private enum characterClass
+    {
+            ARCHER,
+            MAGE,
+            BANDIT,
+            KNIGHT
+    }
 
     #endregion
     
@@ -459,8 +472,10 @@ public class Player : NetworkComponent {
             currentMovementState = movementState.JUMPING;
         }
 
+        isFacingRight = (moveInput.x > 0f);
+
         //we're gonna give the horizontal boost in Update() cause that's where we change horizontal velocity
-        //inWallJump = true;
+        inWallJump = true;
         verticalVelocity = initialJumpVelocity;
 
         rigidbody.velocity = new Vector2(rigidbody.velocity.x, verticalVelocity);
@@ -474,6 +489,7 @@ public class Player : NetworkComponent {
                     SendUpdate("IS_FACING_RIGHT", isFacingRight.ToString());
                     SendUpdate("HOLDING_RUN", holdingRun.ToString());
                     SendUpdate("CURRENT_MOVEMENT_STATE", MovementStateToString(currentMovementState));
+                    //SendUpdate("SELECTED_CHARACTER_CLASS", CharacterClassToString(selectedCharacterClass));
                     
                     IsDirty = false;
                 }
@@ -507,7 +523,7 @@ public class Player : NetworkComponent {
 
 
         if (IsServer){
-            //"Update"
+            //Jumping
             jumpBufferTimer -= Time.deltaTime;
 
             if (!CheckForGround()){
@@ -515,7 +531,6 @@ public class Player : NetworkComponent {
             }else{
                 coyoteTimer = MAX_JUMP_COYOTE_TIME;
             }
-
 
             if (jumpPressed){
                 jumpBufferTimer = MAX_JUMP_BUFFER_TIME;
@@ -575,10 +590,9 @@ public class Player : NetworkComponent {
             }
 
 
-            //"FixedUpdate"
+            //Vertical Velocity
             bool onGround = CheckForGround();
 
-            //Vertical Velocity
             if (IsJumping()){
                 //! If we want our air movement to feel more float, we'll probably want to comment this out. This is a question for Mr. Game Design
                 if (CheckForCeiling()){
@@ -624,16 +638,26 @@ public class Player : NetworkComponent {
 
 
             //Horizontal Velocity! You MUST set it here!
-            //!FIX THIS AFTER WATCHING THE VIDEO!
-            // if (inWallJump){
-            //     const float WALL_JUMP_BOOST = 50f;
-            //     Vector2 direction = new Vector2(moveInput.x * -1f, rigidbody.velocity.y);
+            if (inWallJump){
+                if (wallJumpTimer > 0f){
+                    wallJumpTimer -= Time.deltaTime;
+                }else{
+                    wallJumpTimer = MAX_WALL_JUMP_TIME;
+                    inWallJump = false;
+                }
 
-            //     rigidbody.velocity = new Vector2(direction.x * WALL_JUMP_BOOST, direction.y);
+                //can't do moveInput.x cause that would be using player input
+                float xDirection = (isFacingRight ? 1f : -1f);
+
+                Vector2 targetVelocity = new Vector2(xDirection * WALL_JUMP_HORIZONTAL_BOOST, 0f);
+
+                //rigidbody.velocity = new Vector2(xDirection * WALL_JUMP_BOOST, rigidbody.velocity.y);
+                moveVelocity = Vector2.Lerp(new Vector2(xDirection/10f, 0f), targetVelocity, WALL_JUMP_ACCELERATION * Time.deltaTime);
+                rigidbody.velocity = new Vector2(moveVelocity.x, rigidbody.velocity.y);
                 
-            //     inWallJump = false;
-            //     return; 
-            // }
+                //returning to temporarily take away horizontal control from the player
+                return;
+            }
 
             if (onGround){
                 currentMovementState = movementState.GROUND;
