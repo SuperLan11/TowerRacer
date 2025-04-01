@@ -61,6 +61,7 @@ public class Player : NetworkComponent {
     //these values will probably need to change based on the size of the Player
     
     private const float COLLISION_RAYCAST_LENGTH = 0.02f;
+    private const float WALL_COLLISION_RAYCAST_LENGTH = COLLISION_RAYCAST_LENGTH + 0.01f;
 
     private const float JUMP_HEIGHT = 6.5f;
     private const float JUMP_HEIGHT_COMPENSATION_FACTOR = 1.054f;
@@ -370,7 +371,7 @@ public class Player : NetworkComponent {
     private bool CanLeftWallJump(){
         if (IsServer){
             Vector2 leftTempPos = new Vector2(bodyCollider.bounds.min.x - COLLISION_RAYCAST_LENGTH, bodyCollider.bounds.center.y);
-            RaycastHit2D leftHit = Physics2D.Raycast(leftTempPos, Vector2.left, COLLISION_RAYCAST_LENGTH, ~0);
+            RaycastHit2D leftHit = Physics2D.Raycast(leftTempPos, Vector2.left, WALL_COLLISION_RAYCAST_LENGTH, ~0);
 
             bool leftCollision = (leftHit.collider != null && (leftHit.normal == (Vector2)rightNormal));
             //bool movingLeft = (moveInput.x < 0f);
@@ -386,7 +387,7 @@ public class Player : NetworkComponent {
     private bool CanRightWallJump(){
         if (IsServer){
             Vector2 rightTempPos = new Vector2(bodyCollider.bounds.max.x + COLLISION_RAYCAST_LENGTH, bodyCollider.bounds.center.y);
-            RaycastHit2D rightHit = Physics2D.Raycast(rightTempPos, Vector2.right, COLLISION_RAYCAST_LENGTH, ~0);
+            RaycastHit2D rightHit = Physics2D.Raycast(rightTempPos, Vector2.right, WALL_COLLISION_RAYCAST_LENGTH, ~0);
 
             bool rightCollision = (rightHit.collider != null && (rightHit.normal == leftNormal));
             //bool movingRight = (moveInput.x > 0f);
