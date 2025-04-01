@@ -344,17 +344,33 @@ public class Player : NetworkComponent {
         }
     }
 
+    // private bool CheckForGround(){
+    //     if (IsServer){
+    //         Vector2 tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y - COLLISION_RAYCAST_LENGTH);
+    //         RaycastHit2D hit = Physics2D.Raycast(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+    //         //DrawDebugNormal(tempPos, Vector2.down, GROUND_DETECTION_RAY_LENGTH, false);
+
+    //         return ((hit.collider != null) && (hit.normal == upNormal) && !hit.collider.isTrigger);
+    //     }
+        
+    //     return false;
+    // }
+
     private bool CheckForGround(){
         if (IsServer){
             Vector2 tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y - COLLISION_RAYCAST_LENGTH);
-            RaycastHit2D hit = Physics2D.Raycast(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
-            //DrawDebugNormal(tempPos, Vector2.down, GROUND_DETECTION_RAY_LENGTH, false);
+            RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
 
-            return ((hit.collider != null) && (hit.normal == upNormal) && !hit.collider.isTrigger);
+            foreach (RaycastHit2D hit in hits){
+                if (!hit.collider.isTrigger && (hit.normal == upNormal)){
+                    return true;
+                }
+            }
         }
-        
+
         return false;
     }
+
 
     private bool CheckForCeiling(){
         if (IsServer){
