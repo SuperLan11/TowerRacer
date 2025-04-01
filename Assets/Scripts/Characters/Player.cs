@@ -366,6 +366,25 @@ public class Player : NetworkComponent {
                     return true;
                 }
             }
+
+            //shoot left and right raycast only if middle raycast didn't detect anything
+            tempPos.x = feetCollider.bounds.min.x;
+            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+
+            foreach (RaycastHit2D hit in hits){
+                if (!hit.collider.isTrigger && (hit.normal == upNormal)){
+                    return true;
+                }
+            }
+
+            tempPos.x = feetCollider.bounds.max.x;
+            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+
+            foreach (RaycastHit2D hit in hits){
+                if (!hit.collider.isTrigger && (hit.normal == upNormal)){
+                    return true;
+                }
+            }
         }
 
         return false;
