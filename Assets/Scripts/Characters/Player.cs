@@ -71,6 +71,7 @@ public class Player : NetworkComponent {
     private const int MAX_WALL_JUMPS = 1;
 
     private uint wallJumpCounter = 0;
+    private bool inWallJump = false;
 
     private const float TIME_FOR_UP_CANCEL = 0.027f;
     private const float APEX_THRESHOLD = 0.97f, APEX_HANG_TIME = 0.075f;
@@ -327,9 +328,11 @@ public class Player : NetworkComponent {
             RaycastHit2D leftHit = Physics2D.Raycast(leftTempPos, Vector2.left, COLLISION_RAYCAST_LENGTH, ~0);
 
             bool leftCollision = (leftHit.collider != null && (leftHit.normal == (Vector2)rightNormal));
-            bool movingLeft = (moveInput.x < 0f);
+            //bool movingLeft = (moveInput.x < 0f);
+            bool movingRight = (moveInput.x > 0f);
 
-            return (leftCollision && movingLeft);
+
+            return (leftCollision && movingRight);
         }
 
         return false;
@@ -341,9 +344,10 @@ public class Player : NetworkComponent {
             RaycastHit2D rightHit = Physics2D.Raycast(rightTempPos, Vector2.right, COLLISION_RAYCAST_LENGTH, ~0);
 
             bool rightCollision = (rightHit.collider != null && (rightHit.normal == leftNormal));
-            bool movingRight = (moveInput.x > 0f);
+            //bool movingRight = (moveInput.x > 0f);
+            bool movingLeft = (moveInput.x < 0f);
 
-            return (rightCollision && movingRight);
+            return (rightCollision && movingLeft);
         }
 
         return false;
@@ -455,7 +459,8 @@ public class Player : NetworkComponent {
             currentMovementState = movementState.JUMPING;
         }
 
-        //we may want to give a horizontal velopcity boost in the opposite direction
+        //we're gonna give the horizontal boost in Update() cause that's where we change horizontal velocity
+        //inWallJump = true;
         verticalVelocity = initialJumpVelocity;
 
         rigidbody.velocity = new Vector2(rigidbody.velocity.x, verticalVelocity);
@@ -618,7 +623,18 @@ public class Player : NetworkComponent {
             rigidbody.velocity = new Vector2(rigidbody.velocity.x, verticalVelocity);
 
 
-            //Horizontal Velocity
+            //Horizontal Velocity! You MUST set it here!
+            //!FIX THIS AFTER WATCHING THE VIDEO!
+            // if (inWallJump){
+            //     const float WALL_JUMP_BOOST = 50f;
+            //     Vector2 direction = new Vector2(moveInput.x * -1f, rigidbody.velocity.y);
+
+            //     rigidbody.velocity = new Vector2(direction.x * WALL_JUMP_BOOST, direction.y);
+                
+            //     inWallJump = false;
+            //     return; 
+            // }
+
             if (onGround){
                 currentMovementState = movementState.GROUND;
                 JumpVariableCleanup();
@@ -626,6 +642,7 @@ public class Player : NetworkComponent {
 
             float currentAcceleration = (IsGrounded() ? GROUND_ACCELERATION : AIR_ACCELERATION);
             float currentDeceleration = (IsGrounded() ? GROUND_DECELERATION : AIR_DECELERATION);
+
             
             if (moveInput != Vector2.zero){     //accelerate
                 TurnCheck();
