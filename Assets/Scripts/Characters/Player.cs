@@ -75,7 +75,7 @@ public class Player : NetworkComponent {
     private const float WALL_JUMP_HORIZONTAL_BOOST = 15f;
 
 
-    private uint wallJumpCounter = 0;
+    [SerializeField] private uint numWallJumpsUsed = 0;
     private bool inWallJump = false;
 
     private const float TIME_FOR_UP_CANCEL = 0.027f;
@@ -406,14 +406,18 @@ public class Player : NetworkComponent {
     private bool CanLeftWallJump(){
         if (IsServer){
             Vector2 leftTempPos = new Vector2(bodyCollider.bounds.min.x - COLLISION_RAYCAST_LENGTH, bodyCollider.bounds.center.y);
-            RaycastHit2D leftHit = Physics2D.Raycast(leftTempPos, Vector2.left, WALL_COLLISION_RAYCAST_LENGTH, ~0);
+            RaycastHit2D[] leftHits = Physics2D.RaycastAll(leftTempPos, Vector2.left, WALL_COLLISION_RAYCAST_LENGTH, ~0);
 
-            bool leftCollision = (leftHit.collider != null && (leftHit.normal == (Vector2)rightNormal));
+            bool leftCollision = false;
+            foreach (RaycastHit2D hit in leftHits){
+                if (!hit.collider.isTrigger && (hit.normal == (Vector2)rightNormal)){
+                    leftCollision = true;
+                }
+            }
             //bool movingLeft = (moveInput.x < 0f);
-            bool movingRight = (moveInput.x > 0f);
+            //bool movingRight = (moveInput.x > 0f);
 
-
-            return (leftCollision && movingRight);
+            return leftCollision;
         }
 
         return false;
@@ -422,20 +426,25 @@ public class Player : NetworkComponent {
     private bool CanRightWallJump(){
         if (IsServer){
             Vector2 rightTempPos = new Vector2(bodyCollider.bounds.max.x + COLLISION_RAYCAST_LENGTH, bodyCollider.bounds.center.y);
-            RaycastHit2D rightHit = Physics2D.Raycast(rightTempPos, Vector2.right, WALL_COLLISION_RAYCAST_LENGTH, ~0);
+            RaycastHit2D[] rightHits = Physics2D.RaycastAll(rightTempPos, Vector2.right, WALL_COLLISION_RAYCAST_LENGTH, ~0);
 
-            bool rightCollision = (rightHit.collider != null && (rightHit.normal == leftNormal));
+            bool rightCollision = false;
+            foreach (RaycastHit2D hit in rightHits){
+                if (!hit.collider.isTrigger && (hit.normal == leftNormal)){
+                    rightCollision = true;
+                }
+            }
             //bool movingRight = (moveInput.x > 0f);
-            bool movingLeft = (moveInput.x < 0f);
+            // bool movingLeft = (moveInput.x < 0f);
 
-            return (rightCollision && movingLeft);
+            return rightCollision;
         }
 
         return false;
     }
 
     private bool CanWallJump(){
-        return (CanLeftWallJump() || CanRightWallJump() && (wallJumpCounter < MAX_WALL_JUMPS));
+        return ((CanLeftWallJump() || CanRightWallJump()) && (numWallJumpsUsed < MAX_WALL_JUMPS));
     }
 
     //if we want a function for just the left or right wall, we'll want to modify this function and then create two new helper functions
@@ -519,7 +528,7 @@ public class Player : NetworkComponent {
         isPastApexThreshold = false;
         verticalVelocity = 0f;
         numJumpsUsed = 0;
-        wallJumpCounter = 0;
+        numWallJumpsUsed = 0;
     }
 
     //only gets called on server
@@ -540,7 +549,9 @@ public class Player : NetworkComponent {
             currentMovementState = movementState.JUMPING;
         }
 
-        isFacingRight = (moveInput.x > 0f);
+        //isFacingRight = (moveInput.x > 0f);
+        isFacingRight = !isFacingRight;
+        numWallJumpsUsed++;
 
         //we're gonna give the horizontal boost in Update() cause that's where we change horizontal velocity
         inWallJump = true;
@@ -651,7 +662,7 @@ public class Player : NetworkComponent {
                 currentMovementState = movementState.FAST_FALLING;
             }
 
-            bool justLanded = (IsJumping() || IsFallingInTheAir()) && CheckForGround() && (verticalVelocity <= 0f);
+            bool justLanded = ((IsJumping() || IsFallingInTheAir()) && CheckForGround() && (verticalVelocity <= 0f));
             if (justLanded){
                 currentMovementState = movementState.GROUND;
                 JumpVariableCleanup();
@@ -662,7 +673,7 @@ public class Player : NetworkComponent {
             bool onGround = CheckForGround();
 
             if (IsJumping()){
-                //! If we want our air movement to feel more float, we'll probably want to comment this out. This is a question for Mr. Game Design
+                //! If we want our air movement to feel more floaty, we'll probably want to comment this out. This is a question for Mr. Game Design
                 if (CheckForCeiling()){
                     currentMovementState = movementState.FAST_FALLING;
                 }
