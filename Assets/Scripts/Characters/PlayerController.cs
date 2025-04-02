@@ -17,7 +17,7 @@ public class PlayerController : Character
     //[System.NonSerialized] public Sprite sprite;
 
     //nonsync vars    
-    public NetRope grabbedRope;    
+    public Rope grabbedRope;    
     private Color[] colors;
 
     private Vector2 lastMoveInput;
@@ -29,6 +29,9 @@ public class PlayerController : Character
     private bool isGrounded = true;
     private bool canGrabRope = true;
     public int swingPosHeight = 0;
+
+    public bool onLadder = false;
+    public LadderObj grabbedLadder = null;    
     
     [SerializeField] private float launchCorrectionSpeed = 8f;
     public float jumpStrength = 10f;
@@ -77,6 +80,14 @@ public class PlayerController : Character
                 }
                 holdingDir = "left";
             }            
+            else if(lastMoveInput.y > 0)
+            {
+                holdingDir = "up";
+            }
+            else if(lastMoveInput.y < 0)
+            {
+                holdingDir = "down";
+            }
             else
             {
                 holdingDir = "none";
@@ -94,6 +105,13 @@ public class PlayerController : Character
                 grabbedRope.playerPresent = false;
                 grabbedRope = null;
                 StartCoroutine(GrabCooldown(1f));                
+            }
+            else if(state == "LADDER")
+            {
+                state = "NORMAL";
+                grabbedLadder = null;
+                onLadder = false;
+                myRig.velocity += new Vector2(0, jumpStrength);
             }
             else
             {
@@ -179,11 +197,11 @@ public class PlayerController : Character
             if (collision.gameObject.name.Contains("Rope") && canGrabRope)
             {
                 //using a wrapper so all rope variables can be modified on the rope script
-                collision.gameObject.GetComponentInParent<NetRope>().GrabRope(this);
+                collision.gameObject.GetComponentInParent<Rope>().GrabRope(this);
                 state = "SWINGING";
-            }
+            }            
         }
-    }
+    }  
 
     public void Mover(InputAction.CallbackContext mv)
     {
@@ -259,9 +277,24 @@ public class PlayerController : Character
 
                 myRig.velocity = newVel;
             }
+            else if(state == "LADDER")
+            {
+                if (holdingDir == "up")
+                {
+                    myRig.velocity = new Vector2(0, grabbedLadder.ladderSpeed);
+                }
+                else if (holdingDir == "down")
+                {
+                    myRig.velocity = new Vector2(0, -grabbedLadder.ladderSpeed);
+                }
+                else
+                {
+                    myRig.velocity = Vector2.zero;
+                }
+            }
             else if(state == "NORMAL")
             {
-                myRig.velocity = new Vector2(lastMoveInput.x, 0) * speed + new Vector2(0, myRig.velocity.y);
+                myRig.velocity = new Vector2(lastMoveInput.x, 0) * speed + new Vector2(0, myRig.velocity.y);                
             }            
         }
     }       

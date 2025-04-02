@@ -3,26 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 using NETWORK_ENGINE;
 
-public class Arrow : NetworkComponent
-{
-	public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
+public class Arrow : Projectile
+{	
 	public float speed = 10f;
-	private Rigidbody2D myRig;
 	public int dir = 0;
+	private float destroyTime = 5f;
 
 	public override void HandleMessage(string flag, string value)
-	{
-		if (flag == "SPAWN")
-		{
-			if (IsClient)
-			{
-				string[] vars = value.Split(";");
-				dir = int.Parse(vars[0]);
-				Vector3 rot = NetworkCore.Vector3FromString(vars[1]);
-				transform.eulerAngles = rot;
-			}
-		}
-		else if (flag == "DEBUG")
+	{		
+		if (flag == "DEBUG")
 		{
 			Debug.Log(value);
 			if (IsClient)
@@ -38,32 +27,36 @@ public class Arrow : NetworkComponent
 				SendCommand(flag, value);
 			}
 		}
-	}
-
-	private void Start()
-	{
-		myRig = GetComponent<Rigidbody2D>();
-
-		if (GetComponent<NetworkRB2D>() != null)
-			OTHER_FLAGS = GetComponent<NetworkRB2D>().FLAGS;
-		else if (GetComponentInChildren<NetworkRB2D>() != null)
-			OTHER_FLAGS = GetComponentInChildren<NetworkRB2D>().FLAGS;
-		else if (GetComponent<NetworkTransform>() != null)
-			OTHER_FLAGS = GetComponent<NetworkTransform>().FLAGS;
-		else if (GetComponentInChildren<NetworkTransform>() != null)
-			OTHER_FLAGS = GetComponentInChildren<NetworkTransform>().FLAGS;
-	}
+	}	
 
 	public override void NetworkedStart()
 	{
+		if (dir == -1)
+			spriteRender.flipX = true;
 
-	}
+		if (IsServer)
+		{
+			StartCoroutine(TTL(destroyTime));
+		}
+	}    
 
-    private void OnCollisionEnter2D(Collision2D collision)
+	//shouldn't be necessary since there will be walls, but just in case
+	private IEnumerator TTL(float seconds)
+    {
+		yield return new WaitForSeconds(seconds);
+		MyCore.NetDestroyObject(this.NetId);
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
     {
         if(IsServer)
-        {
-			MyCore.NetDestroyObject(this.NetId);
+        {			
+			bool hitPlayer = other.GetComponentInParent<Player>() != null;
+			bool hitWall = other.gameObject.tag == "WALL";
+			if (hitPlayer || hitWall)
+            {
+				MyCore.NetDestroyObject(this.NetId);
+			}
         }
     }
 
@@ -78,6 +71,7 @@ public class Arrow : NetworkComponent
 			yield return new WaitForSeconds(0.05f);
 		}
 	}
+
     // Update is called once per frame
     private void Update()
     {

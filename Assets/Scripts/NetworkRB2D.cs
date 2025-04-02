@@ -95,7 +95,7 @@ public class NetworkRB2D : NetworkComponent
     {        
         myRig = GetComponent<Rigidbody2D>();
         //you can set a different rigidbody than the one on this object to network it
-        if (GetComponent<NetRope>() != null)
+        if (GetComponent<Rope>() != null)
             myRig = transform.GetChild(0).GetComponent<Rigidbody2D>();
     }
 

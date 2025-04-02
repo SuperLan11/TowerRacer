@@ -243,6 +243,8 @@ MonoBehaviour:
   swingPos: {fileID: 0}
   launchVec: {x: 0, y: 0}
   swingPosHeight: 0
+  onLadder: 0
+  grabbedLadder: {fileID: 0}
   launchCorrectionSpeed: 35
   jumpStrength: 8
   airSlowdownMult: 2
@@ -425,7 +427,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 4
 --- !u!61 &1091227401733856551
 BoxCollider2D:
   m_ObjectHideFlags: 0

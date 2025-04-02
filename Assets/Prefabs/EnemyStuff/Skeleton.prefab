@@ -64,7 +64,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 4
 --- !u!114 &8108229472301237831
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -145,7 +145,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 072956943ea842f45b83c55e3816debd, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 98b532af9d17d0744959efd674777f35, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -219,8 +219,6 @@ MonoBehaviour:
   speed: 6
   myRig: {fileID: 0}
   shootTime: 1
-  sightRange: 10
-  ARROW_IDX: 2
 --- !u!61 &966792554250064909
 BoxCollider2D:
   m_ObjectHideFlags: 0

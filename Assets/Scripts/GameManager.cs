@@ -210,8 +210,10 @@ public class GameManager : NetworkComponent
                 temp.GetComponent<PlayerController>().PName = n.PName;
                 temp.GetComponentInChildren<Text>().text = n.PName;
                 temp.GetComponent<PlayerController>().SendUpdate("START", n.PName + ";" + n.ColorSelected);
-            }
-            //MyCore.NetCreateObject(7, Owner, Vector3.zero, Quaternion.identity);
+            }            
+            MyCore.NetCreateObject(9, Owner, new Vector3(1.7f, 0.5f, 0), Quaternion.identity);
+            MyCore.NetCreateObject(10, Owner, new Vector3(5f, 0.5f, 0), Quaternion.identity);
+            MyCore.NetCreateObject(11, Owner, new Vector3(-3.5f, 5f, 0), Quaternion.identity);
             //MyCore.NetCreateObject(1, Owner, new Vector3(4, 3f, 0), Quaternion.identity);
 
             SendUpdate("GAMESTART", "1");
