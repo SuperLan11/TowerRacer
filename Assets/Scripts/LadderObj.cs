@@ -88,15 +88,16 @@ public class LadderObj : NetworkComponent
     private void OnTriggerExit2D(Collider2D collision)
     {
 		if (IsServer)
-		{			
-			if (collision.gameObject.GetComponentInParent<PlayerController>() != null)
+		{
+			bool playerExited = collision.gameObject.GetComponentInParent<PlayerController>() != null;
+			if (playerExited)
 			{
 				if (attachedPlayer == null)
 					return;
 
 				//means player got to top of ladder
 				if (attachedPlayer.onLadder)
-				{					
+				{
 					attachedPlayer.state = "NORMAL";
 					attachedPlayer.myRig.velocity = Vector2.zero;
 					attachedPlayer.onLadder = false;

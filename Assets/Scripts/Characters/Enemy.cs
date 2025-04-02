@@ -4,8 +4,7 @@ using UnityEngine;
 using UnityEngine.AI;
 
 public abstract class Enemy : Character
-{
-    public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
+{    
     protected Player[] players;
     protected LayerMask floorLayer;
     protected int dir = 1;

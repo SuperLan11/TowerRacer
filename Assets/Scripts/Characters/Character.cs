@@ -9,6 +9,8 @@ public abstract class Character : NetworkComponent
     protected int health;        
     [SerializeField] protected float speed;
 
+    public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
+
     //non-sync vars
     protected int attackCooldown;
     protected int maxAttackCooldown;

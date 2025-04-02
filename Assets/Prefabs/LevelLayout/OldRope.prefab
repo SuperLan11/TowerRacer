@@ -26,17 +26,15 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 63765688729865708}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: 0.422716, w: 0.9062623}
   m_LocalPosition: {x: 0.01, y: 0.01, z: -1.9499452}
   m_LocalScale: {x: 3.890703, y: 3.890703, z: 3.890703}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5664878962788984863}
   - {fileID: 4216778973624229162}
-  - {fileID: 8794552994115936764}
-  - {fileID: 1431908563377053565}
   m_Father: {fileID: 8621757193194124836}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 50.012}
 --- !u!212 &8819382449941789265
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -127,11 +125,9 @@ GameObject:
   - component: {fileID: 8621757193194124836}
   - component: {fileID: 2578189713980600218}
   - component: {fileID: 5987195443893200600}
-  - component: {fileID: 3115436199796182571}
-  - component: {fileID: 8770094780354609834}
-  - component: {fileID: 5496633899286058446}
+  - component: {fileID: 9061440336144195108}
   m_Layer: 0
-  m_Name: NetRope
+  m_Name: OldRope
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -232,7 +228,7 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!114 &3115436199796182571
+--- !u!114 &9061440336144195108
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -241,66 +237,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 1905081651418222142}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f34ca87a457962d459c49c36b9753ca5, type: 3}
+  m_Script: {fileID: 11500000, guid: 6fd4ed268ba55e04385596fdff0f596b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Type: 0
-  Owner: -10
-  NetId: -10
-  IsInit: 0
-  IsLocalPlayer: 0
-  UseLobby: 0
-  UpdateFrequency: 0.1
-  MyCore: {fileID: 0}
---- !u!114 &8770094780354609834
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1905081651418222142}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5970c91e031a1c5438e355bd42e8be26, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  MyCore: {fileID: 0}
-  MyId: {fileID: 0}
-  IsDirty: 0
-  pivotRig: {fileID: 0}
   swingPos: {fileID: 4216778973624229162}
   playerPresent: 0
   rope: {fileID: 4419812542326389598}
   slowdownMult: 2
   deadzoneLength: 1
-  fallStrength: 8
-  playerTorque: 4.8
-  heightFallInfluence: 0.16
-  initialTorqueMult: 18
-  xJumpForce: 0.07
-  extraYJumpForce: 0.06
-  baseYJumpForce: 4
-  swingSnapMult: 50
-  dirChangeTorque: 6
---- !u!114 &5496633899286058446
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1905081651418222142}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8195bf53f12f43146843bf50be7bb978, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  MyCore: {fileID: 0}
-  MyId: {fileID: 0}
-  IsDirty: 0
-  threshold: 0.01
-  eThreshold: 0.5
-  useAdjustVel: 0
-  useAdjustAngVel: 0
+  fallStrength: 0.005
+  playerTorque: 0.8
+  heightFallInfluence: 0.015
 --- !u!1 &3859887289474162826
 GameObject:
   m_ObjectHideFlags: 0
@@ -311,7 +258,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4216778973624229162}
   m_Layer: 0
-  m_Name: SwingLoc1
+  m_Name: SwingLoc
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -326,7 +273,7 @@ Transform:
   m_GameObject: {fileID: 3859887289474162826}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0.003939986, w: 0.99999225}
-  m_LocalPosition: {x: -0.007, y: -1.188, z: 0.7173399}
+  m_LocalPosition: {x: -0.025, y: -1.224, z: 0.7173399}
   m_LocalScale: {x: 0.17477985, y: 0.27692887, z: 0.21440233}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -462,65 +409,3 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 0.207295, y: 2.5689669}
   m_EdgeRadius: 0
---- !u!1 &6872153203380007399
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 8794552994115936764}
-  m_Layer: 0
-  m_Name: SwingLoc2
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &8794552994115936764
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6872153203380007399}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0.003939986, w: 0.99999225}
-  m_LocalPosition: {x: -0.012, y: -0.732, z: 0.7173399}
-  m_LocalScale: {x: 0.17477985, y: 0.27692887, z: 0.21440233}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2431137160683252784}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &8292028687132184399
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1431908563377053565}
-  m_Layer: 0
-  m_Name: SwingLoc3
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1431908563377053565
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8292028687132184399}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0.003939986, w: 0.99999225}
-  m_LocalPosition: {x: -0.003, y: -0.431, z: 0.7173399}
-  m_LocalScale: {x: 0.17477985, y: 0.27692887, z: 0.21440233}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2431137160683252784}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

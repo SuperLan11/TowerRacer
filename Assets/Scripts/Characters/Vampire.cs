@@ -4,14 +4,20 @@ using UnityEngine;
 using NETWORK_ENGINE;
 
 public class Vampire : Enemy
-{		
-	private STATE state = STATE.MOVING;
-	
+{
+	private STATE state = STATE.MOVING;	
+	[SerializeField] private float ladderSpeed = 8f;
+	private int startingLayer;
+	private LayerMask ladderLayer;
+	private float ladderBottomY;
+
+
 	enum STATE
-    {
+	{
 		MOVING,
-		LADDER
-    }
+		LADDER_DOWN,
+		LADDER_UP
+	}
 
 	public override void HandleMessage(string flag, string value)
 	{
@@ -42,35 +48,61 @@ public class Vampire : Enemy
 
 	public override void NetworkedStart()
 	{
-
+		startingLayer = gameObject.layer;
+		ladderLayer = LayerMask.NameToLayer("Ladder");
 	}
 
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        if(IsServer)
-        {			
-			//the index of the layer on the layers list
-			int floorLayer = 6;
-			if(collision.gameObject.layer == floorLayer)
-            {
-				state = STATE.MOVING;
-            }
-        }
-    }
-
-    private void OnTriggerEnter2D(Collider2D collision)
+	private void OnCollisionEnter2D(Collision2D collision)
 	{
 		if (IsServer)
 		{
-			bool hitDismount = collision.GetComponentInParent<LadderObj>() != null;
-			if (hitDismount)
+			//the index of the layer on the layers list
+			int floorLayer = 6;
+			if (collision.gameObject.layer == floorLayer)
 			{
-
+				Debug.Log("hit floor");
+				gameObject.layer = startingLayer;
+				state = STATE.MOVING;
+				myRig.gravityScale = 1f;
 			}
 		}
-    }    
+	}
 
-    public override IEnumerator SlowUpdate()
+	private void OnTriggerEnter2D(Collider2D collision)
+	{
+		if (IsServer)
+		{
+			DismountTrigger dismountHit = collision.GetComponent<DismountTrigger>();
+			LadderObj ladderHit = collision.GetComponent<LadderObj>();
+
+			if (dismountHit != null)
+			{
+				if (state == STATE.MOVING)
+				{
+					gameObject.layer = ladderLayer;
+					state = STATE.LADDER_DOWN;
+					transform.position = new Vector2(dismountHit.transform.position.x, this.transform.position.y);
+					myRig.gravityScale = 0f;
+				}
+				else if(state == STATE.LADDER_UP)
+                {
+					gameObject.layer = startingLayer;
+					state = STATE.MOVING;
+					transform.position = dismountHit.transform.position;
+					myRig.gravityScale = 1f;
+				}
+			}
+			else if (ladderHit != null)
+			{
+				gameObject.layer = ladderLayer;
+				state = STATE.LADDER_UP;
+				transform.position = new Vector2(ladderHit.transform.position.x, this.transform.position.y);
+				myRig.gravityScale = 0f;
+			}
+		}
+	}
+
+	public override IEnumerator SlowUpdate()
 	{
 		while (IsConnected)
 		{
@@ -82,11 +114,28 @@ public class Vampire : Enemy
 		}
 	}
 
-    private void Update()
-    {
+	private void Update()
+	{
 		if (IsServer)
 		{
-			Move();
+			switch (state)
+			{
+				case STATE.MOVING:
+				{
+					Move();
+					break;
+				}
+				case STATE.LADDER_UP:
+				{
+					myRig.velocity = new Vector2(0, ladderSpeed);
+					break;
+				}
+				case STATE.LADDER_DOWN:
+				{
+					myRig.velocity = new Vector2(0, -ladderSpeed);
+					break;
+				}
+			}
 		}
 	}
 }

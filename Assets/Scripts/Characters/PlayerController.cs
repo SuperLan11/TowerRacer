@@ -31,7 +31,8 @@ public class PlayerController : Character
     public int swingPosHeight = 0;
 
     public bool onLadder = false;
-    public LadderObj grabbedLadder = null;    
+    public LadderObj grabbedLadder = null;
+    public bool inDismount = false;
     
     [SerializeField] private float launchCorrectionSpeed = 8f;
     public float jumpStrength = 10f;
