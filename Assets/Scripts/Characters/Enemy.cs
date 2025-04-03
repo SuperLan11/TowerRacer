@@ -39,14 +39,14 @@ public abstract class Enemy : Character
             dir = -1;
             spriteRender.flipX = true;
             SendUpdate("FLIP", true.ToString());
-            transform.position -= new Vector3(speed / 10, 0, 0);
+            transform.position -= new Vector3(speed / 5, 0, 0);
         }
         else if (!floorBelow && dir == -1)
         {
             dir = 1;
             spriteRender.flipX = false;
             SendUpdate("FLIP", false.ToString());
-            transform.position += new Vector3(speed / 10, 0, 0);
+            transform.position += new Vector3(speed / 5, 0, 0);
         }
     }
 }

@@ -38,13 +38,16 @@ public class PlayerController : Character
     public float jumpStrength = 10f;
     [SerializeField] private float airSlowdownMult = 1f;
 
-    public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
+    public bool hasBomb = false;
+    private Vector2 lastAimDir;
+    private GameObject arrowPivot;
+    private GameObject aimArrow;    
 
 
     public override void HandleMessage(string flag, string value)
     {
         if (flag == "START")
-        {            
+        {
             if (IsClient)
             {
                 PName = value.Split(";")[0];
@@ -59,16 +62,16 @@ public class PlayerController : Character
             else if (IsServer)
             {
                 SendUpdate("START", value);
-            }            
+            }
         }
         else if (flag == "MOVE")
-        {            
+        {
             lastMoveInput = Vector2FromString(value);
 
             if (lastMoveInput.x > 0)
             {
                 if (holdingDir != "right" && state == "SWINGING")
-                {                    
+                {
                     grabbedRope.pivotRig.AddTorque(grabbedRope.dirChangeTorque);
                 }
                 holdingDir = "right";
@@ -80,12 +83,12 @@ public class PlayerController : Character
                     grabbedRope.pivotRig.AddTorque(-grabbedRope.dirChangeTorque);
                 }
                 holdingDir = "left";
-            }            
-            else if(lastMoveInput.y > 0)
+            }
+            else if (lastMoveInput.y > 0)
             {
                 holdingDir = "up";
             }
-            else if(lastMoveInput.y < 0)
+            else if (lastMoveInput.y < 0)
             {
                 holdingDir = "down";
             }
@@ -95,19 +98,19 @@ public class PlayerController : Character
             }
         }
         else if (flag == "JUMP")
-        {            
+        {
             isGrounded = false;
             //initially called on server
             if (state == "SWINGING")
-            {                
+            {
                 canGrabRope = false;
                 state = "LAUNCHING";
                 grabbedRope.BoostPlayer(this);
                 grabbedRope.playerPresent = false;
                 grabbedRope = null;
-                StartCoroutine(GrabCooldown(1f));                
+                StartCoroutine(GrabCooldown(1f));
             }
-            else if(state == "LADDER")
+            else if (state == "LADDER")
             {
                 state = "NORMAL";
                 grabbedLadder = null;
@@ -117,15 +120,53 @@ public class PlayerController : Character
             else
             {
                 myRig.velocity += new Vector2(0, jumpStrength);
-            }            
-        }               
+            }
+        }
+        else if (flag == "GRAVITY")
+        {
+            if (IsClient)
+            {
+                myRig.gravityScale = float.Parse(value);
+            }
+        }
+        else if (flag == "AIM")
+        {
+            if (IsServer)
+            {                
+                Vector2 newAimDir = Vector2FromString(value);
+                if (newAimDir.magnitude < 0.7f)
+                {
+                    //don't set aim dir if less a threshold so bomb does not have 0 velocity
+                    aimArrow.GetComponent<SpriteRenderer>().enabled = false;
+                }
+                else if (newAimDir.magnitude >= 0.7f)
+                {
+                    lastAimDir = Vector2FromString(value);
+                    aimArrow.GetComponent<SpriteRenderer>().enabled = true;
+                    Vector3 aimDir = new Vector3(lastAimDir.x, lastAimDir.y, 0);                    
+                    Vector3 newRot = arrowPivot.transform.eulerAngles;
+                    newRot.z = DirToDegrees(aimDir);
+                    arrowPivot.transform.eulerAngles = newRot;
+                }
+            }
+        }
+        else if(flag == "BOMB")
+        {
+            if(IsServer)
+            {                
+                Vector2 bombPos = transform.position;
+                bombPos.y += GetComponent<Collider2D>().bounds.size.y / 2;
+                GameObject bomb = MyCore.NetCreateObject(14, Owner, bombPos, Quaternion.identity);
+                bomb.GetComponent<Bomb>().launchVec = lastAimDir * 15;
+            }
+        }
         else if (flag == "DEBUG")
-        {            
+        {
             Debug.Log(value);
             if (IsClient)
             {
                 SendCommand(flag, value);
-            }            
+            }
         }
         else if (!OTHER_FLAGS.ContainsKey(flag))
         {
@@ -135,7 +176,7 @@ public class PlayerController : Character
                 SendCommand("DEBUG", flag + " is not a valid flag in " + this.GetType().Name + ".cs");
             }
         }
-    }
+    }    
 
     // Start is called before the first frame update
     private void Start()
@@ -149,6 +190,8 @@ public class PlayerController : Character
         else if (GetComponentInChildren<NetworkTransform>() != null)
             OTHER_FLAGS = GetComponentInChildren<NetworkTransform>().FLAGS;
 
+        arrowPivot = transform.GetChild(0).GetChild(1).gameObject;
+        aimArrow = arrowPivot.transform.GetChild(0).gameObject;
 
         myRig = GetComponent<Rigidbody2D>();
         colors = new Color[3];
@@ -160,6 +203,13 @@ public class PlayerController : Character
     public override void NetworkedStart()
     {
         GetComponent<SpriteRenderer>().flipX = true;
+    }
+
+    private float DirToDegrees(Vector2 dir)
+    {
+        float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+        //return -(angle + 360) % 360;
+        return angle + 180;
     }
 
     public Vector2 Vector2FromString(string str)
@@ -230,14 +280,43 @@ public class PlayerController : Character
                 SendCommand("JUMP", "");
             }
         }
-    }    
+    }
+
+    public void Aim(InputAction.CallbackContext aim)
+    {
+        if (IsLocalPlayer)
+        {
+            if (aim.started || aim.performed)
+            {
+                lastAimDir = aim.ReadValue<Vector2>();
+                SendCommand("AIM", lastAimDir.ToString());
+
+                //do this on local player
+                aimArrow.GetComponent<SpriteRenderer>().enabled = true;
+                Vector3 aimDir = new Vector3(lastAimDir.x, lastAimDir.y, 0);
+                Vector3 newRot = arrowPivot.transform.eulerAngles;
+                newRot.z = DirToDegrees(aimDir);
+                arrowPivot.transform.eulerAngles = newRot;
+            }            
+            else if (aim.canceled)
+            {
+                if (hasBomb)
+                {
+                    SendCommand("BOMB", "");
+                }
+                
+                lastAimDir = Vector2.zero;
+                aimArrow.GetComponent<SpriteRenderer>().enabled = false;
+                SendCommand("AIM", lastAimDir.ToString());
+            }                        
+        }
+    }
 
     private IEnumerator GrabCooldown(float seconds)
     {
         yield return new WaitForSeconds(seconds);        
         canGrabRope = true;        
     }
-
 
     public override IEnumerator SlowUpdate()
     {
@@ -260,8 +339,8 @@ public class PlayerController : Character
         if (IsServer)
         {
             if (state == "SWINGING")
-            {                
-                myRig.velocity = (swingPos.position - transform.position) * grabbedRope.swingSnapMult;                                
+            {
+                myRig.velocity = (swingPos.position - transform.position) * grabbedRope.swingSnapMult;
             }
             else if (state == "LAUNCHING")
             {
@@ -269,8 +348,8 @@ public class PlayerController : Character
                 newVel.x += lastMoveInput.x * Time.deltaTime * launchCorrectionSpeed;
                 if (lastMoveInput.x == 0)
                     newVel.x *= 1 - (Time.deltaTime * airSlowdownMult);
-                
-                if(Mathf.Abs(newVel.x) < Mathf.Abs(launchVec.x))
+
+                if (Mathf.Abs(newVel.x) < Mathf.Abs(launchVec.x))
                     launchVec.x = newVel.x;
 
                 float allowedXSpeed = Mathf.Max(Mathf.Abs(launchVec.x), speed);
@@ -278,7 +357,7 @@ public class PlayerController : Character
 
                 myRig.velocity = newVel;
             }
-            else if(state == "LADDER")
+            else if (state == "LADDER")
             {
                 if (holdingDir == "up")
                 {
@@ -292,10 +371,22 @@ public class PlayerController : Character
                 {
                     myRig.velocity = Vector2.zero;
                 }
+
+                if (GetComponent<Collider2D>().bounds.min.y >
+                    grabbedLadder.GetComponent<Collider2D>().bounds.max.y)
+                { 
+                    state = "NORMAL";                    
+                    myRig.velocity = Vector2.zero;
+                    onLadder = false;
+                    grabbedLadder.attachedPlayer = null;
+                    grabbedLadder = null;                    
+                    myRig.gravityScale = 1f;
+                    SendUpdate("GRAVITY", "1");
+                }
             }
             else if(state == "NORMAL")
             {
-                myRig.velocity = new Vector2(lastMoveInput.x, 0) * speed + new Vector2(0, myRig.velocity.y);                
+                myRig.velocity = new Vector2(lastMoveInput.x, 0) * speed + new Vector2(0, myRig.velocity.y);    
             }            
         }
     }       

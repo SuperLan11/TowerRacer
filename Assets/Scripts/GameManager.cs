@@ -212,9 +212,18 @@ public class GameManager : NetworkComponent
                 temp.GetComponent<PlayerController>().SendUpdate("START", n.PName + ";" + n.ColorSelected);
             }
             GameObject ladder = MyCore.NetCreateObject(8, Owner, new Vector3(5f, -4f, 0), Quaternion.identity);
+
             Vector2 dismountPos = ladder.GetComponent<Collider2D>().bounds.max;
-            GameObject dismount = MyCore.NetCreateObject(11, Owner, dismountPos, Quaternion.identity);
+            dismountPos.x = ladder.GetComponent<Collider2D>().bounds.center.x;
+            dismountPos.y += 1f;
+            GameObject dismount = MyCore.NetCreateObject(12, Owner, dismountPos, Quaternion.identity);
             dismount.GetComponent<DismountTrigger>().ladder = ladder.GetComponent<LadderObj>();
+
+            GameObject vampire = MyCore.NetCreateObject(11, Owner, new Vector3(9f, 1f, 0), Quaternion.identity);
+
+            GameObject itemBox = MyCore.NetCreateObject(13, Owner, new Vector3(-4f, -9f, 0), Quaternion.identity);
+            GameObject itemBox2 = MyCore.NetCreateObject(13, Owner, new Vector3(8f, -9f, 0), Quaternion.identity);
+            //dismount.GetComponent<DismountTrigger>().ladder = ladder.GetComponent<LadderObj>();
             /*MyCore.NetCreateObject(9, Owner, new Vector3(1.7f, 0.5f, 0), Quaternion.identity);
             MyCore.NetCreateObject(10, Owner, new Vector3(5f, 0.5f, 0), Quaternion.identity);
             MyCore.NetCreateObject(11, Owner, new Vector3(-3.5f, 5f, 0), Quaternion.identity);*/

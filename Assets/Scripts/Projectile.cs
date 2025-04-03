@@ -5,7 +5,7 @@ using NETWORK_ENGINE;
 
 public abstract class Projectile : NetworkComponent
 {
-	protected Rigidbody2D myRig;
+	[System.NonSerialized] public Rigidbody2D myRig;
     protected Sprite sprite;
 	[System.NonSerialized] public SpriteRenderer spriteRender;
 	protected Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();

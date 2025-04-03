@@ -7,7 +7,7 @@ using UnityEngine.Tilemaps;
 public class LadderObj : NetworkComponent
 {
 	public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
-	private PlayerController attachedPlayer = null;
+	public PlayerController attachedPlayer = null;
 	public float ladderSpeed;
 
 	public override void HandleMessage(string flag, string value)
@@ -90,7 +90,7 @@ public class LadderObj : NetworkComponent
 		if (IsServer)
 		{
 			bool playerExited = collision.gameObject.GetComponentInParent<PlayerController>() != null;
-			if (playerExited)
+			/*if (playerExited)
 			{
 				if (attachedPlayer == null)
 					return;
@@ -106,7 +106,7 @@ public class LadderObj : NetworkComponent
 					SendUpdate("GRAVITY", attachedPlayer.name.ToString());
 					attachedPlayer = null;
 				}
-			}
+			}*/
 		}
     }
 

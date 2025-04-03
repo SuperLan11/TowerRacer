@@ -3,11 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using NETWORK_ENGINE;
 
-public class DismountTrigger : NetworkComponent
+public class Chicken : Item
 {
-	public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
-	public LadderObj ladder;
-
 	public override void HandleMessage(string flag, string value)
 	{
 		if (flag == "DEBUG")
@@ -23,7 +20,7 @@ public class DismountTrigger : NetworkComponent
 			Debug.LogWarning(flag + " is not a valid flag in " + this.GetType().Name + ".cs");
 			if (IsClient)
 			{
-				SendCommand(flag, value);
+				SendCommand("DEBUG", flag + " is not a valid flag in " + this.GetType().Name + ".cs");
 			}
 		}
 	}
@@ -38,8 +35,8 @@ public class DismountTrigger : NetworkComponent
 			OTHER_FLAGS = GetComponent<NetworkTransform>().FLAGS;
 		else if (GetComponentInChildren<NetworkTransform>() != null)
 			OTHER_FLAGS = GetComponentInChildren<NetworkTransform>().FLAGS;
-
 	}
+
 
 	public override void NetworkedStart()
 	{
@@ -50,7 +47,11 @@ public class DismountTrigger : NetworkComponent
     {
 		if (IsServer)
 		{
-			
+			Player playerHit = collision.GetComponentInParent<Player>();
+			if (playerHit != null)
+            {				
+				//add one to player hp
+            }
 		}
     }
 
@@ -66,8 +67,8 @@ public class DismountTrigger : NetworkComponent
 		}
 	}
 
-    private void Update()
-    {
-			
-    }
+	private void Update()
+	{
+
+	}
 }
