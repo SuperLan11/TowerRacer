@@ -8,6 +8,10 @@ TagManager:
   - SCORE
   - FLOOR
   - ITEM_UI
+  - ROPE_POS
+  - ITEM_POS
+  - LADDER_POS
+  - ENEMY_POS
   layers:
   - Default
   - TransparentFX

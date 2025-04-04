@@ -31,7 +31,8 @@ public class PlayerController : Character
     public int swingPosHeight = 0;
 
     public bool onLadder = false;
-    public LadderObj grabbedLadder = null;
+    //public LadderObj grabbedLadder = null;
+    public LadderTest grabbedLadder = null;
     public bool inDismount = false;
     
     [SerializeField] private float launchCorrectionSpeed = 8f;
@@ -179,6 +180,14 @@ public class PlayerController : Character
                 bomb.launchVec = lastAimDir * bomb.launchSpeed;                
                 hasBomb = false;
             }                        
+        }
+        else if(flag == "DISMOUNT")
+        {
+            if(IsClient)
+            {
+                Vector2 dismountPos = Vector2FromString(value);
+                transform.position = dismountPos;
+            }
         }
         else if (flag == "DEBUG")
         {
@@ -358,6 +367,7 @@ public class PlayerController : Character
             else if (aim.canceled)
             {                
                 SendCommand("SHOOT_BOMB", "");
+                Destroy(itemUI.transform.GetChild(0).gameObject);
                 hasBomb = false;
 
                 lastAimDir = Vector2.zero;
@@ -385,6 +395,7 @@ public class PlayerController : Character
             {                
                 aimArrow.GetComponent<SpriteRenderer>().enabled = false;
                 SendCommand("SHOOT_BOMB", "");
+                Destroy(itemUI.transform.GetChild(0).gameObject);
                 hasBomb = false;
             }
         }

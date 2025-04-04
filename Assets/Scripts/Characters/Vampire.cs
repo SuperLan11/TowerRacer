@@ -18,7 +18,15 @@ public class Vampire : Enemy
 
 	public override void HandleMessage(string flag, string value)
 	{
-		if(flag == "GRAVITY")
+		if(flag == "DISMOUNT")
+        {
+			if(IsClient)
+            {
+				Vector2 dismountPos = PlayerController.Vector2FromString(value);
+				transform.position = dismountPos;
+            }
+        }
+		else if(flag == "GRAVITY")
         {
 			if(IsClient)
             {
@@ -121,7 +129,16 @@ public class Vampire : Enemy
                 {					
 					myRig.velocity = Vector2.zero;					
 					state = STATE.MOVING;
-					transform.position = dismountHit.transform.position;
+					
+					float height = GetComponent<Collider2D>().bounds.size.y;
+					//raycast to floor instead
+					RaycastHit2D floor = Physics2D.Raycast(dismountHit.transform.position, Vector2.down, height, floorLayer);
+					Vector2 dismountPos = floor.point;
+					dismountPos.y += height / 2;
+					SendUpdate("DISMOUNT", dismountPos.ToString());
+
+					transform.position = dismountPos;
+					//transform.position = dismountHit.transform.position;
 					myRig.gravityScale = 1f;
 					SendUpdate("GRAVITY", "1");
 				}

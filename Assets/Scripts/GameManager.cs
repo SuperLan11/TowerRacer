@@ -27,9 +27,8 @@ public class GameManager : NetworkComponent
     private PlayerController[] overallPlayerLeaderboard;
     private PlayerController[] currentPlayerLeaderboard;
     [SerializeField] private float LOWEST_PIECE_Y = -15f;
-    //these aren't serialized as they could break the game if accidentally changed in the inspector
-    private const int FIRST_LEVEL_PIECE_IDX = 3;
-    private const int NUM_LEVEL_PIECES = 3;
+    [SerializeField] private float CENTER_PIECE_X = 0f;
+    //these aren't serialized as they could break the game if accidentally changed in the inspector        
 
     public static double levelTime;
     public static bool debugMode = true;    
@@ -82,15 +81,7 @@ public class GameManager : NetworkComponent
     // Start is called before the first frame update
     void Start()
     {
-        GameObject start1 = GameObject.Find("P1Start");
-        GameObject start2 = GameObject.Find("P2Start");
-        GameObject start3 = GameObject.Find("P3Start");
-        GameObject start4 = GameObject.Find("P4Start");
-
-        starts[0] = start1.transform.position;
-        starts[1] = start2.transform.position;
-        starts[2] = start3.transform.position;
-        starts[3] = start4.transform.position;
+        
     }
 
     public override void NetworkedStart()
@@ -103,7 +94,7 @@ public class GameManager : NetworkComponent
                 Enemy[] enemies = GetAllEnemies();
                 DestroyAllEnemies(enemies);
             }
-            //RandomizeLevel();
+            RandomizeLevel();
         }        
     }
     private IEnumerator WaitToDisplayScores(float seconds)
@@ -121,7 +112,7 @@ public class GameManager : NetworkComponent
         if (IsServer)
         {
             gameOver = true;
-            SendUpdate("SCORE", "");            
+            SendUpdate("SCORE", "");
         }
     }
 
@@ -142,12 +133,13 @@ public class GameManager : NetworkComponent
     //called by server
     private void RandomizeLevel()
     {        
-        for (int i = 0; i < NUM_LEVEL_PIECES; i++)
+        for (int i = 0; i < Idx.NUM_LEVEL_PIECES; i++)
         {
-            int randIdx = Random.Range(0, NUM_LEVEL_PIECES);
-            MyCore.NetCreateObject(FIRST_LEVEL_PIECE_IDX + randIdx, this.Owner,
-                new Vector3(0, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);
+            int randIdx = Random.Range(0, Idx.NUM_LEVEL_PIECES);
+            GameObject piece = MyCore.NetCreateObject(Idx.FIRST_LEVEL_PIECE_IDX + randIdx, this.Owner,
+                new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);
         }        
+        //do jacob's translate thing here
     }
 
     private void DisableRooms()
@@ -224,7 +216,9 @@ public class GameManager : NetworkComponent
             GameObject itemBox = MyCore.NetCreateObject(13, Owner, new Vector3(-4f, -9f, 0), Quaternion.identity);
             GameObject itemBox2 = MyCore.NetCreateObject(13, Owner, new Vector3(8f, -9f, 0), Quaternion.identity);
 
-            GameObject rope = MyCore.NetCreateObject(7, Owner, new Vector3(-7f, -5f, 0), Quaternion.identity);
+            GameObject rope = MyCore.NetCreateObject(7, Owner, new Vector3(-7f, -4f, 0), Quaternion.identity);
+
+            GameObject endDoor = MyCore.NetCreateObject(15, Owner, new Vector3(5, 12, 0), Quaternion.identity);
             //dismount.GetComponent<DismountTrigger>().ladder = ladder.GetComponent<LadderObj>();
             /*MyCore.NetCreateObject(9, Owner, new Vector3(1.7f, 0.5f, 0), Quaternion.identity);
             MyCore.NetCreateObject(10, Owner, new Vector3(5f, 0.5f, 0), Quaternion.identity);
