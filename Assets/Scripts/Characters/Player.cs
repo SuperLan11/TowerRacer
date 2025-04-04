@@ -18,8 +18,6 @@ using NETWORK_ENGINE;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
 
-//!REFACTOR TO GET RID OF DOUBLE NEGATIVE IF STATEMENTS!
-
 /*
 TODO
     4. start programming different abilities
@@ -373,16 +371,16 @@ public class Player : Character {
 
     //wouldn't recommend changing this
     private void SetApexVariables(){
-        if (!isPastApexThreshold){
-            isPastApexThreshold = true;
-            timePastApexThreshold = 0f;
-        }else{
+        if (isPastApexThreshold){
             timePastApexThreshold += Time.deltaTime;
             if (timePastApexThreshold < APEX_HANG_TIME){
                 verticalVelocity = 0f;
             }else{
                 verticalVelocity = -0.01f;
             }
+        }else{
+            isPastApexThreshold = true;
+            timePastApexThreshold = 0f;
         }
     }
 
