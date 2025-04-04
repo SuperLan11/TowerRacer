@@ -367,6 +367,11 @@ MonoBehaviour:
   jumpStrength: 8
   airSlowdownMult: 2
   hasBomb: 0
+  heroSprites:
+  - {fileID: 21300000, guid: 467422b0027b5d64c8b319ce0c9dd59d, type: 3}
+  - {fileID: 21300000, guid: 072956943ea842f45b83c55e3816debd, type: 3}
+  - {fileID: 21300000, guid: 98b532af9d17d0744959efd674777f35, type: 3}
+  - {fileID: 21300000, guid: a9e36bbcbe392c8449eee9e383b60611, type: 3}
 --- !u!114 &2310169775686152334
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -491,6 +496,10 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: 9f6221bc-17bd-43dc-9ede-68ff13e16078
     m_ActionName: PlayerActions/AimClick[/Mouse/leftButton]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: f45322e1-f1a6-490b-8932-10c7d2031e34
+    m_ActionName: PlayerActions/MoveAbility[/Keyboard/i]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: PlayerActions

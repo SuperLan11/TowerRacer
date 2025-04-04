@@ -81,7 +81,15 @@ public class GameManager : NetworkComponent
     // Start is called before the first frame update
     void Start()
     {
-        
+        GameObject start1 = GameObject.Find("P1Start");
+        GameObject start2 = GameObject.Find("P2Start");
+        GameObject start3 = GameObject.Find("P3Start");
+        GameObject start4 = GameObject.Find("P4Start");
+
+        starts[0] = start1.transform.position;
+        starts[1] = start2.transform.position;
+        starts[2] = start3.transform.position;
+        starts[3] = start4.transform.position;
     }
 
     public override void NetworkedStart()
@@ -135,16 +143,100 @@ public class GameManager : NetworkComponent
     {        
         for (int i = 0; i < Idx.NUM_LEVEL_PIECES; i++)
         {
-            int randIdx = Random.Range(0, Idx.NUM_LEVEL_PIECES);
+            //int randIdx = Random.Range(0, Idx.NUM_LEVEL_PIECES);
+            int randIdx = 0;
             GameObject piece = MyCore.NetCreateObject(Idx.FIRST_LEVEL_PIECE_IDX + randIdx, this.Owner,
                 new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);
-        }        
+
+            RandomlyPlaceRope(piece);
+            RandomlyPlaceEnemies(piece);
+            RandomlyPlaceItemBoxes(piece);
+            RandomlyPlaceLadders(piece);
+        }                
         //do jacob's translate thing here
     }
 
     private void DisableRooms()
     {
 
+    }
+
+    private void RandomlyPlaceRope(GameObject levelPiece)
+    {
+        List<Vector3> ropePlaces = new List<Vector3>();
+        for(int i = 0; i < levelPiece.transform.childCount; i++)
+        {
+            if (levelPiece.transform.GetChild(i).tag == "ROPE_POS")
+                ropePlaces.Add(levelPiece.transform.GetChild(i).position);
+        }
+
+        if (ropePlaces.Count == 0)
+        {
+            Debug.LogWarning("No rope positions found!");
+            return;
+        }
+        
+        int randPos = Random.Range(0, ropePlaces.Count);        
+        MyCore.NetCreateObject(Idx.ROPE, Owner, ropePlaces[randPos], Quaternion.identity);       
+    }
+
+    private void RandomlyPlaceEnemies(GameObject levelPiece)
+    {
+        List<Vector3> enemyPlaces = new List<Vector3>();
+        for (int i = 0; i < levelPiece.transform.childCount; i++)
+        {
+            if (levelPiece.transform.GetChild(i).tag == "ENEMY_POS")
+                enemyPlaces.Add(levelPiece.transform.GetChild(i).position);
+        }
+
+        if (enemyPlaces.Count == 0)
+        {            
+            Debug.LogWarning("No enemy positions found!");
+            return;
+        }
+
+        int randPos = Random.Range(0, enemyPlaces.Count);
+        int lastEnemyIdx = Idx.FIRST_ENEMY_IDX + Idx.NUM_ENEMIES - 1;
+        int randEnemy = Random.Range(Idx.FIRST_ENEMY_IDX, lastEnemyIdx);
+        MyCore.NetCreateObject(randEnemy, Owner, enemyPlaces[randPos], Quaternion.identity);
+    }
+
+    private void RandomlyPlaceItemBoxes(GameObject levelPiece)
+    {
+        List<Vector3> itemPlaces = new List<Vector3>();
+        for (int i = 0; i < levelPiece.transform.childCount; i++)
+        {
+            if (levelPiece.transform.GetChild(i).tag == "ITEM_POS")
+                itemPlaces.Add(levelPiece.transform.GetChild(i).position);
+        }
+
+        if (itemPlaces.Count == 0)
+        {
+            Debug.LogWarning("No item box positions found!");
+            return;
+        }
+
+        int randPos = Random.Range(0, itemPlaces.Count);        
+        MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, itemPlaces[randPos], Quaternion.identity);
+    }
+
+    private void RandomlyPlaceLadders(GameObject levelPiece)
+    {
+        List<Vector3> ladderPlaces = new List<Vector3>();
+        for (int i = 0; i < levelPiece.transform.childCount; i++)
+        {
+            if (levelPiece.transform.GetChild(i).tag == "LADDER_POS")
+                ladderPlaces.Add(levelPiece.transform.GetChild(i).position);
+        }
+
+        if (ladderPlaces.Count == 0)
+        {
+            Debug.LogWarning("No ladder positions found!");
+            return;
+        }
+
+        int randPos = Random.Range(0, ladderPlaces.Count);
+        MyCore.NetCreateObject(Idx.LADDER, Owner, ladderPlaces[randPos], Quaternion.identity);
     }
 
     public Enemy[] GetAllEnemies(){
@@ -197,13 +289,19 @@ public class GameManager : NetworkComponent
                         break;
                 }
 
-                GameObject temp = MyCore.NetCreateObject(0, n.Owner, Vector3.zero, Quaternion.identity);
-                temp.GetComponent<PlayerController>().ColorSelected = n.ColorSelected;
-                temp.GetComponent<PlayerController>().PName = n.PName;
+                GameObject temp = MyCore.NetCreateObject(0, n.Owner, spawnPos, Quaternion.identity);
+                PlayerController player = temp.GetComponent<PlayerController>();
+
+                player.ColorSelected = n.ColorSelected;
+                player.PName = n.PName;
+
+                Sprite spriteSelected = player.heroSprites[n.CharSelected];
+                temp.GetComponent<SpriteRenderer>().sprite = spriteSelected;
+
                 temp.GetComponentInChildren<Text>().text = n.PName;
-                temp.GetComponent<PlayerController>().SendUpdate("START", n.PName + ";" + n.ColorSelected);
+                player.SendUpdate("START", n.PName + ";" + n.ColorSelected + ";" + n.CharSelected);
             }
-            GameObject ladder = MyCore.NetCreateObject(8, Owner, new Vector3(5f, -4f, 0), Quaternion.identity);
+            /*GameObject ladder = MyCore.NetCreateObject(8, Owner, new Vector3(5f, -4f, 0), Quaternion.identity);
 
             Vector2 dismountPos = ladder.GetComponent<Collider2D>().bounds.max;
             dismountPos.x = ladder.GetComponent<Collider2D>().bounds.center.x;
@@ -218,7 +316,8 @@ public class GameManager : NetworkComponent
 
             GameObject rope = MyCore.NetCreateObject(7, Owner, new Vector3(-7f, -4f, 0), Quaternion.identity);
 
-            GameObject endDoor = MyCore.NetCreateObject(15, Owner, new Vector3(5, 12, 0), Quaternion.identity);
+            GameObject endDoor = MyCore.NetCreateObject(15, Owner, new Vector3(5, 12, 0), Quaternion.identity);*/
+
             //dismount.GetComponent<DismountTrigger>().ladder = ladder.GetComponent<LadderObj>();
             /*MyCore.NetCreateObject(9, Owner, new Vector3(1.7f, 0.5f, 0), Quaternion.identity);
             MyCore.NetCreateObject(10, Owner, new Vector3(5f, 0.5f, 0), Quaternion.identity);

@@ -11,10 +11,7 @@ public class PlayerController : Character
     [System.NonSerialized] public Text PlayerName;    
     [System.NonSerialized] public int ColorSelected = -1;
     [System.NonSerialized] public string PName = "<Default>";
-
-    // May not need these if we use inheritance for player classes
-    //[System.NonSerialized] public SpriteRenderer spriteRender;
-    //[System.NonSerialized] public Sprite sprite;
+    [System.NonSerialized] public int CharSelected = -1;         
 
     //nonsync vars    
     public Rope grabbedRope;    
@@ -45,8 +42,9 @@ public class PlayerController : Character
     private float arrowSensitivity = 0.2f;
 
     private GameObject itemUI;    
-    [SerializeField] private GameObject[] itemPrefabs;
     public bool hasBomb = false;
+
+    public Sprite[] heroSprites;
 
 
     public override void HandleMessage(string flag, string value)
@@ -58,11 +56,13 @@ public class PlayerController : Character
                 PName = value.Split(";")[0];
                 GetComponentInChildren<Text>().text = PName;
                 ColorSelected = int.Parse(value.Split(";")[1]);
+                CharSelected = int.Parse(value.Split(";")[2]);
+
+                GetComponent<SpriteRenderer>().sprite = heroSprites[CharSelected];
 
                 //calling a function soon after creating object sometimes runs before Start
                 Start();
-
-                GetComponent<SpriteRenderer>().color = colors[ColorSelected];
+                //GetComponent<SpriteRenderer>().color = colors[ColorSelected];
             }
             else if (IsServer)
             {
@@ -221,6 +221,7 @@ public class PlayerController : Character
 
         arrowPivot = transform.GetChild(0).GetChild(1).gameObject;
         aimArrow = arrowPivot.transform.GetChild(0).gameObject;
+        spriteRender = GetComponent<SpriteRenderer>();
 
         myRig = GetComponent<Rigidbody2D>();
         colors = new Color[3];

@@ -2850,8 +2850,12 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2883408301281918175, guid: cec0322b612f0c04d84db8f4e6d66574, type: 3}
+      propertyPath: CENTER_PIECE_X
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2883408301281918175, guid: cec0322b612f0c04d84db8f4e6d66574, type: 3}
       propertyPath: LOWEST_PIECE_Y
-      value: -4
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8194096176259117141, guid: cec0322b612f0c04d84db8f4e6d66574, type: 3}
       propertyPath: m_RootOrder

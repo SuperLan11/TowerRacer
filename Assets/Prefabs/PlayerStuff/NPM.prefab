@@ -310,9 +310,6 @@ MonoBehaviour:
   MyId: {fileID: 0}
   IsDirty: 0
   PName: 
-  IsReady: 0
-  ColorSelected: 0
-  CharSelected: 0
 --- !u!1 &8924587938476316620
 GameObject:
   m_ObjectHideFlags: 0
@@ -2439,7 +2436,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Circle
+  m_text: Knight
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -3215,13 +3212,13 @@ MonoBehaviour:
   m_Value: 0
   m_Options:
     m_Options:
-    - m_Text: Circle
+    - m_Text: Knight
       m_Image: {fileID: 0}
-    - m_Text: Square
+    - m_Text: Bandit
       m_Image: {fileID: 0}
-    - m_Text: Star
+    - m_Text: Archer
       m_Image: {fileID: 0}
-    - m_Text: Triangle
+    - m_Text: Mage
       m_Image: {fileID: 0}
   m_OnValueChanged:
     m_PersistentCalls:
