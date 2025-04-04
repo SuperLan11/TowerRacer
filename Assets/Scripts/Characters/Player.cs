@@ -137,10 +137,12 @@ public class Player : Character {
     private float wallJumpTimer;
     private float wallsTimer;
 
-    private Item currentlyEquippedItem = null;
+    //can't do this cause references to items is funky
+    //private Item currentlyEquippedItem = null;
+    [System.NonSerialized] public bool hasBomb = false;
     private Vector2 lastAimDir;
-    private GameObject aimArrow;
-    private GameObject arrowPivot;
+    [SerializeField] private GameObject aimArrow;
+    [SerializeField] private GameObject arrowPivot;
     private const float ARROW_SENSITIVITY = 0.2f;
 
     [SerializeField] private float movementAbilityCooldownTimer;
@@ -233,16 +235,21 @@ public class Player : Character {
             isFacingRight = bool.Parse(value);
         }else if (flag == "HOLDING_RUN"){
             holdingRun = bool.Parse(value);
+        }else if(flag == "HAS_BOMB"){            
+            if (IsClient){
+                hasBomb = true;
+            }
         }else if (flag == "SHOOT_BOMB"){
             if (IsServer){
                 Vector2 bombPos = transform.position;
-                bombPos.y += GetComponent<Collider2D>().bounds.size.y / 2;
+                float yOffset = 2f;
+                bombPos.y += ((bodyCollider.bounds.size.y / 2) + (feetCollider.bounds.size.y / 2) + yOffset);
                 
                 GameObject bombObj = MyCore.NetCreateObject(14, Owner, bombPos, Quaternion.identity);                
                 Bomb bomb = bombObj.GetComponent<Bomb>();
                 bomb.launchVec = lastAimDir * bomb.launchSpeed;                
                 
-                currentlyEquippedItem = null;;
+                hasBomb = false;
             }                        
         }else if (flag == "CURRENT_MOVEMENT_STATE"){
             //doing this for performance reasons since Enum.Parse<>() is apparently performance-intensive
@@ -367,6 +374,30 @@ public class Player : Character {
         float radianRot = rotZ * Mathf.Deg2Rad;
         Vector2 direction = new Vector2(Mathf.Sin(radianRot), -Mathf.Cos(radianRot));
         return direction;
+    }
+
+     public static Player ClosestPlayerToPos(Vector2 pos){
+        Player[] players = FindObjectsOfType<Player>();
+        float minDist = Mathf.Infinity;
+
+        if (players.Length == 0)
+        {
+            Debug.LogWarning("IsClosestPlayerToPos() found no players");
+            return null;
+        }
+
+        int closestIdx = -1;
+        for (int i = 0; i < players.Length; i++)
+        {
+            float distToPos = Vector2.Distance(players[i].transform.position, pos);
+            if (distToPos < minDist)
+            {
+                minDist = distToPos;
+                closestIdx = i;
+            }
+        }
+
+        return players[closestIdx];
     }
 
     #endregion
@@ -931,9 +962,7 @@ public class Player : Character {
     public void AimStick(InputAction.CallbackContext aim)
     {
         if (IsLocalPlayer){
-            if (currentlyEquippedItem == null){
-                return;
-            }else if (currentlyEquippedItem.GetComponent<Bomb>() == null){
+            if (!hasBomb){
                 return;
             }
 
@@ -952,7 +981,7 @@ public class Player : Character {
             else if (aim.canceled)
             {                
                 SendCommand("SHOOT_BOMB", "");
-                currentlyEquippedItem = null;
+                hasBomb = false;
 
                 lastAimDir = Vector2.zero;
                 aimArrow.GetComponent<SpriteRenderer>().enabled = false;
@@ -966,9 +995,7 @@ public class Player : Character {
     {
         if (IsLocalPlayer)
         {
-            if (currentlyEquippedItem == null){
-                return;
-            }else if (currentlyEquippedItem.GetComponent<Bomb>() == null){
+            if (!hasBomb){
                 return;
             }
 
@@ -983,7 +1010,7 @@ public class Player : Character {
             {                
                 aimArrow.GetComponent<SpriteRenderer>().enabled = false;
                 SendCommand("SHOOT_BOMB", "");
-                currentlyEquippedItem = null;
+                hasBomb = false;
             }
         }
     }
@@ -993,7 +1020,6 @@ public class Player : Character {
         if (IsLocalPlayer)
         {
             Vector2 delta = mm.ReadValue<Vector2>();
-            bool hasBomb = ((currentlyEquippedItem != null) && (currentlyEquippedItem.GetComponent<Bomb>() != null));
             if ((mm.started || mm.performed) && hasBomb)
             {                
                 Vector3 newArrowRot = arrowPivot.transform.eulerAngles;
