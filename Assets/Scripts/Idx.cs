@@ -9,7 +9,7 @@ public class Idx : MonoBehaviour
     public static int NPM = 2;
     public static int FIRST_LEVEL_PIECE_IDX = 3;
     
-    public static int NUM_LEVEL_PIECES = 3;
+    public static int NUM_LEVEL_PIECES = 1;
 
     public static int ROPE = 7;
     public static int LADDER = 8;

@@ -211,14 +211,14 @@ public class GameManager : NetworkComponent
             GameObject dismount = MyCore.NetCreateObject(12, Owner, dismountPos, Quaternion.identity);
             dismount.GetComponent<DismountTrigger>().ladder = ladder.GetComponent<LadderObj>();
 
-            GameObject vampire = MyCore.NetCreateObject(11, Owner, new Vector3(9f, 1f, 0), Quaternion.identity);
+            //GameObject vampire = MyCore.NetCreateObject(11, Owner, new Vector3(9f, 1f, 0), Quaternion.identity);
 
-            GameObject itemBox = MyCore.NetCreateObject(13, Owner, new Vector3(-4f, -9f, 0), Quaternion.identity);
-            GameObject itemBox2 = MyCore.NetCreateObject(13, Owner, new Vector3(8f, -9f, 0), Quaternion.identity);
+            //GameObject itemBox = MyCore.NetCreateObject(13, Owner, new Vector3(-4f, -9f, 0), Quaternion.identity);
+            //GameObject itemBox2 = MyCore.NetCreateObject(13, Owner, new Vector3(8f, -9f, 0), Quaternion.identity);
 
-            GameObject rope = MyCore.NetCreateObject(7, Owner, new Vector3(-7f, -4f, 0), Quaternion.identity);
+            //GameObject rope = MyCore.NetCreateObject(7, Owner, new Vector3(-7f, -4f, 0), Quaternion.identity);
 
-            GameObject endDoor = MyCore.NetCreateObject(15, Owner, new Vector3(5, 12, 0), Quaternion.identity);
+            //GameObject endDoor = MyCore.NetCreateObject(15, Owner, new Vector3(5, 12, 0), Quaternion.identity);
             //dismount.GetComponent<DismountTrigger>().ladder = ladder.GetComponent<LadderObj>();
             /*MyCore.NetCreateObject(9, Owner, new Vector3(1.7f, 0.5f, 0), Quaternion.identity);
             MyCore.NetCreateObject(10, Owner, new Vector3(5f, 0.5f, 0), Quaternion.identity);
