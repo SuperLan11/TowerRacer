@@ -36,7 +36,6 @@ public class Player : Character {
     private bool isFacingRight;
     
     private bool jumpPressed = false;
-    private bool jumpHeld = false;
     private bool jumpReleased = false;
 
     private bool usingMovementAbility = false;
@@ -181,15 +180,8 @@ public class Player : Character {
             if (IsServer){
                 SendUpdate("JUMP_PRESSED", "GoodMorning");
             }
-        }else if (flag == "JUMP_HELD"){
-            jumpHeld = true;
-
-            if (IsServer){
-                SendUpdate("JUMP_HELD", "GoodMorning");
-            }
         }else if (flag == "JUMP_RELEASED"){
             jumpPressed = false;
-            jumpHeld = false;
             jumpReleased = true;
             
             if (IsServer){
