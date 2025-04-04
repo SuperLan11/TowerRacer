@@ -81,7 +81,10 @@ public class GameManager : NetworkComponent
     // Start is called before the first frame update
     void Start()
     {
-        
+        starts[0] = GameObject.Find("P1Start").transform.position;
+        starts[1] = GameObject.Find("P2Start").transform.position;
+        starts[2] = GameObject.Find("P3Start").transform.position;
+        starts[3] = GameObject.Find("P4Start").transform.position;
     }
 
     public override void NetworkedStart()
@@ -197,19 +200,19 @@ public class GameManager : NetworkComponent
                         break;
                 }
 
-                GameObject temp = MyCore.NetCreateObject(0, n.Owner, Vector3.zero, Quaternion.identity);
+                GameObject temp = MyCore.NetCreateObject(0, n.Owner, spawnPos, Quaternion.identity);
                 temp.GetComponent<PlayerController>().ColorSelected = n.ColorSelected;
                 temp.GetComponent<PlayerController>().PName = n.PName;
                 temp.GetComponentInChildren<Text>().text = n.PName;
                 temp.GetComponent<PlayerController>().SendUpdate("START", n.PName + ";" + n.ColorSelected);
             }
-            GameObject ladder = MyCore.NetCreateObject(8, Owner, new Vector3(5f, -4f, 0), Quaternion.identity);
+            //GameObject ladder = MyCore.NetCreateObject(8, Owner, new Vector3(5f, -4f, 0), Quaternion.identity);
 
-            Vector2 dismountPos = ladder.GetComponent<Collider2D>().bounds.max;
-            dismountPos.x = ladder.GetComponent<Collider2D>().bounds.center.x;
-            dismountPos.y += 1f;
-            GameObject dismount = MyCore.NetCreateObject(12, Owner, dismountPos, Quaternion.identity);
-            dismount.GetComponent<DismountTrigger>().ladder = ladder.GetComponent<LadderObj>();
+            //Vector2 dismountPos = ladder.GetComponent<Collider2D>().bounds.max;
+            //dismountPos.x = ladder.GetComponent<Collider2D>().bounds.center.x;
+            //dismountPos.y += 1f;
+            //GameObject dismount = MyCore.NetCreateObject(12, Owner, dismountPos, Quaternion.identity);
+            //dismount.GetComponent<DismountTrigger>().ladder = ladder.GetComponent<LadderObj>();
 
             //GameObject vampire = MyCore.NetCreateObject(11, Owner, new Vector3(9f, 1f, 0), Quaternion.identity);
 
