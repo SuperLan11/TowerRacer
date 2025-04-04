@@ -14,18 +14,33 @@ public class ItemBox : NetworkComponent
 	[SerializeField] private const int NUM_ITEMS = 3;
 	[SerializeField] private GameObject[] itemPrefabs;
 
-	private bool doDestroy = false;
-
 	public override void HandleMessage(string flag, string value)
 	{
-		if(flag == "DEL")
-        {
-			if(IsServer)
-            {
-				Debug.Log("destroying item box");
-				MyCore.NetDestroyObject(this.NetId);
-            }
-        }		
+		if (flag == "ITEM_UI")
+		{
+			if (IsClient)
+			{
+				string[] args = value.Split(";");
+				Vector2 itemBoxPos = PlayerController.Vector2FromString(args[0]);
+				int itemIdx = int.Parse(args[1]);
+
+				PlayerController playerHit = PlayerController.ClosestPlayerToPos(itemBoxPos);
+				if (playerHit.IsLocalPlayer)
+				{
+					GameObject itemImage = Instantiate(itemPrefabs[itemIdx], itemUI.transform.position, Quaternion.identity);
+					itemImage.transform.SetParent(itemUI.transform);
+				}
+			}
+		}		
+		else if (flag == "HIDE")
+		{
+			if (IsClient)
+			{
+				//disable components instead of destroying object so the object can still receive updates
+				GetComponent<SpriteRenderer>().enabled = false;
+				GetComponent<Collider2D>().enabled = false;
+			}
+		}
 		else if (flag == "DEBUG")
 		{
 			Debug.Log(value);
@@ -62,29 +77,30 @@ public class ItemBox : NetworkComponent
 	public override void NetworkedStart()
 	{
 		itemUI = GameObject.FindGameObjectWithTag("ITEM_UI");
-	}
+	}	
 
-    private void OnTriggerEnter2D(Collider2D collision)
+	private void OnTriggerEnter2D(Collider2D collision)
     {
 		if (IsClient)
 		{
 			PlayerController playerHit = collision.GetComponentInParent<PlayerController>();
 			if (playerHit != null && playerHit.IsLocalPlayer)
 			{
-				int randIdx = Random.Range(0, NUM_ITEMS);
-				//only spawn the player's item on that player's screen
-				//GameObject itemImage = Instantiate(itemPrefabs[randIdx], itemUI.transform.position, Quaternion.identity);
-				GameObject itemImage = Instantiate(itemPrefabs[2], itemUI.transform.position, Quaternion.identity);
-				playerHit.hasBomb = true;
+				int randIdx = Random.Range(0, NUM_ITEMS);				
+
+				//only spawn the player's item on that player's screen				
+				GameObject itemImage = Instantiate(itemPrefabs[randIdx], itemUI.transform.position, Quaternion.identity);
+
+				if (randIdx == 2)
+				{
+					playerHit.hasBomb = true;
+					playerHit.SendUpdate("HAS_BOMB", "");
+				}
 
 				itemImage.transform.SetParent(itemUI.transform);
-
-				//bomb
-				if (randIdx == 2)
-					playerHit.hasBomb = true;
 			}
 		}
-		
+
 		if (IsServer)
 		{
 			//wait to destroy item box so that clients can catch up and touch it before it is destroyed
@@ -95,7 +111,32 @@ public class ItemBox : NetworkComponent
 			//fix later to only despawn when specifically players touch the box
 			StartCoroutine(WaitToDestroyBox(0.1f));
 		}
-    }
+	}
+
+	public static Bomb ClosestBombToPos(Vector2 pos)
+    {
+		Bomb[] bombs = FindObjectsOfType<Bomb>();
+		float minDist = Mathf.Infinity;
+
+		if (bombs.Length == 0)
+		{
+			Debug.LogWarning("ClosestBombToPos() found no bombs");
+			return null;
+		}
+
+		int closestIdx = -1;
+		for (int i = 0; i < bombs.Length; i++)
+		{
+			float distToPos = Vector2.Distance(bombs[i].transform.position, pos);
+			if (distToPos < minDist)
+			{
+				minDist = distToPos;
+				closestIdx = i;
+			}
+		}
+
+		return bombs[closestIdx];
+	}
 
 	private IEnumerator WaitToDestroyBox(float seconds)
     {

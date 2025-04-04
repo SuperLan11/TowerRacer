@@ -2,10 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using NETWORK_ENGINE;
+using UnityEngine.Tilemaps;
 
 public class Bomb : Projectile
 {
-	public Vector2 launchVec;
+	public Vector2 launchVec = Vector2.zero;
+	public float launchSpeed = 15f;	
 
 	public override void HandleMessage(string flag, string value)
 	{
@@ -35,26 +37,31 @@ public class Bomb : Projectile
 		{
 			myRig.velocity = launchVec;
 		}
-	}
+	}	
 
-    private void OnTriggerEnter2D(Collider2D collision)
+	private void OnTriggerEnter2D(Collider2D collision)
     {        
 		if (IsServer)
-		{			
+		{
+			bool hitFloor = collision.GetComponent<TilemapCollider2D>() != null;
+			bool hitLadder = collision.GetComponent<LadderObj>() != null;
+
 			if (collision.GetComponent<NetworkComponent>() != null)
 			{				
 				int collidedOwner = collision.GetComponent<NetworkComponent>().Owner;
-				//means the bomb hit an object besides the current player
+				//means the bomb hit a networked object besides the current player
 				if (collidedOwner != this.Owner)
 				{
-					Debug.Log("destroying bomb since it hit a different owner");
-					StartCoroutine(WaitToDestroyBomb(0.1f));
+					Debug.Log("destroying bomb because it hit " + collision.gameObject.name);
+					MyCore.NetDestroyObject(this.NetId);
 				}
 			}
-			else
+			//to allow bombs to go through jump throughs, only destroy them on floor when they are falling
+			else if( (!hitFloor && !hitLadder) || (hitFloor && myRig.velocity.y < 0))
             {
-				//hit an non-networked object, so the object was not the current player
-				StartCoroutine(WaitToDestroyBomb(0.1f));
+				//hit an non-networked object, so the object was not the current player				
+				Debug.Log("destroying bomb because it hit " + collision.gameObject.name);
+				MyCore.NetDestroyObject(this.NetId);
             }
 		}
     }
@@ -79,6 +86,6 @@ public class Bomb : Projectile
 
 	private void Update()
 	{
-
+		
 	}
 }

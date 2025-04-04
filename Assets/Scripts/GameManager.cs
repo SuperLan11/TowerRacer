@@ -223,6 +223,8 @@ public class GameManager : NetworkComponent
 
             GameObject itemBox = MyCore.NetCreateObject(13, Owner, new Vector3(-4f, -9f, 0), Quaternion.identity);
             GameObject itemBox2 = MyCore.NetCreateObject(13, Owner, new Vector3(8f, -9f, 0), Quaternion.identity);
+
+            GameObject rope = MyCore.NetCreateObject(7, Owner, new Vector3(-7f, -5f, 0), Quaternion.identity);
             //dismount.GetComponent<DismountTrigger>().ladder = ladder.GetComponent<LadderObj>();
             /*MyCore.NetCreateObject(9, Owner, new Vector3(1.7f, 0.5f, 0), Quaternion.identity);
             MyCore.NetCreateObject(10, Owner, new Vector3(5f, 0.5f, 0), Quaternion.identity);

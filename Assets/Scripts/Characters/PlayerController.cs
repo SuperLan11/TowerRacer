@@ -37,11 +37,15 @@ public class PlayerController : Character
     [SerializeField] private float launchCorrectionSpeed = 8f;
     public float jumpStrength = 10f;
     [SerializeField] private float airSlowdownMult = 1f;
-
-    public bool hasBomb = false;
+    
     private Vector2 lastAimDir;
     private GameObject arrowPivot;
-    private GameObject aimArrow;    
+    private GameObject aimArrow;
+    private float arrowSensitivity = 0.2f;
+
+    private GameObject itemUI;    
+    [SerializeField] private GameObject[] itemPrefabs;
+    public bool hasBomb = false;
 
 
     public override void HandleMessage(string flag, string value)
@@ -129,10 +133,10 @@ public class PlayerController : Character
                 myRig.gravityScale = float.Parse(value);
             }
         }
-        else if (flag == "AIM")
+        else if (flag == "AIM_STICK")
         {
             if (IsServer)
-            {                
+            {
                 Vector2 newAimDir = Vector2FromString(value);
                 if (newAimDir.magnitude < 0.7f)
                 {
@@ -143,22 +147,38 @@ public class PlayerController : Character
                 {
                     lastAimDir = Vector2FromString(value);
                     aimArrow.GetComponent<SpriteRenderer>().enabled = true;
-                    Vector3 aimDir = new Vector3(lastAimDir.x, lastAimDir.y, 0);                    
+                    Vector3 aimDir = new Vector3(lastAimDir.x, lastAimDir.y, 0);
                     Vector3 newRot = arrowPivot.transform.eulerAngles;
                     newRot.z = DirToDegrees(aimDir);
                     arrowPivot.transform.eulerAngles = newRot;
                 }
             }
         }
-        else if(flag == "BOMB")
+        else if (flag == "AIM_MOUSE")
         {
-            if(IsServer)
-            {                
+            if (IsServer)
+            {
+                lastAimDir = Vector2FromString(value);
+            }
+        }       
+        else if(flag == "HAS_BOMB")
+        {            
+            if (IsClient)
+            {
+                hasBomb = true;
+            }
+        }
+        else if (flag == "SHOOT_BOMB")
+        {
+            if (IsServer)
+            {
                 Vector2 bombPos = transform.position;
                 bombPos.y += GetComponent<Collider2D>().bounds.size.y / 2;
-                GameObject bomb = MyCore.NetCreateObject(14, Owner, bombPos, Quaternion.identity);
-                bomb.GetComponent<Bomb>().launchVec = lastAimDir * 15;
-            }
+                GameObject bombObj = MyCore.NetCreateObject(14, Owner, bombPos, Quaternion.identity);                
+                Bomb bomb = bombObj.GetComponent<Bomb>();
+                bomb.launchVec = lastAimDir * bomb.launchSpeed;                
+                hasBomb = false;
+            }                        
         }
         else if (flag == "DEBUG")
         {
@@ -203,6 +223,32 @@ public class PlayerController : Character
     public override void NetworkedStart()
     {
         GetComponent<SpriteRenderer>().flipX = true;
+        itemUI = GameObject.FindGameObjectWithTag("ITEM_UI");
+    }
+
+    public static PlayerController ClosestPlayerToPos(Vector2 pos)
+    {
+        PlayerController[] players = FindObjectsOfType<PlayerController>();
+        float minDist = Mathf.Infinity;
+
+        if (players.Length == 0)
+        {
+            Debug.LogWarning("IsClosestPlayerToPos() found no players");
+            return null;
+        }
+
+        int closestIdx = -1;
+        for (int i = 0; i < players.Length; i++)
+        {
+            float distToPos = Vector2.Distance(players[i].transform.position, pos);
+            if (distToPos < minDist)
+            {
+                minDist = distToPos;
+                closestIdx = i;
+            }
+        }
+
+        return players[closestIdx];
     }
 
     private float DirToDegrees(Vector2 dir)
@@ -212,7 +258,15 @@ public class PlayerController : Character
         return angle + 180;
     }
 
-    public Vector2 Vector2FromString(string str)
+    //this assumes 0 degrees means the arrow is facing left
+    private Vector2 RotZToDir(float rotZ)
+    {
+        float radianRot = rotZ * Mathf.Deg2Rad;
+        Vector2 direction = new Vector2(Mathf.Sin(radianRot), -Mathf.Cos(radianRot));
+        return direction;
+    }
+
+    public static Vector2 Vector2FromString(string str)
     {
         //Vector2 is "(X,Y)"
         // Trim() removes whitespace chars
@@ -282,33 +336,78 @@ public class PlayerController : Character
         }
     }
 
-    public void Aim(InputAction.CallbackContext aim)
+    public void AimStick(InputAction.CallbackContext aim)
     {
         if (IsLocalPlayer)
         {
+            if (!hasBomb)
+                return;
+
             if (aim.started || aim.performed)
             {
                 lastAimDir = aim.ReadValue<Vector2>();
-                SendCommand("AIM", lastAimDir.ToString());
+                SendCommand("AIM_STICK", lastAimDir.ToString());
 
-                //do this on local player
+                //do this only on local player
                 aimArrow.GetComponent<SpriteRenderer>().enabled = true;
                 Vector3 aimDir = new Vector3(lastAimDir.x, lastAimDir.y, 0);
                 Vector3 newRot = arrowPivot.transform.eulerAngles;
                 newRot.z = DirToDegrees(aimDir);
                 arrowPivot.transform.eulerAngles = newRot;
-            }            
+            }
             else if (aim.canceled)
-            {
-                if (hasBomb)
-                {
-                    SendCommand("BOMB", "");
-                }
-                
+            {                
+                SendCommand("SHOOT_BOMB", "");
+                hasBomb = false;
+
                 lastAimDir = Vector2.zero;
                 aimArrow.GetComponent<SpriteRenderer>().enabled = false;
-                SendCommand("AIM", lastAimDir.ToString());
-            }                        
+                SendCommand("AIM_STICK", lastAimDir.ToString());
+            }                    
+        }
+    }
+
+    public void LmbClick(InputAction.CallbackContext mc)
+    {
+        if (IsLocalPlayer)
+        {
+            if (!hasBomb)
+                return;
+
+            if (mc.started)
+            {                
+                aimArrow.GetComponent<SpriteRenderer>().enabled = true;
+                //arrows points up initially
+                arrowPivot.transform.eulerAngles = new Vector3(0, 0, 180);
+                SendCommand("AIM_MOUSE", Vector3.zero.ToString());
+            }
+            else if (mc.canceled)
+            {                
+                aimArrow.GetComponent<SpriteRenderer>().enabled = false;
+                SendCommand("SHOOT_BOMB", "");
+                hasBomb = false;
+            }
+        }
+    }
+
+    public void AimMouse(InputAction.CallbackContext mm)
+    {
+        if (IsLocalPlayer)
+        {
+            Vector2 delta = mm.ReadValue<Vector2>();
+            if ((mm.started || mm.performed) && hasBomb)
+            {                
+                Vector3 newArrowRot = arrowPivot.transform.eulerAngles;
+                //minus since rotation is more negative clockwise
+                float potentialNewZ = newArrowRot.z - delta.x * arrowSensitivity;                
+                newArrowRot.z = potentialNewZ;                
+
+                if(newArrowRot.z > 45 && newArrowRot.z < 315)
+                    arrowPivot.transform.eulerAngles = newArrowRot;
+
+                Vector2 aimDir = RotZToDir(arrowPivot.transform.eulerAngles.z);                
+                SendCommand("AIM_MOUSE", aimDir.ToString());
+            }
         }
     }
 

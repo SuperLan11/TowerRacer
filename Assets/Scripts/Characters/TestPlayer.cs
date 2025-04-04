@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 //this is not supposed to be good code for testing reasons
 public class TestPlayer : MonoBehaviour
@@ -40,6 +41,24 @@ public class TestPlayer : MonoBehaviour
             //using a wrapper so all rope variables can be modified on the rope script
             //collision.gameObject.GetComponentInParent<Rope>().GrabRope(this);
         }
+    }
+
+    public void MouseMove(InputAction.CallbackContext mm)
+    {
+        Vector2 delta = mm.ReadValue<Vector2>();
+        Debug.Log("mouse delta: " + delta);
+        if (mm.started)
+        {
+            Debug.Log("mouse delta started");
+        }
+        else if(mm.performed)
+        {
+            Debug.Log("mouse delta performed");
+        }
+        else if(mm.canceled)
+        {
+            Debug.Log("mouse delta canceled");
+        }        
     }
 
     private IEnumerator GrabCooldown(float seconds)
