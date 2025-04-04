@@ -137,6 +137,12 @@ public class Player : Character {
     private float wallJumpTimer;
     private float wallsTimer;
 
+    private Item currentlyEquippedItem = null;
+    private Vector2 lastAimDir;
+    private GameObject aimArrow;
+    private GameObject arrowPivot;
+    private const float ARROW_SENSITIVITY = 0.2f;
+
     [SerializeField] private float movementAbilityCooldownTimer;
     [SerializeField] private float MAX_MOVEMENT_ABILITY_COOLDOWN;
 
@@ -195,6 +201,28 @@ public class Player : Character {
             if (IsServer){
                 SendUpdate("JUMP_RELEASED", "GoodMorning");
             }
+        }else if (flag == "AIM_STICK"){
+            if (IsServer){
+                Vector2 newAimDir = Vector2FromString(value);
+                
+                if (newAimDir.magnitude < 0.7f){
+                    //don't set aim dir if less a threshold so bomb does not have 0 velocity
+                    aimArrow.GetComponent<SpriteRenderer>().enabled = false;
+                }else if (newAimDir.magnitude >= 0.7f){
+                    lastAimDir = Vector2FromString(value);
+                    aimArrow.GetComponent<SpriteRenderer>().enabled = true;
+                    
+                    Vector3 aimDir = new Vector3(lastAimDir.x, lastAimDir.y, 0);
+                    Vector3 newRot = arrowPivot.transform.eulerAngles;
+                    
+                    newRot.z = DirToDegrees(aimDir);
+                    arrowPivot.transform.eulerAngles = newRot;
+                }
+            }
+        }else if (flag == "AIM_MOUSE"){
+            if (IsServer){
+                lastAimDir = Vector2FromString(value);
+            }
         }else if (flag == "MOVEMENT_ABILITY_PRESSED"){
             movementAbilityPressed = bool.Parse(value);
 
@@ -205,6 +233,17 @@ public class Player : Character {
             isFacingRight = bool.Parse(value);
         }else if (flag == "HOLDING_RUN"){
             holdingRun = bool.Parse(value);
+        }else if (flag == "SHOOT_BOMB"){
+            if (IsServer){
+                Vector2 bombPos = transform.position;
+                bombPos.y += GetComponent<Collider2D>().bounds.size.y / 2;
+                
+                GameObject bombObj = MyCore.NetCreateObject(14, Owner, bombPos, Quaternion.identity);                
+                Bomb bomb = bombObj.GetComponent<Bomb>();
+                bomb.launchVec = lastAimDir * bomb.launchSpeed;                
+                
+                currentlyEquippedItem = null;;
+            }                        
         }else if (flag == "CURRENT_MOVEMENT_STATE"){
             //doing this for performance reasons since Enum.Parse<>() is apparently performance-intensive
             switch(value){
@@ -270,6 +309,8 @@ public class Player : Character {
         }
     }
 
+    #region HELPER
+
     public static Vector2 Vector2FromString(string v){
         string raw = v.Trim('(').Trim(')');
         string [] args = raw.Split(',');
@@ -315,12 +356,27 @@ public class Player : Character {
         }
     }
 
+    private float DirToDegrees(Vector2 dir){
+        float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+        //return -(angle + 360) % 360;
+        return angle + 180;
+    }
+
+    //this assumes 0 degrees means the arrow is facing left
+    private Vector2 RotZToDir(float rotZ){
+        float radianRot = rotZ * Mathf.Deg2Rad;
+        Vector2 direction = new Vector2(Mathf.Sin(radianRot), -Mathf.Cos(radianRot));
+        return direction;
+    }
+
+    #endregion
+
     public override void NetworkedStart(){
         CalculateInitialConditions();
         dashSpeed = initialJumpVelocity * 2f;
         
         isFacingRight = true;
-        //!WE ARE NOT USING SPEED ON THE PLAYER!!!!!!
+        //!WE ARE NOT USING SPEED OR MYRIG ON THE PLAYER!!!!!!
         speed = -9000000;
         myRig = null;
 
@@ -367,6 +423,9 @@ public class Player : Character {
         else if (GetComponentInChildren<NetworkTransform>() != null)
             OTHER_FLAGS = GetComponentInChildren<NetworkTransform>().FLAGS;
 
+        // arrowPivot = transform.GetChild(0).GetChild(1).gameObject;
+        // aimArrow = arrowPivot.transform.GetChild(0).gameObject;
+
         //add this back in when we start doing player spawn eggs
         /*
         GameObject temp = GameObject.Find("SpawnPoint");
@@ -376,6 +435,7 @@ public class Player : Character {
         rigidbody.gravityScale = 0f;
     }
 
+    #region PHYSICS
     //go watch the GDC talk if you want know why this math works
     private void CalculateInitialConditions(){
         //proper way to do this would probably be just to modify jump height, but I'm lazy
@@ -413,6 +473,8 @@ public class Player : Character {
         }
     }
 
+    #endregion
+
     //only gets called in server
     private void TurnCheck(){
         bool turnRight;
@@ -438,6 +500,7 @@ public class Player : Character {
     }
 
     
+    #region COLLISION
     private bool CheckForGround(){
         if (IsServer){
             Vector2 tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y - COLLISION_RAYCAST_LENGTH);
@@ -783,6 +846,10 @@ public class Player : Character {
         Debug.DrawRay(pos, unitVector * length, Color.red);
     }
 
+    #endregion
+
+    #region MOVEMENT_STATE
+
     public bool IsGrounded(){
         return (currentMovementState == movementState.GROUND);
     }
@@ -833,6 +900,11 @@ public class Player : Character {
         return ((IsJumping() && (numJumpsUsed == MAX_JUMPS)) || IsDashing());
     }*/
 
+    #endregion
+
+
+    #region INPUT
+
     public void MoveAction(InputAction.CallbackContext context){
         if (IsLocalPlayer){
             if (context.started || context.performed){
@@ -856,6 +928,88 @@ public class Player : Character {
         }
     }
 
+    public void AimStick(InputAction.CallbackContext aim)
+    {
+        if (IsLocalPlayer){
+            if (currentlyEquippedItem == null){
+                return;
+            }else if (currentlyEquippedItem.GetComponent<Bomb>() == null){
+                return;
+            }
+
+            if (aim.started || aim.performed)
+            {
+                lastAimDir = aim.ReadValue<Vector2>();
+                SendCommand("AIM_STICK", lastAimDir.ToString());
+
+                //do this only on local player
+                aimArrow.GetComponent<SpriteRenderer>().enabled = true;
+                Vector3 aimDir = new Vector3(lastAimDir.x, lastAimDir.y, 0);
+                Vector3 newRot = arrowPivot.transform.eulerAngles;
+                newRot.z = DirToDegrees(aimDir);
+                arrowPivot.transform.eulerAngles = newRot;
+            }
+            else if (aim.canceled)
+            {                
+                SendCommand("SHOOT_BOMB", "");
+                currentlyEquippedItem = null;
+
+                lastAimDir = Vector2.zero;
+                aimArrow.GetComponent<SpriteRenderer>().enabled = false;
+                SendCommand("AIM_STICK", lastAimDir.ToString());
+            }                    
+        }
+    }
+
+    //keyboard + mouse need its own callback functions because how they work is fundamentally different
+    public void LmbClick(InputAction.CallbackContext mc)
+    {
+        if (IsLocalPlayer)
+        {
+            if (currentlyEquippedItem == null){
+                return;
+            }else if (currentlyEquippedItem.GetComponent<Bomb>() == null){
+                return;
+            }
+
+            if (mc.started)
+            {                
+                aimArrow.GetComponent<SpriteRenderer>().enabled = true;
+                //arrows points up initially
+                arrowPivot.transform.eulerAngles = new Vector3(0, 0, 180);
+                SendCommand("AIM_MOUSE", Vector3.zero.ToString());
+            }
+            else if (mc.canceled)
+            {                
+                aimArrow.GetComponent<SpriteRenderer>().enabled = false;
+                SendCommand("SHOOT_BOMB", "");
+                currentlyEquippedItem = null;
+            }
+        }
+    }
+
+    public void AimMouse(InputAction.CallbackContext mm)
+    {
+        if (IsLocalPlayer)
+        {
+            Vector2 delta = mm.ReadValue<Vector2>();
+            bool hasBomb = ((currentlyEquippedItem != null) && (currentlyEquippedItem.GetComponent<Bomb>() != null));
+            if ((mm.started || mm.performed) && hasBomb)
+            {                
+                Vector3 newArrowRot = arrowPivot.transform.eulerAngles;
+                //minus since rotation is more negative clockwise
+                float potentialNewZ = newArrowRot.z - delta.x * ARROW_SENSITIVITY;                
+                newArrowRot.z = potentialNewZ;                
+
+                if(newArrowRot.z > 45 && newArrowRot.z < 315)
+                    arrowPivot.transform.eulerAngles = newArrowRot;
+
+                Vector2 aimDir = RotZToDir(arrowPivot.transform.eulerAngles.z);                
+                SendCommand("AIM_MOUSE", aimDir.ToString());
+            }
+        }
+    }
+
     public void MovementAbilityAction(InputAction.CallbackContext context){
         if (IsLocalPlayer){
             if (context.started || context.performed){
@@ -865,6 +1019,11 @@ public class Player : Character {
             }
         }
     }
+
+    #endregion
+
+
+    #region CLEANUP
 
     //only gets called on server and when grounded
     private void JumpVariableCleanup(){
@@ -884,6 +1043,8 @@ public class Player : Character {
     private void RopeVariableCleanup(){
         ropeLaunchVec = Vector2.zero;
     }
+
+    #endregion
 
     //only gets called on server
     private void InitiateJump(int jumps){        
