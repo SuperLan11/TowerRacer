@@ -16,12 +16,12 @@
                 },
                 {
                     "name": "Jump",
-                    "type": "Button",
+                    "type": "Value",
                     "id": "734f1e37-c47c-4eb7-9705-3fff453d9bcb",
                     "expectedControlType": "Button",
                     "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
+                    "interactions": "Hold(duration=0.2)",
+                    "initialStateCheck": true
                 },
                 {
                     "name": "AimStick",

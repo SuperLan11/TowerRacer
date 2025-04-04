@@ -163,12 +163,30 @@ MonoBehaviour:
   MyCore: {fileID: 0}
   MyId: {fileID: 0}
   IsDirty: 0
+  speed: 0
+  myRig: {fileID: 0}
   currentMovementState: 0
+  selectedCharacterClass: 2
   groundLayer:
     serializedVersion: 2
     m_Bits: 0
   feetCollider: {fileID: 2941317128191888691}
   bodyCollider: {fileID: 4394980080252175982}
+  rigidbody: {fileID: 0}
+  jumpAction:
+    m_Name: Jump
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 02483bf5-935a-4b30-b524-56bb667746fb
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
+  MAX_JUMPS: 1
+  swingPosHeight: 0
+  ropeLaunchVec: {x: 0, y: 0}
+  launchCorrectionSpeed: 8
+  airSlowdownMult: 1
 --- !u!212 &4906707819597775948
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -305,6 +323,18 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: 734f1e37-c47c-4eb7-9705-3fff453d9bcb
     m_ActionName: PlayerActions/Jump[/Keyboard/space]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: eeb49a18-2acc-48f3-a876-e4200d79e276
+    m_ActionName: PlayerActions/AimStick
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: b0e34026-6ef1-42ce-8be6-260cca2cb55a
+    m_ActionName: PlayerActions/AimMouse[/Mouse/delta]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 9f6221bc-17bd-43dc-9ede-68ff13e16078
+    m_ActionName: PlayerActions/AimClick[/Mouse/leftButton]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: PlayerActions

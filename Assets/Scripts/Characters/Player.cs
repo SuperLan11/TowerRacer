@@ -18,16 +18,10 @@ using NETWORK_ENGINE;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
 
-/*
-!FIX THESE ISSUES
-    1. Rope spins all over the place (probably an issue with checking for nowMovingLeft and nowMovingRight)
-    2. No gravity
-*/
+//!REFACTOR TO GET RID OF DOUBLE NEGATIVE IF STATEMENTS!
 
 /*
 TODO
-    2. Inhert from Character
-    3. Fix rope and ladder code
     4. start programming different abilities
     3. Camera code
     ...
@@ -46,6 +40,8 @@ public class Player : Character {
     private bool jumpPressed = false;
     private bool jumpHeld = false;
     private bool jumpReleased = false;
+
+    private bool usingMovementAbility = false;
 
     //I doubt we'll want run button in our game, but it's here just in case
     private bool holdingRun = false;
@@ -66,6 +62,7 @@ public class Player : Character {
     [System.NonSerialized] public LadderObj currentLadder = null;
     //we may want to eventually use the rigidbody variable in Character.cs, although ain't no way we're keeping the name as "myRig"
     public Rigidbody2D rigidbody;
+    [SerializeField] private InputAction jumpAction;
     
     [System.NonSerialized] public const float MAX_WALK_SPEED = 12.5f;
     private const float GROUND_ACCELERATION = 5f, GROUND_DECELERATION = 20f;
@@ -85,8 +82,8 @@ public class Player : Character {
     private const float TIME_TILL_JUMP_APEX = 0.35f;
     private const float GRAVITY_RELEASE_MULTIPLIER = 2f;
     private const float MAX_FALL_SPEED = 26f;
-    //no need to have canDoubleJump or anything like that since we have this int
-    private const int MAX_JUMPS = 1;
+    //no need to have canDoubleJump or anything like that since we have this int. Unfortunately can't be a const cause of double jumping
+    public int MAX_JUMPS = 1;
     private const int MAX_WALL_JUMPS = 1;
     private const float WALL_JUMP_HORIZONTAL_BOOST = 15f;
 
@@ -125,7 +122,7 @@ public class Player : Character {
     [SerializeField] private float launchCorrectionSpeed = 32f;      //previously 8f
     [SerializeField] private float airSlowdownMult = 1f;
 
-    private float fastFallTime;
+    private float fastFallTimer;
     private float fastFallReleaseSpeed;
 
     private int numJumpsUsed;
@@ -138,6 +135,14 @@ public class Player : Character {
     private float coyoteTimer;
     private float wallJumpTimer;
     private float wallsTimer;
+
+    private bool inJankJumpCooldown = false;
+    private const int MAX_JANK_JUMP_COOLDOWN = 1;
+    private int jankJumpCooldown;
+
+    // private Coroutine jumpCancelCoroutine;
+    // private const float RELEASE_TOLERANCE = 0.1f;
+    // private const float CANCEL_DELAY = 0.1f;
 
     private Vector2 upNormal = new Vector2(0, 1f);    
     private Vector2 downNormal = new Vector2(0, -1f); 
@@ -179,10 +184,13 @@ public class Player : Character {
                 moveInput = Player.Vector2FromString(value);
             }
         }else if (flag == "JUMP_PRESSED"){
+            Debug.Log("Jump has been pressed");
             jumpPressed = true;
             jumpReleased = false;
             
             if (IsServer){
+                inJankJumpCooldown = true;
+                // StartCoroutine(JumpCooldown());
                 SendUpdate("JUMP_PRESSED", "GoodMorning");
             }
         }else if (flag == "JUMP_HELD"){
@@ -192,12 +200,23 @@ public class Player : Character {
                 SendUpdate("JUMP_HELD", "GoodMorning");
             }
         }else if (flag == "JUMP_RELEASED"){
+            if (IsServer && inJankJumpCooldown){
+                return;
+            }
+            
+            Debug.Log("jump has been released");
             jumpPressed = false;
             jumpHeld = false;
             jumpReleased = true;
             
             if (IsServer){
                 SendUpdate("JUMP_RELEASED", "GoodMorning");
+            }
+        }else if (flag == "MOVEMENT_ABILITY"){
+            usingMovementAbility = bool.Parse(value);
+
+            if (IsServer){
+                SendUpdate("MOVEMENT_ABILITY", value);
             }
         }else if (flag == "IS_FACING_RIGHT"){
             isFacingRight = bool.Parse(value);
@@ -230,20 +249,20 @@ public class Player : Character {
             }
         }else if (flag == "SELECTED_CHARACTER_CLASS"){
             //doing this for performance reasons since Enum.Parse<>() is apparently performance-intensive
-                switch(value){
-                    case "ARCHER":
-                        selectedCharacterClass = characterClass.ARCHER;
-                        break;
-                    case "MAGE":
-                        selectedCharacterClass = characterClass.MAGE;
-                        break;
-                    case "BANDIT":
-                        selectedCharacterClass = characterClass.BANDIT;
-                        break;
-                    case "KNIGHT":
-                        selectedCharacterClass = characterClass.KNIGHT;
-                        break;
-                }
+            switch(value){
+                case "ARCHER":
+                    selectedCharacterClass = characterClass.ARCHER;
+                    break;
+                case "MAGE":
+                    selectedCharacterClass = characterClass.MAGE;
+                    break;
+                case "BANDIT":
+                    selectedCharacterClass = characterClass.BANDIT;
+                    break;
+                case "KNIGHT":
+                    selectedCharacterClass = characterClass.KNIGHT;
+                    break;
+            }
         }
         
         //anything with a cooldown is gonna look something like this
@@ -310,11 +329,21 @@ public class Player : Character {
 
     public override void NetworkedStart(){
         CalculateInitialConditions();
+
+        if (IsServer){
+            jankJumpCooldown = MAX_JANK_JUMP_COOLDOWN;
+        }
         
         isFacingRight = true;
         //!WE ARE NOT USING SPEED ON THE PLAYER!!!!!!
         speed = -9000000;
         myRig = null;
+
+        //why 3 jumps for a double jump? Cause Unity can't do something as simple as make a functional input system. Set this to 2 at your own
+        //peril
+        if (selectedCharacterClass == characterClass.BANDIT){
+            MAX_JUMPS = 3;
+        }
         
         if (!GameManager.debugMode){
             Cursor.lockState = CursorLockMode.Locked;
@@ -360,6 +389,12 @@ public class Player : Character {
         
         initialJumpVelocity = Mathf.Abs(gravity);
     }
+
+    // private IEnumerator JumpCooldown(){
+    //     yield return new WaitForSeconds(CANCEL_DELAY);
+
+    //     inJankJumpCooldown = false;
+    // }
 
     //only gets called in server
     private void SetApexVariables(){
@@ -808,22 +843,35 @@ public class Player : Character {
         }
     }
 
+    //!"canceled" being called immediately after "started" or "performed" is what's causing your double jump issue
     public void JumpAction(InputAction.CallbackContext context){
         if (IsLocalPlayer){
-            if (context.started){ 
+            if (context.started || context.performed){ 
                 SendCommand("JUMP_PRESSED", "GoodMorning");
-            }else if (context.performed){
+            }/*else if (context.performed){
                 //we only need this for making sure you can't hold jump button to wall jump
                 SendCommand("JUMP_HELD", "GoodMorning");
-            }else if (context.canceled){
+            }*/else if (context.canceled){
                 SendCommand("JUMP_RELEASED", "GoodMorning");
+            }
+        }
+    }
+
+    public void MovementAbilityAction(InputAction.CallbackContext context){
+        if (IsLocalPlayer){
+            if (context.started || context.performed){
+                SendCommand("MOVEMENT_ABILITY", true.ToString());
+            }else if (context.canceled){
+                SendCommand("MOVEMENT_ABIILITY", false.ToString());
             }
         }
     }
 
     //only gets called on server and when grounded
     private void JumpVariableCleanup(){
-        fastFallTime = 0f;
+        Debug.Log("cleaning up jump");
+
+        fastFallTimer = 0f;
         isPastApexThreshold = false;
         verticalVelocity = 0f;
         numJumpsUsed = 0;
@@ -842,6 +890,8 @@ public class Player : Character {
 
     //only gets called on server
     private void InitiateJump(int jumps){
+        //Debug.Log("initiating jump");
+        
         if (!IsJumping()){
             currentMovementState = movementState.JUMPING;
         }
@@ -849,8 +899,6 @@ public class Player : Character {
         jumpBufferTimer = 0;
         numJumpsUsed += jumps;
         verticalVelocity = initialJumpVelocity;
-
-        rigidbody.velocity = new Vector2(rigidbody.velocity.x, verticalVelocity);
     }
 
     private void InitiateWallJump(){
@@ -903,6 +951,7 @@ public class Player : Character {
     {    
         //Debug.Log("CurrentMovementState: " + currentMovementState);
         //Debug.Log("Move input" + moveInput);
+        //Debug.Log("Num jumps used: " + numJumpsUsed);
         
         if (!MyId.IsInit){
             return;
@@ -922,7 +971,19 @@ public class Player : Character {
 
         if (IsServer){
             bool onGround = CheckForGround();
+
+            //prevents context.canceled from being called too early and stopping double jumps
+            if (inJankJumpCooldown){
+                if (jankJumpCooldown > 0){
+                    jankJumpCooldown--;
+                }
+                else{
+                    jankJumpCooldown = MAX_JANK_JUMP_COOLDOWN;
+                    inJankJumpCooldown = false;
+                }
+            }
             
+            #region SpecialCases
             //can't bypass jumping code cause we need gravity to work to be bypassed by special movement states
             if (canGrabRope && CheckForRopes()){
                 if (currentRope != null){
@@ -959,6 +1020,7 @@ public class Player : Character {
             }
 
             if (IsLaunching() && (verticalVelocity < 0f)){
+                Debug.Log("Fast falling 1");
                 currentMovementState = movementState.FAST_FALLING;
             }
 
@@ -971,6 +1033,7 @@ public class Player : Character {
                     InitiateJump(1);
 
                     if (jumpReleasedDuringBuffer){
+                        Debug.Log("Fast falling 2");
                         currentMovementState = movementState.FAST_FALLING;
                         fastFallReleaseSpeed = verticalVelocity;
                     }
@@ -1002,8 +1065,9 @@ public class Player : Character {
                 
                 return;
             }
+            #endregion
 
-
+            #region JUMPING
             //Jumping
             jumpBufferTimer -= Time.deltaTime;
 
@@ -1039,20 +1103,20 @@ public class Player : Character {
             if (jumpPressed){
                 jumpBufferTimer = MAX_JUMP_BUFFER_TIME;
                 jumpReleasedDuringBuffer = false;
-            }
-            
-            if (jumpReleased){
+            }else if (jumpReleased){
                 if (jumpBufferTimer > 0f){
                     jumpReleasedDuringBuffer = true;
                 }
 
                 //letting go of jump while still moving upwards is what causes fast falling
-                if (IsJumping() && verticalVelocity > 0f){
+                if (IsJumping() && verticalVelocity > 0f /*&& !inJankJumpCooldown*/){
+                    Debug.Log("Fast falling 3");
+                    
                     currentMovementState = movementState.FAST_FALLING;
                     
                     if (isPastApexThreshold){
                         isPastApexThreshold = false;
-                        fastFallTime = TIME_FOR_UP_CANCEL;
+                        fastFallTimer = TIME_FOR_UP_CANCEL;
                         verticalVelocity = 0;
                     }else{
                         fastFallReleaseSpeed = verticalVelocity;
@@ -1072,17 +1136,22 @@ public class Player : Character {
             //bool doubleJump = (jumpPressed && IsFastFalling() && (numJumpsUsed < MAX_JUMPS));
             bool extraJump = (jumpBufferTimer > 0f && IsFastFalling() && (numJumpsUsed < MAX_JUMPS));
             bool airJump = (jumpBufferTimer > 0f && IsFallingInTheAir() && (numJumpsUsed < MAX_JUMPS - 1));
-        
+
             if (normalJump){
+                Debug.Log("normal jump");
                 InitiateJump(1);
                 
                 if (jumpReleasedDuringBuffer){
+                    Debug.Log("Fast falling 4");
+                    
                     currentMovementState = movementState.FAST_FALLING;
                     fastFallReleaseSpeed = verticalVelocity;
                 }
             }else if (wallJump){
                 InitiateWallJump();
             }else if (extraJump){
+                //Debug.Log("Movement State: " + currentMovementState);
+                Debug.Log("double jump");
                 InitiateJump(1);
             }else if (airJump){
                 //forces player to only get one jump when they're falling, so they can't fall off a ledge and then jump twice.
@@ -1096,7 +1165,11 @@ public class Player : Character {
                 currentMovementState = movementState.GROUND;
                 JumpVariableCleanup();
                 RopeVariableCleanup();
+                //force it to reset cause Unity's input system is a piece of dogcrap, and otherwise it'll infintely jump
+                jumpPressed = false;
+                jumpReleased = true;
             }
+            #endregion
 
             #region VerticalVelocity
             //Vertical Velocity
@@ -1106,11 +1179,14 @@ public class Player : Character {
                 //!This also isn't working as intended, since there's still some time from when you bump your head to when you actually start
                 //!falling
                 if (CheckForCeiling()){
+                     Debug.Log("Fast falling 5");
+                    
                     currentMovementState = movementState.FAST_FALLING;
                 }
 
                 if (verticalVelocity >= 0f){
                     apexPoint = Mathf.InverseLerp(initialJumpVelocity, 0f, verticalVelocity);
+                    //if we're 97% of way there to apex, we set apex variables
                     if (apexPoint > APEX_THRESHOLD){
                         SetApexVariables();
                     }else{
@@ -1126,13 +1202,13 @@ public class Player : Character {
             }
 
             if (IsFastFalling()){
-                if (fastFallTime >= TIME_FOR_UP_CANCEL){
+                if (fastFallTimer >= TIME_FOR_UP_CANCEL){
                     verticalVelocity += gravity * GRAVITY_RELEASE_MULTIPLIER * Time.deltaTime;
-                }else if (fastFallTime < TIME_FOR_UP_CANCEL){
-                    verticalVelocity = Mathf.Lerp(fastFallReleaseSpeed, 0f, (fastFallTime / TIME_FOR_UP_CANCEL));
+                }else if (fastFallTimer < TIME_FOR_UP_CANCEL){
+                    verticalVelocity = Mathf.Lerp(fastFallReleaseSpeed, 0f, (fastFallTimer / TIME_FOR_UP_CANCEL));
                 }
 
-                fastFallTime += Time.deltaTime;
+                fastFallTimer += Time.deltaTime;
             }
 
             if (!onGround && !IsJumping()){
@@ -1189,7 +1265,7 @@ public class Player : Character {
                 return;
             }
 
-            if (onGround && !InSpecialMovementState()){
+            if (onGround && !IsJumping() && !InSpecialMovementState()){
                 currentMovementState = movementState.GROUND;
                 JumpVariableCleanup();
             }
