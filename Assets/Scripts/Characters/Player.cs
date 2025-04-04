@@ -11,6 +11,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
 using Unity.VisualScripting;
+using UnityEngine.UI;
 
 using NETWORK_ENGINE;
 
@@ -18,16 +19,27 @@ using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
 
 /*
+!FIX THESE ISSUES
+    1. Rope spins all over the place (probably an issue with checking for nowMovingLeft and nowMovingRight)
+    2. No gravity
+*/
+
+/*
 TODO
+    2. Inhert from Character
+    3. Fix rope and ladder code
     4. start programming different abilities
     3. Camera code
     ...
     5. Test IsDirty stuff once we have movement states other than ground that aren't dependent on input (climbing, swinging, etc)
 */
 
-public class Player : NetworkComponent {
+public class Player : Character {
     //!If you add a variable to this, you are responsible for making sure it goes in the IsDirty check in SlowUpdate()
     #region SyncVars
+
+    // [System.NonSerialized] public Text PlayerName;
+    // [System.NonSerialized] public string PName = "<Default>";
 
     private bool isFacingRight;
     
@@ -50,9 +62,12 @@ public class Player : NetworkComponent {
     [SerializeField] private LayerMask groundLayer;
     [SerializeField] private BoxCollider2D feetCollider;
     [SerializeField] private BoxCollider2D bodyCollider;
-    private Rigidbody2D rigidbody;
+    [System.NonSerialized] public Rope currentRope = null;
+    private LadderObj currentLadder = null;
+    //we may want to eventually use the rigidbody variable in Character.cs, although ain't no way we're keeping the name as "myRig"
+    public Rigidbody2D rigidbody;
     
-    private const float MAX_WALK_SPEED = 12.5f;
+    [System.NonSerialized] public const float MAX_WALK_SPEED = 12.5f;
     private const float GROUND_ACCELERATION = 5f, GROUND_DECELERATION = 20f;
     private const float AIR_ACCELERATION = 5f, AIR_DECELERATION = 5f;
     private const float WALL_JUMP_ACCELERATION = AIR_ACCELERATION * 4f;     //totally fine if we want to make it independent
@@ -83,20 +98,32 @@ public class Player : NetworkComponent {
     private bool onWallWithoutJumpPressed = false;
     private bool wallJumpPressed = false;
 
+    //!RENAME THIS LATER
+    private bool canGrabRope = true;
+    public int swingPosHeight = 0;
+    [System.NonSerialized] public Transform swingPos;
+    [System.NonSerialized] public const float MAX_SWING_SPEED = 7.0f;
+    private const float MAX_LAUNCH_SPEED = MAX_WALK_SPEED * 20f;
+
     private const float TIME_FOR_UP_CANCEL = 0.027f;
     private const float APEX_THRESHOLD = 0.97f, APEX_HANG_TIME = 0.075f;
     private const float MAX_JUMP_BUFFER_TIME = 0.125f;
     private const float MAX_JUMP_COYOTE_TIME = 0.1f;
     private const float MAX_WALL_JUMP_TIME = 0.2f;
-    private const float MAX_WALL_STICK_TIME = 2f;
+    private const float MAX_WALL_STICK_TIME = 3f;
 
     private float gravity;
     private float initialJumpVelocity;
     private float adjustedJumpHeight;
 
-    private float verticalVelocity;
+    [System.NonSerialized] public float verticalVelocity;
     private Vector2 moveVelocity;
-    private Vector2 moveInput;
+    [System.NonSerialized] public Vector2 moveInput;
+    public Vector2 ropeLaunchVec = Vector2.zero;
+    
+    //how fast you can change directions midair
+    [SerializeField] private float launchCorrectionSpeed = 32f;      //previously 8f
+    [SerializeField] private float airSlowdownMult = 1f;
 
     private float fastFallTime;
     private float fastFallReleaseSpeed;
@@ -117,14 +144,17 @@ public class Player : NetworkComponent {
     private Vector2 leftNormal = new Vector2(-1f, 0);
     private Vector3 rightNormal = new Vector2(1f, 0);
 
+    public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
+
     private enum movementState
     {
             GROUND,
             JUMPING,    //!jumping means you are in the air with the jump button pressed or held down
             FALLING,
             FAST_FALLING,  
-            SWINGING,
-            CLIMBING
+            SWINGING,   //trigger
+            LAUNCHING,  //trigger
+            CLIMBING    //trigger
     };
 
     private enum characterClass
@@ -191,6 +221,9 @@ public class Player : NetworkComponent {
                 case "SWINGING":
                     currentMovementState = movementState.SWINGING;
                     break;
+                case "LAUNCHING":
+                    currentMovementState = movementState.LAUNCHING;
+                    break;
                 case "CLIMBING":
                     currentMovementState = movementState.CLIMBING;
                     break;
@@ -222,9 +255,13 @@ public class Player : NetworkComponent {
             }
         }*/
         
-        else{      //!Ask Landon to do this part later!
-            //something like...
-            Debug.Log("Thine flag name is INCORRECT!");
+        else if (!OTHER_FLAGS.ContainsKey(flag))
+        {
+            Debug.LogWarning(flag + " is not a valid flag in " + this.GetType().Name + ".cs");
+            if (IsClient)
+            {
+                SendCommand("DEBUG", flag + " is not a valid flag in " + this.GetType().Name + ".cs");
+            }
         }
     }
 
@@ -247,6 +284,8 @@ public class Player : NetworkComponent {
                 return "FAST_FALLING";
             case movementState.SWINGING:
                 return "SWINGING";
+            case movementState.LAUNCHING:
+                return "LAUNCHING";
             case movementState.CLIMBING:
                 return "CLIMBING";
             default:
@@ -273,6 +312,9 @@ public class Player : NetworkComponent {
         CalculateInitialConditions();
         
         isFacingRight = true;
+        //!WE ARE NOT USING SPEED ON THE PLAYER!!!!!!
+        speed = -9000000;
+        myRig = null;
         
         if (!GameManager.debugMode){
             Cursor.lockState = CursorLockMode.Locked;
@@ -287,6 +329,15 @@ public class Player : NetworkComponent {
         if (rigidbody == null){
             Debug.LogError("Thine rigidbody is missing, good sir!");
         }
+
+        if (GetComponent<NetworkRB2D>() != null)
+            OTHER_FLAGS = GetComponent<NetworkRB2D>().FLAGS;
+        else if (GetComponentInChildren<NetworkRB2D>() != null)
+            OTHER_FLAGS = GetComponentInChildren<NetworkRB2D>().FLAGS;
+        else if (GetComponent<NetworkTransform>() != null)
+            OTHER_FLAGS = GetComponent<NetworkTransform>().FLAGS;
+        else if (GetComponentInChildren<NetworkTransform>() != null)
+            OTHER_FLAGS = GetComponentInChildren<NetworkTransform>().FLAGS;
 
         //add this back in when we start doing player spawn eggs
         /*
@@ -358,18 +409,7 @@ public class Player : NetworkComponent {
         }
     }
 
-    // private bool CheckForGround(){
-    //     if (IsServer){
-    //         Vector2 tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y - COLLISION_RAYCAST_LENGTH);
-    //         RaycastHit2D hit = Physics2D.Raycast(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
-    //         //DrawDebugNormal(tempPos, Vector2.down, GROUND_DETECTION_RAY_LENGTH, false);
-
-    //         return ((hit.collider != null) && (hit.normal == upNormal) && !hit.collider.isTrigger);
-    //     }
-        
-    //     return false;
-    // }
-
+    
     private bool CheckForGround(){
         if (IsServer){
             Vector2 tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y - COLLISION_RAYCAST_LENGTH);
@@ -408,10 +448,32 @@ public class Player : NetworkComponent {
     private bool CheckForCeiling(){
         if (IsServer){
             Vector2 tempPos = new Vector2(bodyCollider.bounds.center.x, bodyCollider.bounds.max.y + COLLISION_RAYCAST_LENGTH);
-            RaycastHit2D hit = Physics2D.Raycast(tempPos, Vector2.up, COLLISION_RAYCAST_LENGTH, ~0);
-            //DrawDebugNormal(tempPos, Vector2.up, GROUND_DETECTION_RAY_LENGTH, false);
+            RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.up, COLLISION_RAYCAST_LENGTH, ~0);
 
-            return (hit.collider != null && (hit.normal == downNormal));
+            foreach (RaycastHit2D hit in hits){
+                if (!hit.collider.isTrigger && (hit.normal == downNormal)){
+                    return true;
+                }
+            }
+
+            //shoot left and right raycast only if middle raycast didn't detect anything
+            tempPos.x = bodyCollider.bounds.min.x;
+            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+
+            foreach (RaycastHit2D hit in hits){
+                if (!hit.collider.isTrigger && (hit.normal == downNormal)){
+                    return true;
+                }
+            }
+
+            tempPos.x = bodyCollider.bounds.max.x;
+            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+
+            foreach (RaycastHit2D hit in hits){
+                if (!hit.collider.isTrigger && (hit.normal == downNormal)){
+                    return true;
+                }
+            }
         }
 
         return false;
@@ -491,6 +553,103 @@ public class Player : NetworkComponent {
         return false;
     }
 
+    private bool CheckForRopes(){
+        if (IsServer){
+            //UP
+            Vector2 tempPos = new Vector2(bodyCollider.bounds.center.x, bodyCollider.bounds.max.y + COLLISION_RAYCAST_LENGTH);
+            RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.up, COLLISION_RAYCAST_LENGTH, ~0);
+
+            foreach (RaycastHit2D hit in hits){
+                if (hit.collider.isTrigger && (hit.normal == downNormal) && hit.collider.gameObject.name.Contains("Rope")){
+                    currentRope = hit.collider.gameObject.GetComponentInParent<Rope>();
+                    return true;
+                }
+            }
+
+            //shoot left and right raycast only if middle raycast didn't detect anything
+            tempPos.x = bodyCollider.bounds.min.x;
+            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+
+            foreach (RaycastHit2D hit in hits){
+                if (hit.collider.isTrigger && (hit.normal == downNormal) && hit.collider.gameObject.name.Contains("Rope")){
+                    currentRope = hit.collider.gameObject.GetComponentInParent<Rope>();
+                    return true;
+                }
+            }
+
+            tempPos.x = bodyCollider.bounds.max.x;
+            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+
+            foreach (RaycastHit2D hit in hits){
+                if (hit.collider.isTrigger && (hit.normal == downNormal) && hit.collider.gameObject.name.Contains("Rope")){
+                    currentRope = hit.collider.gameObject.GetComponentInParent<Rope>();
+                    return true;
+                }
+            }
+            
+
+            //DOWN
+            tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y - COLLISION_RAYCAST_LENGTH);
+            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+
+            foreach (RaycastHit2D hit in hits){
+                if (hit.collider.isTrigger && (hit.normal == upNormal) && hit.collider.gameObject.name.Contains("Rope")){
+                    currentRope = hit.collider.gameObject.GetComponentInParent<Rope>();
+                    return true;
+                }
+            }
+
+            tempPos.x = feetCollider.bounds.min.x;
+            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+
+            foreach (RaycastHit2D hit in hits){
+                if (hit.collider.isTrigger && (hit.normal == upNormal) && hit.collider.gameObject.name.Contains("Rope")){
+                    currentRope = hit.collider.gameObject.GetComponentInParent<Rope>();
+                    return true;
+                }
+            }
+
+            tempPos.x = feetCollider.bounds.max.x;
+            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+
+            foreach (RaycastHit2D hit in hits){
+                if (hit.collider.isTrigger && (hit.normal == upNormal) && hit.collider.gameObject.name.Contains("Rope")){
+                    currentRope = hit.collider.gameObject.GetComponentInParent<Rope>();
+                    return true;
+                }
+            }
+    
+
+            //LEFT
+            tempPos = new Vector2(bodyCollider.bounds.min.x - COLLISION_RAYCAST_LENGTH, bodyCollider.bounds.center.y);
+            hits = Physics2D.RaycastAll(tempPos, Vector2.left, WALL_COLLISION_RAYCAST_LENGTH, ~0);
+
+            foreach (RaycastHit2D hit in hits){
+                if (hit.collider.isTrigger && (hit.normal == (Vector2)rightNormal) && hit.collider.gameObject.name.Contains("Rope")){
+                    currentRope = hit.collider.gameObject.GetComponentInParent<Rope>();   
+                    return true;
+                }
+            }
+            
+
+            //RIGHT
+            tempPos = new Vector2(bodyCollider.bounds.max.x + COLLISION_RAYCAST_LENGTH, bodyCollider.bounds.center.y);
+            hits = Physics2D.RaycastAll(tempPos, Vector2.right, WALL_COLLISION_RAYCAST_LENGTH, ~0);
+
+            foreach (RaycastHit2D hit in hits){
+                if (hit.collider.isTrigger && (hit.normal == leftNormal) && hit.collider.gameObject.name.Contains("Rope")){
+                    currentRope = hit.collider.gameObject.GetComponentInParent<Rope>();
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    //We may need to do this differently in the future for performance reasons, but if we want to actually handle collisions in Update(), we need
+    //different methods for checking side to side colliders vs triggers
+
     //!You must be in scene view for this to show up
     private void DrawDebugNormal(Vector2 pos, Vector2 unitVector, float length, bool makeLargeForVisibility = true){
         if (makeLargeForVisibility){
@@ -521,7 +680,24 @@ public class Player : NetworkComponent {
     }
 
     private bool InTheAir(){
-        return (IsJumping() || IsFallingInTheAir());
+        return (IsJumping() || IsFallingInTheAir() || IsLaunching());
+    }
+
+    private bool IsClimbing(){
+        return (currentMovementState == movementState.CLIMBING);
+    }
+
+    private bool IsSwinging(){
+        return (currentMovementState == movementState.SWINGING);
+    }
+
+    private bool IsLaunching(){
+        return (currentMovementState == movementState.LAUNCHING);
+    }
+
+    //add to this if we add any trigger movement states
+    private bool InSpecialMovementState(){
+        return (IsClimbing() || IsSwinging() || IsLaunching());
     }
 
     public void MoveAction(InputAction.CallbackContext context){
@@ -532,7 +708,7 @@ public class Player : NetworkComponent {
             }else if (context.canceled){
                 moveInput = Vector2.zero;
                 SendCommand("MOVE", moveInput.ToString());
-            }
+            }            
         }
     }
 
@@ -562,6 +738,10 @@ public class Player : NetworkComponent {
         onWall = false;
         onWallWithoutJumpPressed = false;
         wallJumpPressed = false;
+    }
+
+    private void RopeVariableCleanup(){
+        ropeLaunchVec = Vector2.zero;
     }
 
     //only gets called on server
@@ -595,6 +775,13 @@ public class Player : NetworkComponent {
         rigidbody.velocity = new Vector2(rigidbody.velocity.x, verticalVelocity);
     }
 
+    private IEnumerator GrabCooldown(float seconds)
+    {
+        yield return new WaitForSeconds(seconds);        
+        
+        canGrabRope = true;        
+    }
+
     public override IEnumerator SlowUpdate(){
         while (IsConnected){
             if (IsServer){
@@ -603,7 +790,8 @@ public class Player : NetworkComponent {
                     SendUpdate("IS_FACING_RIGHT", isFacingRight.ToString());
                     SendUpdate("HOLDING_RUN", holdingRun.ToString());
                     SendUpdate("CURRENT_MOVEMENT_STATE", MovementStateToString(currentMovementState));
-                    SendUpdate("SELECTED_CHARACTER_CLASS", CharacterClassToString(selectedCharacterClass));
+                    SendUpdate("SELECTED_CHARACTER_CLASS", CharacterClassToString(selectedCharacterClass)); 
+                    //SendUpdate("NAME", Pname);
                     
                     IsDirty = false;
                 }
@@ -637,6 +825,42 @@ public class Player : NetworkComponent {
 
 
         if (IsServer){
+            //can't bypass jumping code cause we need gravity to work to be bypassed by special movement states
+            if (canGrabRope && CheckForRopes()){
+                if (currentRope != null){
+                    canGrabRope = false;
+                    currentRope.GrabRope(this);
+                    currentMovementState = movementState.SWINGING;
+                }
+            }
+
+            //Rope Swinging
+            if (IsSwinging()){
+                if (jumpPressed){
+                    //canGrabRope = false;
+                    currentRope.BoostPlayer(this);
+                    currentMovementState = movementState.LAUNCHING;
+                    currentRope.playerPresent = false;
+                    currentRope = null;
+                    StartCoroutine(GrabCooldown(1f));
+                }else{
+                    //don't worry about horizontal movement cause it's already taken care of in the rope script
+                    rigidbody.velocity = (swingPos.position - transform.position) * currentRope.swingSnapMult;
+                }
+
+                return;
+            }
+
+            if (IsLaunching() && (verticalVelocity < 0f)){
+                currentMovementState = movementState.FAST_FALLING;
+            }
+
+
+            if (IsClimbing()){
+                
+            }
+
+
             //Jumping
             jumpBufferTimer -= Time.deltaTime;
 
@@ -726,18 +950,20 @@ public class Player : NetworkComponent {
                 currentMovementState = movementState.FAST_FALLING;
             }
 
-            bool justLanded = ((IsJumping() || IsFallingInTheAir()) && onGround && (verticalVelocity <= 0f));
+            bool justLanded = (InTheAir() && onGround && (verticalVelocity <= 0f));
             if (justLanded){
                 currentMovementState = movementState.GROUND;
                 JumpVariableCleanup();
+                RopeVariableCleanup();
             }
 
-
+            #region VerticalVelocity
             //Vertical Velocity
-            
-
-            if (IsJumping()){
-                //! If we want our air movement to feel more floaty, we'll probably want to comment this out. This is a question for Mr. Game Design
+            //!For rope launching, we may want to add IsLaunching() to the if statement
+            if (InTheAir()/*IsJumping()*/){
+                //!If we want our air movement to feel more floaty, we'll probably want to comment this out. This is a question for Mr. Game Design
+                //!This also isn't working as intended, since there's still some time from when you bump your head to when you actually start
+                //!falling
                 if (CheckForCeiling()){
                     currentMovementState = movementState.FAST_FALLING;
                 }
@@ -769,7 +995,7 @@ public class Player : NetworkComponent {
             }
 
             if (!onGround && !IsJumping()){
-                if (!IsFallingInTheAir()){
+                if (!IsFallingInTheAir() && !InSpecialMovementState()){
                     currentMovementState = movementState.FALLING;
                 }
 
@@ -778,8 +1004,10 @@ public class Player : NetworkComponent {
 
             verticalVelocity = Mathf.Clamp(verticalVelocity, -MAX_FALL_SPEED, 50f);
             rigidbody.velocity = new Vector2(rigidbody.velocity.x, verticalVelocity);
+            #endregion
 
 
+            #region HorizontalVelocity
             //Horizontal Velocity! You MUST set it here!
             if (inWallJump){
                 if (wallJumpTimer > 0f){
@@ -802,10 +1030,30 @@ public class Player : NetworkComponent {
                 return;
             }
 
-            if (onGround){
+            if (IsLaunching()){
+                float newXVel = rigidbody.velocity.x;
+                newXVel += moveInput.x * Time.deltaTime * launchCorrectionSpeed;
+                if (moveInput.x == 0)
+                    newXVel *= 1 - (Time.deltaTime * airSlowdownMult);
+
+                if (Mathf.Abs(newXVel) < Mathf.Abs(ropeLaunchVec.x))
+                    ropeLaunchVec.x = newXVel;
+
+                //!if this is too slow, change MAX_WALK_SPEED to a const with a higher value
+                float allowedXSpeed = Mathf.Max(Mathf.Abs(ropeLaunchVec.x), MAX_LAUNCH_SPEED);
+                newXVel = Mathf.Clamp(newXVel, -Mathf.Abs(allowedXSpeed), Mathf.Abs(allowedXSpeed));
+
+                rigidbody.velocity = new Vector2(newXVel, rigidbody.velocity.y);
+
+                return;
+            }
+
+            if (onGround && !InSpecialMovementState()){
                 currentMovementState = movementState.GROUND;
                 JumpVariableCleanup();
             }
+
+            
 
             float currentAcceleration = (IsGrounded() ? GROUND_ACCELERATION : AIR_ACCELERATION);
             float currentDeceleration = (IsGrounded() ? GROUND_DECELERATION : AIR_DECELERATION);
@@ -823,6 +1071,7 @@ public class Player : NetworkComponent {
                 moveVelocity = Vector2.Lerp(moveVelocity, Vector2.zero, currentDeceleration * Time.deltaTime);
                 rigidbody.velocity = new Vector2(moveVelocity.x, rigidbody.velocity.y);
             }
+            #endregion
         }
     }
 }

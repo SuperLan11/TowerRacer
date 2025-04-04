@@ -109,7 +109,7 @@ public class PlayerController : Character
             {
                 canGrabRope = false;
                 state = "LAUNCHING";
-                grabbedRope.BoostPlayer(this);
+                //grabbedRope.BoostPlayer(this);
                 grabbedRope.playerPresent = false;
                 grabbedRope = null;
                 StartCoroutine(GrabCooldown(1f));
@@ -302,7 +302,7 @@ public class PlayerController : Character
             if (collision.gameObject.name.Contains("Rope") && canGrabRope)
             {
                 //using a wrapper so all rope variables can be modified on the rope script
-                collision.gameObject.GetComponentInParent<Rope>().GrabRope(this);
+                //collision.gameObject.GetComponentInParent<Rope>().GrabRope(this);
                 state = "SWINGING";
             }            
         }
