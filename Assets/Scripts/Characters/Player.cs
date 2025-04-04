@@ -197,7 +197,6 @@ public class Player : Character {
             }
         }else if (flag == "MOVEMENT_ABILITY_PRESSED"){
             movementAbilityPressed = bool.Parse(value);
-            Debug.Log(movementAbilityPressed);
 
             if (IsServer){
                 SendUpdate("MOVEMENT_ABILITY_PRESSED", value);
@@ -979,7 +978,6 @@ public class Player : Character {
             }
 
             if (movementAbilityPressed && !inMovementAbilityCooldown){
-                Debug.Log("this happens");
                 //at least for right now, the only way to double jump is going to be to hit jump twice
                 if (selectedCharacterClass == characterClass.MAGE){
                     currentMovementState = movementState.DASHING;
@@ -988,7 +986,8 @@ public class Player : Character {
                     Vector2 dashVelocity;
                     float xDirection = 0f, yDirection = 0f;
 
-                    if (moveInput == Vector2.zero){
+                    bool noInput = (moveInput.x > -0.01f && moveInput.x < 0.01f && moveInput.y > -0.01f && moveInput.y < 0.01f);
+                    if (noInput){
                         xDirection = (isFacingRight ? 1f : -1f);
                         yDirection = 0f;
                         
