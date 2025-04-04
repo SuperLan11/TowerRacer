@@ -166,22 +166,13 @@ MonoBehaviour:
   speed: 0
   myRig: {fileID: 0}
   currentMovementState: 0
-  selectedCharacterClass: 2
+  selectedCharacterClass: 1
   groundLayer:
     serializedVersion: 2
     m_Bits: 0
   feetCollider: {fileID: 2941317128191888691}
   bodyCollider: {fileID: 4394980080252175982}
   rigidbody: {fileID: 0}
-  jumpAction:
-    m_Name: Jump
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: 02483bf5-935a-4b30-b524-56bb667746fb
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings: []
-    m_Flags: 0
   MAX_JUMPS: 1
   swingPosHeight: 0
   ropeLaunchVec: {x: 0, y: 0}
@@ -335,6 +326,22 @@ MonoBehaviour:
       m_Calls: []
     m_ActionId: 9f6221bc-17bd-43dc-9ede-68ff13e16078
     m_ActionName: PlayerActions/AimClick[/Mouse/leftButton]
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 798786563735217055}
+        m_TargetAssemblyTypeName: Player, Assembly-CSharp
+        m_MethodName: MovementAbilityAction
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: f45322e1-f1a6-490b-8932-10c7d2031e34
+    m_ActionName: PlayerActions/MoveAbility[/Keyboard/i]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: PlayerActions
