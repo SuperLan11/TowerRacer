@@ -136,13 +136,10 @@ public class Player : Character {
     private float wallJumpTimer;
     private float wallsTimer;
 
+/*
     private bool inJankJumpCooldown = false;
     private const int MAX_JANK_JUMP_COOLDOWN = 1;
-    private int jankJumpCooldown;
-
-    // private Coroutine jumpCancelCoroutine;
-    // private const float RELEASE_TOLERANCE = 0.1f;
-    // private const float CANCEL_DELAY = 0.1f;
+    private int jankJumpCooldown;*/
 
     private Vector2 upNormal = new Vector2(0, 1f);    
     private Vector2 downNormal = new Vector2(0, -1f); 
@@ -189,7 +186,7 @@ public class Player : Character {
             jumpReleased = false;
             
             if (IsServer){
-                inJankJumpCooldown = true;
+                //inJankJumpCooldown = true;
                 // StartCoroutine(JumpCooldown());
                 SendUpdate("JUMP_PRESSED", "GoodMorning");
             }
@@ -200,9 +197,11 @@ public class Player : Character {
                 SendUpdate("JUMP_HELD", "GoodMorning");
             }
         }else if (flag == "JUMP_RELEASED"){
+            /*
             if (IsServer && inJankJumpCooldown){
                 return;
             }
+            */
             
             Debug.Log("jump has been released");
             jumpPressed = false;
@@ -330,9 +329,9 @@ public class Player : Character {
     public override void NetworkedStart(){
         CalculateInitialConditions();
 
-        if (IsServer){
-            jankJumpCooldown = MAX_JANK_JUMP_COOLDOWN;
-        }
+        // if (IsServer){
+        //     jankJumpCooldown = MAX_JANK_JUMP_COOLDOWN;
+        // }
         
         isFacingRight = true;
         //!WE ARE NOT USING SPEED ON THE PLAYER!!!!!!
@@ -973,15 +972,15 @@ public class Player : Character {
             bool onGround = CheckForGround();
 
             //prevents context.canceled from being called too early and stopping double jumps
-            if (inJankJumpCooldown){
-                if (jankJumpCooldown > 0){
-                    jankJumpCooldown--;
-                }
-                else{
-                    jankJumpCooldown = MAX_JANK_JUMP_COOLDOWN;
-                    inJankJumpCooldown = false;
-                }
-            }
+            // if (inJankJumpCooldown){
+            //     if (jankJumpCooldown > 0){
+            //         jankJumpCooldown--;
+            //     }
+            //     else{
+            //         jankJumpCooldown = MAX_JANK_JUMP_COOLDOWN;
+            //         inJankJumpCooldown = false;
+            //     }
+            // }
             
             #region SpecialCases
             //can't bypass jumping code cause we need gravity to work to be bypassed by special movement states
@@ -1168,6 +1167,7 @@ public class Player : Character {
                 //force it to reset cause Unity's input system is a piece of dogcrap, and otherwise it'll infintely jump
                 jumpPressed = false;
                 jumpReleased = true;
+                SendCommand("JUMP_RELEASED", "GoodMorning");
             }
             #endregion
 
