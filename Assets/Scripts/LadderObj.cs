@@ -7,25 +7,11 @@ using UnityEngine.Tilemaps;
 public class LadderObj : NetworkComponent
 {
 	public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
-	public PlayerController attachedPlayer = null;
+	public Player attachedPlayer = null;
 	public float ladderSpeed;
 
 	public override void HandleMessage(string flag, string value)
 	{
-		if(flag == "NOGRAVITY")
-        {
-			if(IsClient)
-            {
-				GameObject.Find(value).GetComponent<PlayerController>().myRig.gravityScale = 0f;
-			}
-        }
-		else if(flag == "GRAVITY")
-        {
-			if (IsClient)
-			{				
-				GameObject.Find(value).GetComponent<PlayerController>().myRig.gravityScale = 1f;
-			}
-		}
 		if (flag == "DEBUG")
 		{
 			Debug.Log(value);
@@ -66,24 +52,24 @@ public class LadderObj : NetworkComponent
     {
 		if (IsServer)
 		{			
-			PlayerController player = collision.gameObject.GetComponentInParent<PlayerController>();
-			bool touchingPlayer = player != null;
 			
-			if (touchingPlayer && !player.onLadder && (player.holdingDir == "up" || player.holdingDir == "down"))
-			{
-				Vector2 grabPos = transform.position;
-				grabPos.y = player.transform.position.y;
-				player.state = "LADDER";
-				player.grabbedLadder = this;
+		}
+    }
+
+	public void InitializeLadderVariables(Player p){
+		if (IsServer){
+			Player player = p;
+			bool touchingPlayer = (player != null);
+			
+			if (touchingPlayer){
+				Vector2 grabPos = new Vector2(GetComponent<BoxCollider2D>().bounds.center.x, player.transform.position.y);
+				player.currentLadder = this;
 				attachedPlayer = player;
 
 				player.transform.position = grabPos;
-				player.onLadder = true;
-				player.myRig.gravityScale = 0f;
-				SendUpdate("NOGRAVITY", player.name.ToString());
 			}
 		}
-    }
+	}
 
     private void OnTriggerExit2D(Collider2D collision)
     {

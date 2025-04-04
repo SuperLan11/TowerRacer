@@ -63,7 +63,7 @@ public class Player : Character {
     [SerializeField] private BoxCollider2D feetCollider;
     [SerializeField] private BoxCollider2D bodyCollider;
     [System.NonSerialized] public Rope currentRope = null;
-    private LadderObj currentLadder = null;
+    [System.NonSerialized] public LadderObj currentLadder = null;
     //we may want to eventually use the rigidbody variable in Character.cs, although ain't no way we're keeping the name as "myRig"
     public Rigidbody2D rigidbody;
     
@@ -553,6 +553,8 @@ public class Player : Character {
         return false;
     }
 
+    //At some point we may want to convert this to a general CheckForTriggers() function that takes in different parameters, and depending
+    //on the parameter assigns currentRope, currentLadder, etc
     private bool CheckForRopes(){
         if (IsServer){
             //UP
@@ -647,6 +649,100 @@ public class Player : Character {
         return false;
     }
 
+    private bool CheckForLadders(){
+        if (IsServer){
+            //UP
+            Vector2 tempPos = new Vector2(bodyCollider.bounds.center.x, bodyCollider.bounds.max.y + COLLISION_RAYCAST_LENGTH);
+            RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.up, COLLISION_RAYCAST_LENGTH, ~0);
+
+            foreach (RaycastHit2D hit in hits){
+                if (hit.collider.isTrigger && (hit.normal == downNormal) && hit.collider.gameObject.name.Contains("Ladder")){
+                    currentLadder = hit.collider.gameObject.GetComponentInParent<LadderObj>();
+                    return true;
+                }
+            }
+
+            //shoot left and right raycast only if middle raycast didn't detect anything
+            tempPos.x = bodyCollider.bounds.min.x;
+            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+
+            foreach (RaycastHit2D hit in hits){
+                if (hit.collider.isTrigger && (hit.normal == downNormal) && hit.collider.gameObject.name.Contains("Ladder")){
+                    currentLadder = hit.collider.gameObject.GetComponentInParent<LadderObj>();
+                    return true;
+                }
+            }
+
+            tempPos.x = bodyCollider.bounds.max.x;
+            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+
+            foreach (RaycastHit2D hit in hits){
+                if (hit.collider.isTrigger && (hit.normal == downNormal) && hit.collider.gameObject.name.Contains("Ladder")){
+                    currentLadder = hit.collider.gameObject.GetComponentInParent<LadderObj>();
+                    return true;
+                }
+            }
+            
+
+            //DOWN
+            tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y - COLLISION_RAYCAST_LENGTH);
+            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+
+            foreach (RaycastHit2D hit in hits){
+                if (hit.collider.isTrigger && (hit.normal == upNormal) && hit.collider.gameObject.name.Contains("Ladder")){
+                    currentLadder = hit.collider.gameObject.GetComponentInParent<LadderObj>();
+                    return true;
+                }
+            }
+
+            tempPos.x = feetCollider.bounds.min.x;
+            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+
+            foreach (RaycastHit2D hit in hits){
+                if (hit.collider.isTrigger && (hit.normal == upNormal) && hit.collider.gameObject.name.Contains("Ladder")){
+                    currentLadder = hit.collider.gameObject.GetComponentInParent<LadderObj>();
+                    return true;
+                }
+            }
+
+            tempPos.x = feetCollider.bounds.max.x;
+            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+
+            foreach (RaycastHit2D hit in hits){
+                if (hit.collider.isTrigger && (hit.normal == upNormal) && hit.collider.gameObject.name.Contains("Ladder")){
+                    currentLadder = hit.collider.gameObject.GetComponentInParent<LadderObj>();
+                    return true;
+                }
+            }
+    
+
+            //LEFT
+            tempPos = new Vector2(bodyCollider.bounds.min.x - COLLISION_RAYCAST_LENGTH, bodyCollider.bounds.center.y);
+            hits = Physics2D.RaycastAll(tempPos, Vector2.left, WALL_COLLISION_RAYCAST_LENGTH, ~0);
+
+            foreach (RaycastHit2D hit in hits){
+                if (hit.collider.isTrigger && (hit.normal == (Vector2)rightNormal) && hit.collider.gameObject.name.Contains("Ladder")){
+                    currentLadder = hit.collider.gameObject.GetComponentInParent<LadderObj>();   
+                    return true;
+                }
+            }
+            
+
+            //RIGHT
+            tempPos = new Vector2(bodyCollider.bounds.max.x + COLLISION_RAYCAST_LENGTH, bodyCollider.bounds.center.y);
+            hits = Physics2D.RaycastAll(tempPos, Vector2.right, WALL_COLLISION_RAYCAST_LENGTH, ~0);
+
+            foreach (RaycastHit2D hit in hits){
+                if (hit.collider.isTrigger && (hit.normal == leftNormal) && hit.collider.gameObject.name.Contains("Ladder")){
+                    currentLadder = hit.collider.gameObject.GetComponentInParent<LadderObj>();
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     //We may need to do this differently in the future for performance reasons, but if we want to actually handle collisions in Update(), we need
     //different methods for checking side to side colliders vs triggers
 
@@ -659,44 +755,44 @@ public class Player : Character {
         Debug.DrawRay(pos, unitVector * length, Color.red);
     }
 
-    private bool IsGrounded(){
+    public bool IsGrounded(){
         return (currentMovementState == movementState.GROUND);
     }
 
-    private bool IsJumping(){
+    public bool IsJumping(){
         return (currentMovementState == movementState.JUMPING);
     }
 
-    private bool IsFalling(){
+    public bool IsFalling(){
         return (currentMovementState == movementState.FALLING);
     }
 
-    private bool IsFastFalling(){
+    public bool IsFastFalling(){
         return (currentMovementState == movementState.FAST_FALLING);
     }
 
-    private bool IsFallingInTheAir(){
+    public bool IsFallingInTheAir(){
         return (IsFalling() || IsFastFalling());
     }
 
-    private bool InTheAir(){
+    public bool InTheAir(){
         return (IsJumping() || IsFallingInTheAir() || IsLaunching());
     }
 
-    private bool IsClimbing(){
+    public bool IsClimbing(){
         return (currentMovementState == movementState.CLIMBING);
     }
 
-    private bool IsSwinging(){
+    public bool IsSwinging(){
         return (currentMovementState == movementState.SWINGING);
     }
 
-    private bool IsLaunching(){
+    public bool IsLaunching(){
         return (currentMovementState == movementState.LAUNCHING);
     }
 
     //add to this if we add any trigger movement states
-    private bool InSpecialMovementState(){
+    public bool InSpecialMovementState(){
         return (IsClimbing() || IsSwinging() || IsLaunching());
     }
 
@@ -825,12 +921,23 @@ public class Player : Character {
 
 
         if (IsServer){
+            bool onGround = CheckForGround();
+            
             //can't bypass jumping code cause we need gravity to work to be bypassed by special movement states
             if (canGrabRope && CheckForRopes()){
                 if (currentRope != null){
                     canGrabRope = false;
                     currentRope.GrabRope(this);
                     currentMovementState = movementState.SWINGING;
+                }
+            }
+
+            //!We're going to want to rethink how we handle ladders so that it's smooth
+            if (CheckForLadders()){
+                bool pressingUpOrDown = (moveInput.y > 0f || moveInput.y < 0f);
+                if ((currentLadder != null) && pressingUpOrDown && !IsClimbing()){
+                    currentLadder.InitializeLadderVariables(this);
+                    currentMovementState = movementState.CLIMBING;
                 }
             }
 
@@ -857,14 +964,48 @@ public class Player : Character {
 
 
             if (IsClimbing()){
+                //ik this is copy paste from the jumping code, but idk a different way to do this that doesn't involve returning out of Update()
+                //at specific points
+                bool ladderJump = (jumpPressed && IsClimbing());
+                if (ladderJump){
+                    InitiateJump(1);
+
+                    if (jumpReleasedDuringBuffer){
+                        currentMovementState = movementState.FAST_FALLING;
+                        fastFallReleaseSpeed = verticalVelocity;
+                    }
+                }
                 
+
+                if (moveInput.y > 0f){
+                    rigidbody.velocity = new Vector2(0, currentLadder.ladderSpeed);
+                }
+                else if (moveInput.y < 0f){
+                    if (onGround){
+                        currentMovementState = movementState.GROUND;
+                    }else{
+                        rigidbody.velocity = new Vector2(0, -currentLadder.ladderSpeed);
+                    }
+                }
+                else{
+                    rigidbody.velocity = Vector2.zero;
+                }
+
+                bool aboveLadder = (feetCollider.bounds.min.y > currentLadder.GetComponent<Collider2D>().bounds.max.y); 
+                if (aboveLadder){
+                    currentMovementState = movementState.GROUND;                  
+                    rigidbody.velocity = Vector2.zero;
+                    currentLadder.attachedPlayer = null;
+                    currentLadder = null;                    
+                    verticalVelocity = 0f;
+                }
+                
+                return;
             }
 
 
             //Jumping
             jumpBufferTimer -= Time.deltaTime;
-
-            bool onGround = CheckForGround();
 
             if (!onGround){
                 coyoteTimer -= Time.deltaTime;
