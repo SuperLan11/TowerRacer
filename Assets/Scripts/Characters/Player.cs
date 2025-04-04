@@ -38,7 +38,7 @@ public class Player : Character {
     private bool jumpPressed = false;
     private bool jumpReleased = false;
 
-    private bool usingMovementAbility = false;
+    private bool movementAbilityPressed = false;
 
     //I doubt we'll want run button in our game, but it's here just in case
     private bool holdingRun = false;
@@ -59,7 +59,6 @@ public class Player : Character {
     [System.NonSerialized] public LadderObj currentLadder = null;
     //we may want to eventually use the rigidbody variable in Character.cs, although ain't no way we're keeping the name as "myRig"
     public Rigidbody2D rigidbody;
-    [SerializeField] private InputAction jumpAction;
     
     [System.NonSerialized] public const float MAX_WALK_SPEED = 12.5f;
     private const float GROUND_ACCELERATION = 5f, GROUND_DECELERATION = 20f;
@@ -83,6 +82,11 @@ public class Player : Character {
     public int MAX_JUMPS = 1;
     private const int MAX_WALL_JUMPS = 1;
     private const float WALL_JUMP_HORIZONTAL_BOOST = 15f;
+
+    [SerializeField] private bool inMovementAbilityCooldown = false;
+    private float dashSpeed;
+    private float dashTimer;
+    private const float MAX_DASH_TIME = 0.5f;
 
 
 
@@ -133,6 +137,9 @@ public class Player : Character {
     private float wallJumpTimer;
     private float wallsTimer;
 
+    [SerializeField] private float movementAbilityCooldownTimer;
+    [SerializeField] private float MAX_MOVEMENT_ABILITY_COOLDOWN;
+
 
     private Vector2 upNormal = new Vector2(0, 1f);    
     private Vector2 downNormal = new Vector2(0, -1f); 
@@ -144,12 +151,13 @@ public class Player : Character {
     private enum movementState
     {
             GROUND,
-            JUMPING,    //!jumping means you are in the air with the jump button pressed or held down
+            JUMPING,    //!jumping means you are in the air with the jump button pressed
             FALLING,
             FAST_FALLING,  
             SWINGING,   //trigger
             LAUNCHING,  //trigger
-            CLIMBING    //trigger
+            CLIMBING,   //trigger
+            DASHING,    //abiliy
     };
 
     private enum characterClass
@@ -187,11 +195,12 @@ public class Player : Character {
             if (IsServer){
                 SendUpdate("JUMP_RELEASED", "GoodMorning");
             }
-        }else if (flag == "MOVEMENT_ABILITY"){
-            usingMovementAbility = bool.Parse(value);
+        }else if (flag == "MOVEMENT_ABILITY_PRESSED"){
+            movementAbilityPressed = bool.Parse(value);
+            Debug.Log(movementAbilityPressed);
 
             if (IsServer){
-                SendUpdate("MOVEMENT_ABILITY", value);
+                SendUpdate("MOVEMENT_ABILITY_PRESSED", value);
             }
         }else if (flag == "IS_FACING_RIGHT"){
             isFacingRight = bool.Parse(value);
@@ -220,6 +229,9 @@ public class Player : Character {
                     break;
                 case "CLIMBING":
                     currentMovementState = movementState.CLIMBING;
+                    break;
+                case "DASHING":
+                    currentMovementState = movementState.DASHING;
                     break;
             }
         }else if (flag == "SELECTED_CHARACTER_CLASS"){
@@ -282,6 +294,8 @@ public class Player : Character {
                 return "LAUNCHING";
             case movementState.CLIMBING:
                 return "CLIMBING";
+            case movementState.DASHING:
+                return "DASHING";
             default:
                 return "GROUND";
         }
@@ -304,16 +318,31 @@ public class Player : Character {
 
     public override void NetworkedStart(){
         CalculateInitialConditions();
+        dashSpeed = initialJumpVelocity * 2f;
         
         isFacingRight = true;
         //!WE ARE NOT USING SPEED ON THE PLAYER!!!!!!
         speed = -9000000;
         myRig = null;
 
-        //why 3 jumps for a double jump? Cause Unity can't do something as simple as make a functional input system. Set this to 2 at your own
-        //peril
-        if (selectedCharacterClass == characterClass.BANDIT){
-            MAX_JUMPS = 3;
+        switch(selectedCharacterClass){
+            case characterClass.ARCHER:
+                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 20f;
+                break;
+            case characterClass.MAGE:
+                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 5f;
+                break;
+            //why 3 jumps for a double jump? Cause Unity can't do something as simple as make a functional input system. Set this to 2 at your own
+            //peril
+            case characterClass.BANDIT:
+                MAX_JUMPS = 3;
+                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 0.0001f;
+                //maybe increase movement speed as well?
+                break;
+            case characterClass.KNIGHT:
+                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 2f;
+                break;
+            
         }
         
         if (!GameManager.debugMode){
@@ -791,10 +820,19 @@ public class Player : Character {
         return (currentMovementState == movementState.LAUNCHING);
     }
 
+    public bool IsDashing(){
+        return (currentMovementState == movementState.DASHING);
+    }
+
     //add to this if we add any trigger movement states
     public bool InSpecialMovementState(){
         return (IsClimbing() || IsSwinging() || IsLaunching());
     }
+
+    /*
+    public bool IsInMovementAbilityState(){
+        return ((IsJumping() && (numJumpsUsed == MAX_JUMPS)) || IsDashing());
+    }*/
 
     public void MoveAction(InputAction.CallbackContext context){
         if (IsLocalPlayer){
@@ -822,9 +860,9 @@ public class Player : Character {
     public void MovementAbilityAction(InputAction.CallbackContext context){
         if (IsLocalPlayer){
             if (context.started || context.performed){
-                SendCommand("MOVEMENT_ABILITY", true.ToString());
+                SendCommand("MOVEMENT_ABILITY_PRESSED", true.ToString());
             }else if (context.canceled){
-                SendCommand("MOVEMENT_ABIILITY", false.ToString());
+                SendCommand("MOVEMENT_ABILITY_PRESSED", false.ToString());
             }
         }
     }
@@ -892,7 +930,8 @@ public class Player : Character {
                     SendUpdate("IS_FACING_RIGHT", isFacingRight.ToString());
                     SendUpdate("HOLDING_RUN", holdingRun.ToString());
                     SendUpdate("CURRENT_MOVEMENT_STATE", MovementStateToString(currentMovementState));
-                    SendUpdate("SELECTED_CHARACTER_CLASS", CharacterClassToString(selectedCharacterClass)); 
+                    SendUpdate("SELECTED_CHARACTER_CLASS", CharacterClassToString(selectedCharacterClass));
+                    SendUpdate("MOVEMENT_ABILITY_PRESSED", movementAbilityPressed.ToString()); 
                     //SendUpdate("NAME", Pname);
                     
                     IsDirty = false;
@@ -929,6 +968,69 @@ public class Player : Character {
 
         if (IsServer){
             bool onGround = CheckForGround();
+
+             if (inMovementAbilityCooldown){
+                if (movementAbilityCooldownTimer > 0f){
+                    movementAbilityCooldownTimer -= Time.deltaTime;
+                }else{
+                    movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN;
+                    inMovementAbilityCooldown = false;
+                }
+            }
+
+            if (movementAbilityPressed && !inMovementAbilityCooldown){
+                Debug.Log("this happens");
+                //at least for right now, the only way to double jump is going to be to hit jump twice
+                if (selectedCharacterClass == characterClass.MAGE){
+                    currentMovementState = movementState.DASHING;
+                    dashTimer = MAX_DASH_TIME;
+                    
+                    Vector2 dashVelocity;
+                    float xDirection = 0f, yDirection = 0f;
+
+                    if (moveInput == Vector2.zero){
+                        xDirection = (isFacingRight ? 1f : -1f);
+                        yDirection = 0f;
+                        
+                        dashVelocity = new Vector2(xDirection * dashSpeed, yDirection);
+                        verticalVelocity = dashVelocity.y;
+                        rigidbody.velocity = dashVelocity;
+
+                        inMovementAbilityCooldown = true;
+                        return;
+                    }
+                    
+                    if (moveInput.x > 0.01f){
+                        xDirection = 1f;
+                    }else if (moveInput.x < -0.01f){
+                        xDirection = -1f;
+                    }
+
+                    if (moveInput.y > 0.01f){
+                        yDirection = 1f;
+                    }else if (moveInput.y < -0.01f){
+                        yDirection = -1f;
+                    }
+
+                    TurnCheck();
+
+                    dashVelocity = new Vector2(xDirection * dashSpeed, yDirection * dashSpeed);
+                    verticalVelocity = dashVelocity.y;
+                    rigidbody.velocity = dashVelocity;
+
+                    //bypassing both gravity and horizontal velocity code
+                    inMovementAbilityCooldown = true;
+                    return;
+                }
+
+                //inMovementAbilityCooldown = true;
+            }
+
+            if (!onGround){
+                coyoteTimer -= Time.deltaTime;
+            }else{
+                coyoteTimer = MAX_JUMP_COYOTE_TIME;
+            }
             
 
             #region SPECIAL_CASES
@@ -962,6 +1064,15 @@ public class Player : Character {
                 }
 
                 return;
+            }
+
+            if (IsDashing()){
+                if (dashTimer > 0f){
+                    dashTimer -= Time.deltaTime;
+                }else{
+                    dashTimer = MAX_DASH_TIME;
+                    currentMovementState = movementState.FALLING;
+                }
             }
 
             if (IsLaunching() && (verticalVelocity < 0f)){
