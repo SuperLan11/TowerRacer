@@ -126,11 +126,11 @@ GameObject:
   - component: {fileID: 2578189713980600218}
   - component: {fileID: 5987195443893200600}
   - component: {fileID: 3115436199796182571}
-  - component: {fileID: 8770094780354609834}
   - component: {fileID: 5496633899286058446}
   - component: {fileID: 6659438356313623936}
+  - component: {fileID: 5250811293905700405}
   m_Layer: 0
-  m_Name: Rope
+  m_Name: RopeEdits
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -251,36 +251,6 @@ MonoBehaviour:
   UseLobby: 0
   UpdateFrequency: 0.1
   MyCore: {fileID: 0}
---- !u!114 &8770094780354609834
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1905081651418222142}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9a724dcf1417124409722482fdef9ecc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  MyCore: {fileID: 0}
-  MyId: {fileID: 0}
-  IsDirty: 0
-  pivotRig: {fileID: 0}
-  swingPos: {fileID: 0}
-  playerPresent: 0
-  rope: {fileID: 0}
-  slowdownMult: 2
-  deadzoneLength: 1
-  fallStrength: 0.06
-  playerTorque: 3
-  heightFallInfluence: 0.16
-  initialTorqueMult: 16
-  xJumpForce: 0.08
-  extraYJumpForce: 0.05
-  baseYJumpForce: 4
-  swingSnapMult: 50
-  dirChangeTorque: 6
 --- !u!114 &5496633899286058446
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -346,6 +316,36 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
+--- !u!114 &5250811293905700405
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1905081651418222142}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b202e1c2c73d05b4c87b26bd44744650, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MyCore: {fileID: 0}
+  MyId: {fileID: 0}
+  IsDirty: 0
+  pivotRig: {fileID: 0}
+  swingPos: {fileID: 0}
+  playerPresent: 0
+  rope: {fileID: 0}
+  slowdownMult: 2
+  deadzoneLength: 1
+  fallStrength: 0.06
+  playerTorque: 3
+  heightFallInfluence: 0.16
+  initialTorqueMult: 16
+  xJumpForce: 0.08
+  extraYJumpForce: 0.05
+  baseYJumpForce: 4
+  swingSnapMult: 50
+  dirChangeTorque: 6
 --- !u!1 &3859887289474162826
 GameObject:
   m_ObjectHideFlags: 0

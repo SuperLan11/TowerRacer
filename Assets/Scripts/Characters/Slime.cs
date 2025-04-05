@@ -33,8 +33,8 @@ public class Slime : Enemy
     }    
 
     public override void NetworkedStart()
-    {
-        
+    {        
+        spriteRender.flipX = true;
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -56,6 +56,7 @@ public class Slime : Enemy
         {
             if (IsServer)
             {
+                SendUpdate("FLIP", spriteRender.flipX.ToString());
                 IsDirty = false;
             }
             yield return new WaitForSeconds(0.05f);

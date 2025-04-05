@@ -69,7 +69,7 @@ public class Skeleton : Enemy
         if(IsServer)
         {            
             Player playerHit = collision.gameObject.GetComponentInParent<Player>();
-            Debug.Log("was player hit: " + (playerHit != null));
+            //Debug.Log("was player hit: " + (playerHit != null));
             if (playerHit != null && !playersInRange.Contains(playerHit))
             {
                 if (playersInRange.Count == 0)
@@ -183,8 +183,8 @@ public class Skeleton : Enemy
                 if(canShoot)
                     Shoot();
             }
-            Debug.Log("state: " + state);
-            Debug.Log("playersInRange: " + playersInRange.Count);
+            /*Debug.Log("state: " + state);
+            Debug.Log("playersInRange: " + playersInRange.Count);*/
         }
     }
 }

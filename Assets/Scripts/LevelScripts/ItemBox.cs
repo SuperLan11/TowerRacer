@@ -69,16 +69,24 @@ public class ItemBox : NetworkComponent
 	{
 		itemUI = GameObject.FindGameObjectWithTag("ITEM_UI");
 	}	
+	
+	private bool LocalPlayerHasItem()
+    {		
+		if (itemUI.transform.childCount >= 1)
+			return true;
+		return false;
+    }
 
 	private void OnTriggerEnter2D(Collider2D collision)
     {
+		Player playerHit = collision.GetComponentInParent<Player>();
+		//PlayerController playerHit = collision.GetComponentInParent<PlayerController>();
+
 		if (IsClient)
-		{
-			Player playerHit = collision.GetComponentInParent<Player>();
-			if (playerHit != null && playerHit.IsLocalPlayer)
+		{			
+			if (playerHit != null && playerHit.IsLocalPlayer && !LocalPlayerHasItem())
 			{
-				//int randIdx = Random.Range(0, NUM_ITEMS);				
-				int randIdx = 2;
+				int randIdx = Random.Range(0, NUM_ITEMS);								
 
 				//only spawn the player's item on that player's screen				
 				GameObject itemImage = Instantiate(itemPrefabs[randIdx], itemUI.transform.position, Quaternion.identity);
@@ -93,7 +101,7 @@ public class ItemBox : NetworkComponent
 			}
 		}
 
-		if (IsServer)
+		if (IsServer && playerHit != null)
 		{
 			//wait to destroy item box so that clients can catch up and touch it before it is destroyed
 			// maybe not the cleanest solution, but hopefully it works well enough

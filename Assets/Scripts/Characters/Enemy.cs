@@ -9,6 +9,7 @@ public abstract class Enemy : Character
     protected LayerMask floorLayer;
     protected int dir = 1;
     protected bool raycastingPaused = false;
+    protected Animator anim;
 
     // Start is called before the first frame update
     private void Start()
@@ -18,6 +19,7 @@ public abstract class Enemy : Character
         sprite = spriteRender.sprite;
         players = FindObjectsOfType<Player>();
         floorLayer = LayerMask.GetMask("Floor");
+        anim = GetComponent<Animator>();
 
         if (GetComponent<NetworkRB2D>() != null)
             OTHER_FLAGS = GetComponent<NetworkRB2D>().FLAGS;
@@ -41,7 +43,7 @@ public abstract class Enemy : Character
         if (!floorBelow && dir == 1)
         {
             dir = -1;
-            spriteRender.flipX = true;
+            spriteRender.flipX = !spriteRender.flipX;
             SendUpdate("FLIP", true.ToString());
             StartCoroutine(PauseRaycasting(0.1f));
             //transform.position -= new Vector3(speed / 5, 0, 0);
@@ -49,7 +51,7 @@ public abstract class Enemy : Character
         else if (!floorBelow && dir == -1)
         {
             dir = 1;
-            spriteRender.flipX = false;
+            spriteRender.flipX = !spriteRender.flipX;
             SendUpdate("FLIP", false.ToString());
             StartCoroutine(PauseRaycasting(0.1f));
             //transform.position += new Vector3(speed / 5, 0, 0);

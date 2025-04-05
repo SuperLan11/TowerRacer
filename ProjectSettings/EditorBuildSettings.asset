@@ -12,14 +12,14 @@ EditorBuildSettings:
     path: Assets/Scenes/Menu/WAN_Game.unity
     guid: c5d5bdd17b4ccb94ca08692cbc9af70b
   - enabled: 1
+    path: Assets/Scenes/Dev/Landon/GameStart.unity
+    guid: 07b64541a706fb3418f07d0e57b027ef
+  - enabled: 1
     path: Assets/Scenes/Dev/Patrick/PatrickGameStart.unity
     guid: bc17bb022a65bc146b31bd66228b8c13
   - enabled: 0
     path: Assets/Scenes/Dev/PatrickTesting.unity
     guid: f383b0d1f41e8164fb471950eedf9834
-  - enabled: 0
-    path: Assets/Scenes/Dev/Landon/GameStart.unity
-    guid: 07b64541a706fb3418f07d0e57b027ef
   - enabled: 1
     path: Assets/Scenes/LANFull.unity
     guid: e93f2ee9b78135f43b21084775936d3f

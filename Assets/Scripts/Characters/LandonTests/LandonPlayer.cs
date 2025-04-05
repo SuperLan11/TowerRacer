@@ -1,25 +1,25 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using NETWORK_ENGINE;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 
-public class PlayerController : Character
-{    
+public class LandonPlayer : Character
+{
     //sync vars
-    [System.NonSerialized] public Text PlayerName;    
+    [System.NonSerialized] public Text PlayerName;
     [System.NonSerialized] public int ColorSelected = -1;
     [System.NonSerialized] public string PName = "<Default>";
     [System.NonSerialized] public int CharSelected = -1;
 
     //nonsync vars    
-    [System.NonSerialized] public Rope grabbedRope;    
+    [System.NonSerialized] public Rope grabbedRope;
     private Color[] colors;
 
     private Vector2 lastMoveInput;
     [System.NonSerialized] public string holdingDir = "none";
-    public string state = "NORMAL";
+    [System.NonSerialized] public string state = "NORMAL";
 
     [System.NonSerialized] public Transform swingPos;
     [System.NonSerialized] public Vector2 launchVec = Vector2.zero;
@@ -30,8 +30,8 @@ public class PlayerController : Character
     [System.NonSerialized] public bool onLadder = false;
     //public LadderObj grabbedLadder = null;
     [System.NonSerialized] public LadderTest grabbedLadder = null;
-    [System.NonSerialized] public bool inDismount = false;        
-    
+    [System.NonSerialized] public bool inDismount = false;    
+
     private Vector2 lastAimDir;
     private GameObject arrowPivot;
     private GameObject aimArrow;    
@@ -41,11 +41,12 @@ public class PlayerController : Character
 
     public Sprite[] heroSprites;
 
+
     [SerializeField] private float acceleration = 0.3f;
     [SerializeField] private float launchCorrectionSpeed = 8f;
-    public float jumpStrength = 10f;
+    [SerializeField] public float jumpStrength = 10f;
     [SerializeField] private float airSlowdownMult = 1f;
-    private float arrowSensitivity = 0.2f;
+    [SerializeField] private float arrowSensitivity = 0.2f;
 
 
     public override void HandleMessage(string flag, string value)
@@ -62,7 +63,7 @@ public class PlayerController : Character
                 GetComponent<SpriteRenderer>().sprite = heroSprites[CharSelected];
 
                 //calling a function soon after creating object sometimes runs before Start
-                Start();                
+                Start();
             }
             else if (IsServer)
             {
@@ -104,43 +105,29 @@ public class PlayerController : Character
         }
         else if (flag == "JUMP")
         {
-            if (value == "pressed")
+            //initially called on server
+            if (state == "SWINGING")
             {
-                if (state == "SWINGING")
-                {
-                    canGrabRope = false;
-                    state = "LAUNCHING";
-                    //grabbedRope.BoostPlayer(this);
-                    grabbedRope.playerPresent = false;
-                    grabbedRope = null;
-                    StartCoroutine(GrabCooldown(1f));
-                }
-                else if (state == "LADDER")
-                {
-                    state = "NORMAL";
-                    grabbedLadder = null;
-                    onLadder = false;
+                canGrabRope = false;
+                state = "LAUNCHING";
+                //grabbedRope.BoostPlayer(this);
+                grabbedRope.playerPresent = false;
+                grabbedRope = null;
+                StartCoroutine(GrabCooldown(1f));
+            }
+            else if (state == "LADDER")
+            {
+                state = "NORMAL";
+                grabbedLadder = null;
+                onLadder = false;
+                myRig.velocity += new Vector2(0, jumpStrength);
+            }
+            else
+            {
+                if (isGrounded)
                     myRig.velocity += new Vector2(0, jumpStrength);
-                }
-                else
-                {
-                    if (isGrounded)
-                        myRig.velocity += new Vector2(0, jumpStrength);
-                }
-                isGrounded = false;
             }
-            else if(value == "released")
-            {
-                myRig.velocity = new Vector2(myRig.velocity.x, 0);
-            }
-        }
-        else if(flag == "JUMP_RELEASE")
-        {
-            myRig.velocity = new Vector2(myRig.velocity.x, 0);
-            if (IsServer)
-            {
-                SendUpdate("JUMP_RELEASE", "");
-            }
+            isGrounded = false;
         }
         else if (flag == "GRAVITY")
         {
@@ -176,9 +163,9 @@ public class PlayerController : Character
             {
                 lastAimDir = Vector2FromString(value);
             }
-        }       
-        else if(flag == "HAS_BOMB")
-        {            
+        }
+        else if (flag == "HAS_BOMB")
+        {
             if (IsClient)
             {
                 hasBomb = true;
@@ -190,15 +177,15 @@ public class PlayerController : Character
             {
                 Vector2 bombPos = transform.position;
                 bombPos.y += GetComponent<Collider2D>().bounds.size.y / 2;
-                GameObject bombObj = MyCore.NetCreateObject(14, Owner, bombPos, Quaternion.identity);                
+                GameObject bombObj = MyCore.NetCreateObject(14, Owner, bombPos, Quaternion.identity);
                 Bomb bomb = bombObj.GetComponent<Bomb>();
-                bomb.launchVec = lastAimDir * bomb.launchSpeed;                
+                bomb.launchVec = lastAimDir * bomb.launchSpeed;
                 hasBomb = false;
-            }                        
+            }
         }
-        else if(flag == "DISMOUNT")
+        else if (flag == "DISMOUNT")
         {
-            if(IsClient)
+            if (IsClient)
             {
                 Vector2 dismountPos = Vector2FromString(value);
                 transform.position = dismountPos;
@@ -220,11 +207,11 @@ public class PlayerController : Character
                 SendCommand("DEBUG", flag + " is not a valid flag in " + this.GetType().Name + ".cs");
             }
         }
-    }    
+    }
 
     // Start is called before the first frame update
     private void Start()
-    {
+    {        
         if (GetComponent<NetworkRB2D>() != null)
             OTHER_FLAGS = GetComponent<NetworkRB2D>().FLAGS;
         else if (GetComponentInChildren<NetworkRB2D>() != null)
@@ -237,8 +224,8 @@ public class PlayerController : Character
         arrowPivot = transform.GetChild(0).GetChild(1).gameObject;
         aimArrow = arrowPivot.transform.GetChild(0).gameObject;
         spriteRender = GetComponent<SpriteRenderer>();
-
         myRig = GetComponent<Rigidbody2D>();
+
         colors = new Color[3];
         colors[0] = new Color(255, 0, 0, 255); //red
         colors[1] = new Color(0, 0, 255, 255); //blue
@@ -308,21 +295,21 @@ public class PlayerController : Character
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
-    {               
-        if(IsServer)
+    {
+        if (IsServer)
         {
             if (collision.gameObject.name.Contains("Floor"))
-            {                
+            {
                 isGrounded = true;
                 launchVec = Vector2.zero;
-                state = "NORMAL";                
+                state = "NORMAL";
             }
-            else if(collision.gameObject.tag == "FLOOR")
+            else if (collision.gameObject.tag == "FLOOR")
             {
                 isGrounded = true;
             }
         }
-    }   
+    }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
@@ -333,9 +320,9 @@ public class PlayerController : Character
                 //using a wrapper so all rope variables can be modified on the rope script
                 //collision.gameObject.GetComponentInParent<Rope>().GrabRope(this);
                 state = "SWINGING";
-            }            
+            }
         }
-    }  
+    }
 
     public void Mover(InputAction.CallbackContext mv)
     {
@@ -350,7 +337,7 @@ public class PlayerController : Character
             {
                 lastMoveInput = Vector2.zero;
                 SendCommand("MOVE", lastMoveInput.ToString());
-            }            
+            }
         }
     }
 
@@ -359,12 +346,8 @@ public class PlayerController : Character
         if (IsLocalPlayer)
         {
             if (jp.started)
-            {                
-                SendCommand("JUMP", "pressed");
-            }
-            else if(jp.canceled)
             {
-                SendCommand("JUMP", "released");
+                SendCommand("JUMP", "");
             }
         }
     }
@@ -389,7 +372,7 @@ public class PlayerController : Character
                 arrowPivot.transform.eulerAngles = newRot;
             }
             else if (aim.canceled)
-            {                
+            {
                 SendCommand("SHOOT_BOMB", "");
                 Destroy(itemUI.transform.GetChild(0).gameObject);
                 hasBomb = false;
@@ -397,7 +380,7 @@ public class PlayerController : Character
                 lastAimDir = Vector2.zero;
                 aimArrow.GetComponent<SpriteRenderer>().enabled = false;
                 SendCommand("AIM_STICK", lastAimDir.ToString());
-            }                    
+            }
         }
     }
 
@@ -409,14 +392,14 @@ public class PlayerController : Character
                 return;
 
             if (mc.started)
-            {                
+            {
                 aimArrow.GetComponent<SpriteRenderer>().enabled = true;
                 //arrows points up initially
                 arrowPivot.transform.eulerAngles = new Vector3(0, 0, 180);
                 SendCommand("AIM_MOUSE", Vector3.zero.ToString());
             }
             else if (mc.canceled)
-            {                
+            {
                 aimArrow.GetComponent<SpriteRenderer>().enabled = false;
                 SendCommand("SHOOT_BOMB", "");
                 Destroy(itemUI.transform.GetChild(0).gameObject);
@@ -431,16 +414,16 @@ public class PlayerController : Character
         {
             Vector2 delta = mm.ReadValue<Vector2>();
             if ((mm.started || mm.performed) && hasBomb)
-            {                
+            {
                 Vector3 newArrowRot = arrowPivot.transform.eulerAngles;
                 //minus since rotation is more negative clockwise
-                float potentialNewZ = newArrowRot.z - delta.x * arrowSensitivity;                
-                newArrowRot.z = potentialNewZ;                
+                float potentialNewZ = newArrowRot.z - delta.x * arrowSensitivity;
+                newArrowRot.z = potentialNewZ;
 
-                if(newArrowRot.z > 45 && newArrowRot.z < 315)
+                if (newArrowRot.z > 45 && newArrowRot.z < 315)
                     arrowPivot.transform.eulerAngles = newArrowRot;
 
-                Vector2 aimDir = RotZToDir(arrowPivot.transform.eulerAngles.z);                
+                Vector2 aimDir = RotZToDir(arrowPivot.transform.eulerAngles.z);
                 SendCommand("AIM_MOUSE", aimDir.ToString());
             }
         }
@@ -448,24 +431,24 @@ public class PlayerController : Character
 
     private IEnumerator GrabCooldown(float seconds)
     {
-        yield return new WaitForSeconds(seconds);        
-        canGrabRope = true;        
+        yield return new WaitForSeconds(seconds);
+        canGrabRope = true;
     }
 
     public override IEnumerator SlowUpdate()
     {
-        while(IsConnected)
-        { 
-            if(IsServer)
+        while (IsConnected)
+        {
+            if (IsServer)
             {
-                if(IsDirty)
+                if (IsDirty)
                 {
                     IsDirty = false;
                 }
             }
             yield return new WaitForSeconds(.1f);
         }
-    }   
+    }
 
     // Update is called once per frame
     void Update()
@@ -508,21 +491,24 @@ public class PlayerController : Character
 
                 if (GetComponent<Collider2D>().bounds.min.y >
                     grabbedLadder.GetComponent<Collider2D>().bounds.max.y)
-                { 
-                    state = "NORMAL";                    
+                {
+                    state = "NORMAL";
                     myRig.velocity = Vector2.zero;
                     onLadder = false;
                     grabbedLadder.attachedPlayer = null;
-                    grabbedLadder = null;                    
+                    grabbedLadder = null;
                     myRig.gravityScale = 1f;
                     SendUpdate("GRAVITY", "1");
                 }
             }
-            else if(state == "NORMAL")
-            {                
+            else if (state == "NORMAL")
+            {
+                if (myRig == null)
+                    Debug.LogWarning("myRig is null");
+
                 Vector2 newVel = new Vector2(lastMoveInput.x, 0) * speed + new Vector2(0, myRig.velocity.y);
                 myRig.velocity = Vector2.Lerp(myRig.velocity, newVel, acceleration);
-            }            
+            }
         }
-    }       
+    }
 }

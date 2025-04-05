@@ -14,8 +14,8 @@ public abstract class Character : NetworkComponent
     //non-sync vars
     protected int attackCooldown;
     protected int maxAttackCooldown;
-    // public for testing
-    public Rigidbody2D myRig;
+    
+    [System.NonSerialized] public Rigidbody2D myRig;
 
     protected Sprite sprite;
     protected SpriteRenderer spriteRender;    

@@ -22,7 +22,7 @@ public class NetworkRB2D : NetworkComponent
     public float eThreshold;    
     [System.NonSerialized] public Vector2 adjustVel;
     [System.NonSerialized] public float adjustAngVel;
-    [System.NonSerialized] public Rigidbody2D myRig;
+    public Rigidbody2D myRig;
     public bool useAdjustVel;
     public bool useAdjustAngVel;
 
@@ -92,11 +92,10 @@ public class NetworkRB2D : NetworkComponent
 
     // Start is called before the first frame update
     void Start()
-    {        
-        myRig = GetComponent<Rigidbody2D>();
-        //you can set a different rigidbody than the one on this object to network it
-        if (GetComponent<Rope>() != null)
-            myRig = transform.GetChild(0).GetComponent<Rigidbody2D>();
+    {
+        //you can set a different rigidbody than the one on this object by using the inspector to network it
+        if (myRig == null)
+            myRig = GetComponent<Rigidbody2D>();
     }
 
     public override void NetworkedStart()

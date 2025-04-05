@@ -13,7 +13,7 @@ using NETWORK_ENGINE;
 using UnityEngine.Tilemaps;
 using UnityEngine.InputSystem.LowLevel;
 
-public class GameManager : NetworkComponent
+public class FastGM : NetworkComponent
 {    
     //sync vars
     public static bool gameOver;
@@ -47,13 +47,11 @@ public class GameManager : NetworkComponent
             if (IsClient)
             {
                 gameStarted = true;
-                
-                foreach (NPM npm in FindObjectsOfType<NPM>())
-                {                    
+
+                foreach (NPMEdits npm in FindObjectsOfType<NPMEdits>())
+                {
                     if (npm.GetComponentInChildren<Canvas>() != null)
-                    {                        
                         npm.gameObject.GetComponentInChildren<Canvas>().enabled = false;
-                    }
                 }
             }
         }
@@ -103,10 +101,10 @@ public class GameManager : NetworkComponent
             if (debugMode){
                 Enemy[] enemies = GetAllEnemies();
                 DestroyAllEnemies(enemies);
-            }                        
+            }
+            //RandomizeLevel();
         }        
     }
-
     private IEnumerator WaitToDisplayScores(float seconds)
     {
         yield return new WaitForSeconds(seconds);
@@ -131,8 +129,11 @@ public class GameManager : NetworkComponent
     // where we change the variable
     public static void AdjustReady(int change)
     {
+        Debug.Log("ready change: " + change);       
         playersReady += change;
-        int numPlayers = FindObjectsOfType<NPM>().Length;
+        Debug.Log("players ready: " + playersReady);
+
+        int numPlayers = FindObjectsOfType<NPMEdits>().Length;
         // change to numPlayers > 1 later
         if (playersReady >= numPlayers && numPlayers > 0)
         {
@@ -172,7 +173,8 @@ public class GameManager : NetworkComponent
         }
 
         if (ropePlaces.Count == 0)
-        {            
+        {
+            Debug.LogWarning("No rope positions found!");
             return;
         }
         
@@ -190,13 +192,14 @@ public class GameManager : NetworkComponent
         }
 
         if (enemyPlaces.Count == 0)
-        {                        
+        {            
+            Debug.LogWarning("No enemy positions found!");
             return;
         }
 
         int randPos = Random.Range(0, enemyPlaces.Count);
         int lastEnemyIdx = Idx.FIRST_ENEMY_IDX + Idx.NUM_ENEMIES - 1;
-        int randEnemy = Random.Range(Idx.FIRST_ENEMY_IDX, lastEnemyIdx);        
+        int randEnemy = Random.Range(Idx.FIRST_ENEMY_IDX, lastEnemyIdx);
         MyCore.NetCreateObject(randEnemy, Owner, enemyPlaces[randPos], Quaternion.identity);
     }
 
@@ -210,7 +213,8 @@ public class GameManager : NetworkComponent
         }
 
         if (itemPlaces.Count == 0)
-        {            
+        {
+            Debug.LogWarning("No item box positions found!");
             return;
         }
 
@@ -258,58 +262,12 @@ public class GameManager : NetworkComponent
     public override IEnumerator SlowUpdate()
     {
         if (IsServer)
-        {
-            RandomizeLevel();
-            
-            while (!gameStarted)
-            {
-                yield return new WaitForSeconds(0.5f);
-            }            
+        {                     
+            GameObject temp = MyCore.NetCreateObject(0, Owner, Vector2.zero, Quaternion.identity);
+            GameObject ladder = MyCore.NetCreateObject(5, Owner, new Vector3(9, -5, 0), Quaternion.identity);
+            GameObject rope = MyCore.NetCreateObject(6, Owner, new Vector3(0, -2, 0), Quaternion.identity);
 
-            NPM[] players = GameObject.FindObjectsOfType<NPM>();
-            foreach (NPM n in players)
-            {
-                //create object and set proper networked variables                
-                //Go to each NPM and look at their options
-                //Create the appropriate character for their options                
-                Vector3 spawnPos = Vector3.zero;
-                switch (n.Owner)
-                {
-                    case 0:
-                        spawnPos = starts[0];
-                        break;
-                    case 1:
-                        spawnPos = starts[1];
-                        break;
-                    case 2:
-                        spawnPos = starts[2];
-                        break;
-                    case 3:
-                        spawnPos = starts[3];
-                        break;
-                }
-
-                GameObject temp = MyCore.NetCreateObject(0, n.Owner, spawnPos, Quaternion.identity);
-                PlayerController player = temp.GetComponent<PlayerController>();
-                if (player == null)
-                    Debug.Log("player is null!!");
-
-                player.ColorSelected = n.ColorSelected;
-                player.PName = n.PName;
-
-                Sprite spriteSelected = player.heroSprites[n.CharSelected];
-                temp.GetComponent<SpriteRenderer>().sprite = spriteSelected;
-
-                temp.GetComponentInChildren<Text>().text = n.PName;
-                player.SendUpdate("START", n.PName + ";" + n.ColorSelected + ";" + n.CharSelected);
-            }
-            GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, new Vector3(-7, -3, 0), Quaternion.identity);
-            GameObject rope = MyCore.NetCreateObject(Idx.ROPE, Owner, new Vector3(0, 0, 0), Quaternion.identity);
-
-            GameObject itemBox1 = MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(8, -7, 0), Quaternion.identity);
-            GameObject itemBox2 = MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(5, -7, 0), Quaternion.identity);
-
-            SendUpdate("GAMESTART", "1");            
+            SendUpdate("GAMESTART", "1");
             //stops server from listening, so nobody new can join.
             MyCore.NotifyGameStart();            
 

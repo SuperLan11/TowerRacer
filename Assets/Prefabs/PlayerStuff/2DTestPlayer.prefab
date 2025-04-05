@@ -353,7 +353,6 @@ MonoBehaviour:
   MyId: {fileID: 0}
   IsDirty: 0
   speed: 7
-  myRig: {fileID: 0}
   grabbedRope: {fileID: 0}
   holdingDir: 
   state: NORMAL
@@ -364,7 +363,7 @@ MonoBehaviour:
   grabbedLadder: {fileID: 0}
   inDismount: 0
   launchCorrectionSpeed: 35
-  jumpStrength: 8
+  jumpStrength: 10
   airSlowdownMult: 2
   hasBomb: 0
   heroSprites:
@@ -389,6 +388,7 @@ MonoBehaviour:
   IsDirty: 0
   threshold: 0.01
   eThreshold: 0.5
+  myRig: {fileID: 0}
   useAdjustVel: 0
   useAdjustAngVel: 0
 --- !u!114 &7104285125774254201
@@ -592,7 +592,7 @@ Rigidbody2D:
   m_Mass: 1
   m_LinearDrag: 0
   m_AngularDrag: 0.05
-  m_GravityScale: 1.5
+  m_GravityScale: 1.9
   m_Material: {fileID: 6200000, guid: 005ea51527f12b04890ce6c6670568a9, type: 2}
   m_IncludeLayers:
     serializedVersion: 2

@@ -58,7 +58,7 @@ public class Bomb : Projectile
 				}
 			}
 			//to allow bombs to go through jump throughs, only destroy them on floor when they are falling
-			else if( (!hitFloor && !hitLadder) || (hitFloor && myRig.velocity.y < 0))
+			else if( (!hitFloor && !collision.isTrigger) || (hitFloor && myRig.velocity.y < 0))
             {
 				//hit an non-networked object, so the object was not the current player				
 				Debug.Log("destroying bomb because it hit " + collision.gameObject.name);
