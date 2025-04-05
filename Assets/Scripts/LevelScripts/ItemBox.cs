@@ -21,10 +21,10 @@ public class ItemBox : NetworkComponent
 			if (IsClient)
 			{
 				string[] args = value.Split(";");
-				Vector2 itemBoxPos = PlayerController.Vector2FromString(args[0]);
+				Vector2 itemBoxPos = Player.Vector2FromString(args[0]);
 				int itemIdx = int.Parse(args[1]);
 
-				PlayerController playerHit = PlayerController.ClosestPlayerToPos(itemBoxPos);
+				Player playerHit = Player.ClosestPlayerToPos(itemBoxPos);
 				if (playerHit.IsLocalPlayer)
 				{
 					GameObject itemImage = Instantiate(itemPrefabs[itemIdx], itemUI.transform.position, Quaternion.identity);
@@ -74,7 +74,7 @@ public class ItemBox : NetworkComponent
     {
 		if (IsClient)
 		{
-			PlayerController playerHit = collision.GetComponentInParent<PlayerController>();
+			Player playerHit = collision.GetComponentInParent<Player>();
 			if (playerHit != null && playerHit.IsLocalPlayer)
 			{
 				//int randIdx = Random.Range(0, NUM_ITEMS);				
