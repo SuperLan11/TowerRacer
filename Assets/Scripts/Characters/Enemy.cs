@@ -8,6 +8,7 @@ public abstract class Enemy : Character
     protected Player[] players;
     protected LayerMask floorLayer;
     protected int dir = 1;
+    protected bool raycastingPaused = false;
 
     // Start is called before the first frame update
     private void Start()
@@ -33,20 +34,31 @@ public abstract class Enemy : Character
         myRig.velocity = new Vector2(dir * speed, myRig.velocity.y);
         float playerHeight = GetComponent<Collider2D>().bounds.size.y;
         bool floorBelow = Physics2D.Raycast(transform.position, Vector2.down, playerHeight * 1.5f, floorLayer);
-        
+
+        if (raycastingPaused)
+            return;
+
         if (!floorBelow && dir == 1)
         {
             dir = -1;
             spriteRender.flipX = true;
             SendUpdate("FLIP", true.ToString());
-            transform.position -= new Vector3(speed / 5, 0, 0);
+            StartCoroutine(PauseRaycasting(0.1f));
+            //transform.position -= new Vector3(speed / 5, 0, 0);
         }
         else if (!floorBelow && dir == -1)
         {
             dir = 1;
             spriteRender.flipX = false;
             SendUpdate("FLIP", false.ToString());
-            transform.position += new Vector3(speed / 5, 0, 0);
-        }
+            StartCoroutine(PauseRaycasting(0.1f));
+            //transform.position += new Vector3(speed / 5, 0, 0);
+        }        
+    }
+    protected IEnumerator PauseRaycasting(float seconds)
+    {
+        raycastingPaused = true;
+        yield return new WaitForSeconds(seconds);
+        raycastingPaused = false;
     }
 }

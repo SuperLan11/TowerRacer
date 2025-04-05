@@ -143,8 +143,7 @@ public class GameManager : NetworkComponent
     {        
         for (int i = 0; i < Idx.NUM_LEVEL_PIECES; i++)
         {
-            //int randIdx = Random.Range(0, Idx.NUM_LEVEL_PIECES);
-            int randIdx = 0;
+            int randIdx = Random.Range(0, Idx.NUM_LEVEL_PIECES);            
             GameObject piece = MyCore.NetCreateObject(Idx.FIRST_LEVEL_PIECE_IDX + randIdx, this.Owner,
                 new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);
 
@@ -301,6 +300,9 @@ public class GameManager : NetworkComponent
                 temp.GetComponentInChildren<Text>().text = n.PName;
                 player.SendUpdate("START", n.PName + ";" + n.ColorSelected + ";" + n.CharSelected);
             }
+            GameObject itemBox1 = MyCore.NetCreateObject(13, Owner, new Vector3(-4f, -9f, 0), Quaternion.identity);
+            GameObject itemBox2 = MyCore.NetCreateObject(13, Owner, new Vector3(4f, -9f, 0), Quaternion.identity);
+
             /*GameObject ladder = MyCore.NetCreateObject(8, Owner, new Vector3(5f, -4f, 0), Quaternion.identity);
 
             Vector2 dismountPos = ladder.GetComponent<Collider2D>().bounds.max;
@@ -309,10 +311,7 @@ public class GameManager : NetworkComponent
             GameObject dismount = MyCore.NetCreateObject(12, Owner, dismountPos, Quaternion.identity);
             dismount.GetComponent<DismountTrigger>().ladder = ladder.GetComponent<LadderObj>();
 
-            GameObject vampire = MyCore.NetCreateObject(11, Owner, new Vector3(9f, 1f, 0), Quaternion.identity);
-
-            GameObject itemBox = MyCore.NetCreateObject(13, Owner, new Vector3(-4f, -9f, 0), Quaternion.identity);
-            GameObject itemBox2 = MyCore.NetCreateObject(13, Owner, new Vector3(8f, -9f, 0), Quaternion.identity);
+            GameObject vampire = MyCore.NetCreateObject(11, Owner, new Vector3(9f, 1f, 0), Quaternion.identity);            
 
             GameObject rope = MyCore.NetCreateObject(7, Owner, new Vector3(-7f, -4f, 0), Quaternion.identity);
 

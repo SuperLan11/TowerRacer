@@ -31,16 +31,7 @@ public class ItemBox : NetworkComponent
 					itemImage.transform.SetParent(itemUI.transform);
 				}
 			}
-		}		
-		else if (flag == "HIDE")
-		{
-			if (IsClient)
-			{
-				//disable components instead of destroying object so the object can still receive updates
-				GetComponent<SpriteRenderer>().enabled = false;
-				GetComponent<Collider2D>().enabled = false;
-			}
-		}
+		}				
 		else if (flag == "DEBUG")
 		{
 			Debug.Log(value);
@@ -86,7 +77,8 @@ public class ItemBox : NetworkComponent
 			PlayerController playerHit = collision.GetComponentInParent<PlayerController>();
 			if (playerHit != null && playerHit.IsLocalPlayer)
 			{
-				int randIdx = Random.Range(0, NUM_ITEMS);				
+				//int randIdx = Random.Range(0, NUM_ITEMS);				
+				int randIdx = 2;
 
 				//only spawn the player's item on that player's screen				
 				GameObject itemImage = Instantiate(itemPrefabs[randIdx], itemUI.transform.position, Quaternion.identity);

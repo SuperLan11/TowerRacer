@@ -61,8 +61,7 @@ public class PlayerController : Character
                 GetComponent<SpriteRenderer>().sprite = heroSprites[CharSelected];
 
                 //calling a function soon after creating object sometimes runs before Start
-                Start();
-                //GetComponent<SpriteRenderer>().color = colors[ColorSelected];
+                Start();                
             }
             else if (IsServer)
             {
@@ -103,8 +102,7 @@ public class PlayerController : Character
             }
         }
         else if (flag == "JUMP")
-        {
-            isGrounded = false;
+        {            
             //initially called on server
             if (state == "SWINGING")
             {
@@ -124,8 +122,10 @@ public class PlayerController : Character
             }
             else
             {
-                myRig.velocity += new Vector2(0, jumpStrength);
+                if(isGrounded)
+                    myRig.velocity += new Vector2(0, jumpStrength);
             }
+            isGrounded = false;
         }
         else if (flag == "GRAVITY")
         {
@@ -296,11 +296,15 @@ public class PlayerController : Character
     {               
         if(IsServer)
         {
-            if(collision.gameObject.name.Contains("Floor"))
+            if (collision.gameObject.name.Contains("Floor"))
             {                
                 isGrounded = true;
                 launchVec = Vector2.zero;
                 state = "NORMAL";                
+            }
+            else if(collision.gameObject.tag == "FLOOR")
+            {
+                isGrounded = true;
             }
         }
     }   
@@ -340,7 +344,7 @@ public class PlayerController : Character
         if (IsLocalPlayer)
         {
             if (jp.started)
-            {
+            {                
                 SendCommand("JUMP", "");
             }
         }

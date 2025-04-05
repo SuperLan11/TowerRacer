@@ -53,6 +53,7 @@ public class Bomb : Projectile
 				if (collidedOwner != this.Owner)
 				{
 					Debug.Log("destroying bomb because it hit " + collision.gameObject.name);
+					MyCore.NetCreateObject(Idx.EXPLOSION, Owner, transform.position, Quaternion.identity);
 					MyCore.NetDestroyObject(this.NetId);
 				}
 			}
@@ -61,6 +62,7 @@ public class Bomb : Projectile
             {
 				//hit an non-networked object, so the object was not the current player				
 				Debug.Log("destroying bomb because it hit " + collision.gameObject.name);
+				MyCore.NetCreateObject(Idx.EXPLOSION, Owner, transform.position, Quaternion.identity);
 				MyCore.NetDestroyObject(this.NetId);
             }
 		}
