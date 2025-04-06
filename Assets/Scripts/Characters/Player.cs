@@ -696,15 +696,19 @@ public class Player : Character {
 
     //At some point we may want to convert this to a general CheckForTriggers() function that takes in different parameters, and depending
     //on the parameter assigns currentRope, currentLadder, etc
-    private bool CheckForRopes(){
+    bool CheckForTriggers(string triggerType){
+        if (triggerType != "Rope" && triggerType != "Ladder"){
+            return false;
+        }
+        
         if (IsServer){
             //UP
             Vector2 tempPos = new Vector2(bodyCollider.bounds.center.x, bodyCollider.bounds.max.y + COLLISION_RAYCAST_LENGTH);
             RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.up, COLLISION_RAYCAST_LENGTH, ~0);
 
             foreach (RaycastHit2D hit in hits){
-                if (hit.collider.isTrigger && (hit.normal == downNormal) && hit.collider.gameObject.name.Contains("Rope")){
-                    currentRope = hit.collider.gameObject.GetComponentInParent<Rope>();
+                if (hit.collider.isTrigger && (hit.normal == downNormal) && hit.collider.gameObject.name.Contains(triggerType)){
+                    SetCurrentTriggerObj(triggerType, hit.collider.gameObject);
                     return true;
                 }
             }
@@ -714,8 +718,8 @@ public class Player : Character {
             hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
 
             foreach (RaycastHit2D hit in hits){
-                if (hit.collider.isTrigger && (hit.normal == downNormal) && hit.collider.gameObject.name.Contains("Rope")){
-                    currentRope = hit.collider.gameObject.GetComponentInParent<Rope>();
+                if (hit.collider.isTrigger && (hit.normal == downNormal) && hit.collider.gameObject.name.Contains(triggerType)){
+                    SetCurrentTriggerObj(triggerType, hit.collider.gameObject);
                     return true;
                 }
             }
@@ -724,8 +728,8 @@ public class Player : Character {
             hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
 
             foreach (RaycastHit2D hit in hits){
-                if (hit.collider.isTrigger && (hit.normal == downNormal) && hit.collider.gameObject.name.Contains("Rope")){
-                    currentRope = hit.collider.gameObject.GetComponentInParent<Rope>();
+                if (hit.collider.isTrigger && (hit.normal == downNormal) && hit.collider.gameObject.name.Contains(triggerType)){
+                    SetCurrentTriggerObj(triggerType, hit.collider.gameObject);
                     return true;
                 }
             }
@@ -736,8 +740,8 @@ public class Player : Character {
             hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
 
             foreach (RaycastHit2D hit in hits){
-                if (hit.collider.isTrigger && (hit.normal == upNormal) && hit.collider.gameObject.name.Contains("Rope")){
-                    currentRope = hit.collider.gameObject.GetComponentInParent<Rope>();
+                if (hit.collider.isTrigger && (hit.normal == upNormal) && hit.collider.gameObject.name.Contains(triggerType)){
+                    SetCurrentTriggerObj(triggerType, hit.collider.gameObject);
                     return true;
                 }
             }
@@ -746,8 +750,8 @@ public class Player : Character {
             hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
 
             foreach (RaycastHit2D hit in hits){
-                if (hit.collider.isTrigger && (hit.normal == upNormal) && hit.collider.gameObject.name.Contains("Rope")){
-                    currentRope = hit.collider.gameObject.GetComponentInParent<Rope>();
+                if (hit.collider.isTrigger && (hit.normal == upNormal) && hit.collider.gameObject.name.Contains(triggerType)){
+                    SetCurrentTriggerObj(triggerType, hit.collider.gameObject);
                     return true;
                 }
             }
@@ -756,8 +760,8 @@ public class Player : Character {
             hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
 
             foreach (RaycastHit2D hit in hits){
-                if (hit.collider.isTrigger && (hit.normal == upNormal) && hit.collider.gameObject.name.Contains("Rope")){
-                    currentRope = hit.collider.gameObject.GetComponentInParent<Rope>();
+                if (hit.collider.isTrigger && (hit.normal == upNormal) && hit.collider.gameObject.name.Contains(triggerType)){
+                    SetCurrentTriggerObj(triggerType, hit.collider.gameObject);
                     return true;
                 }
             }
@@ -768,8 +772,8 @@ public class Player : Character {
             hits = Physics2D.RaycastAll(tempPos, Vector2.left, WALL_COLLISION_RAYCAST_LENGTH, ~0);
 
             foreach (RaycastHit2D hit in hits){
-                if (hit.collider.isTrigger && (hit.normal == (Vector2)rightNormal) && hit.collider.gameObject.name.Contains("Rope")){
-                    currentRope = hit.collider.gameObject.GetComponentInParent<Rope>();   
+                if (hit.collider.isTrigger && (hit.normal == (Vector2)rightNormal) && hit.collider.gameObject.name.Contains(triggerType)){
+                    SetCurrentTriggerObj(triggerType, hit.collider.gameObject);   
                     return true;
                 }
             }
@@ -780,8 +784,8 @@ public class Player : Character {
             hits = Physics2D.RaycastAll(tempPos, Vector2.right, WALL_COLLISION_RAYCAST_LENGTH, ~0);
 
             foreach (RaycastHit2D hit in hits){
-                if (hit.collider.isTrigger && (hit.normal == leftNormal) && hit.collider.gameObject.name.Contains("Rope")){
-                    currentRope = hit.collider.gameObject.GetComponentInParent<Rope>();
+                if (hit.collider.isTrigger && (hit.normal == leftNormal) && hit.collider.gameObject.name.Contains(triggerType)){
+                    SetCurrentTriggerObj(triggerType, hit.collider.gameObject);
                     return true;
                 }
             }
@@ -790,98 +794,12 @@ public class Player : Character {
         return false;
     }
 
-    private bool CheckForLadders(){
-        if (IsServer){
-            //UP
-            Vector2 tempPos = new Vector2(bodyCollider.bounds.center.x, bodyCollider.bounds.max.y + COLLISION_RAYCAST_LENGTH);
-            RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.up, COLLISION_RAYCAST_LENGTH, ~0);
-
-            foreach (RaycastHit2D hit in hits){
-                if (hit.collider.isTrigger && (hit.normal == downNormal) && hit.collider.gameObject.name.Contains("Ladder")){
-                    currentLadder = hit.collider.gameObject.GetComponentInParent<LadderObj>();
-                    return true;
-                }
-            }
-
-            //shoot left and right raycast only if middle raycast didn't detect anything
-            tempPos.x = bodyCollider.bounds.min.x;
-            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
-
-            foreach (RaycastHit2D hit in hits){
-                if (hit.collider.isTrigger && (hit.normal == downNormal) && hit.collider.gameObject.name.Contains("Ladder")){
-                    currentLadder = hit.collider.gameObject.GetComponentInParent<LadderObj>();
-                    return true;
-                }
-            }
-
-            tempPos.x = bodyCollider.bounds.max.x;
-            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
-
-            foreach (RaycastHit2D hit in hits){
-                if (hit.collider.isTrigger && (hit.normal == downNormal) && hit.collider.gameObject.name.Contains("Ladder")){
-                    currentLadder = hit.collider.gameObject.GetComponentInParent<LadderObj>();
-                    return true;
-                }
-            }
-            
-
-            //DOWN
-            tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y - COLLISION_RAYCAST_LENGTH);
-            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
-
-            foreach (RaycastHit2D hit in hits){
-                if (hit.collider.isTrigger && (hit.normal == upNormal) && hit.collider.gameObject.name.Contains("Ladder")){
-                    currentLadder = hit.collider.gameObject.GetComponentInParent<LadderObj>();
-                    return true;
-                }
-            }
-
-            tempPos.x = feetCollider.bounds.min.x;
-            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
-
-            foreach (RaycastHit2D hit in hits){
-                if (hit.collider.isTrigger && (hit.normal == upNormal) && hit.collider.gameObject.name.Contains("Ladder")){
-                    currentLadder = hit.collider.gameObject.GetComponentInParent<LadderObj>();
-                    return true;
-                }
-            }
-
-            tempPos.x = feetCollider.bounds.max.x;
-            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
-
-            foreach (RaycastHit2D hit in hits){
-                if (hit.collider.isTrigger && (hit.normal == upNormal) && hit.collider.gameObject.name.Contains("Ladder")){
-                    currentLadder = hit.collider.gameObject.GetComponentInParent<LadderObj>();
-                    return true;
-                }
-            }
-    
-
-            //LEFT
-            tempPos = new Vector2(bodyCollider.bounds.min.x - COLLISION_RAYCAST_LENGTH, bodyCollider.bounds.center.y);
-            hits = Physics2D.RaycastAll(tempPos, Vector2.left, WALL_COLLISION_RAYCAST_LENGTH, ~0);
-
-            foreach (RaycastHit2D hit in hits){
-                if (hit.collider.isTrigger && (hit.normal == (Vector2)rightNormal) && hit.collider.gameObject.name.Contains("Ladder")){
-                    currentLadder = hit.collider.gameObject.GetComponentInParent<LadderObj>();   
-                    return true;
-                }
-            }
-            
-
-            //RIGHT
-            tempPos = new Vector2(bodyCollider.bounds.max.x + COLLISION_RAYCAST_LENGTH, bodyCollider.bounds.center.y);
-            hits = Physics2D.RaycastAll(tempPos, Vector2.right, WALL_COLLISION_RAYCAST_LENGTH, ~0);
-
-            foreach (RaycastHit2D hit in hits){
-                if (hit.collider.isTrigger && (hit.normal == leftNormal) && hit.collider.gameObject.name.Contains("Ladder")){
-                    currentLadder = hit.collider.gameObject.GetComponentInParent<LadderObj>();
-                    return true;
-                }
-            }
+    private void SetCurrentTriggerObj(string triggerType, GameObject collidingObj){
+        if (triggerType == "Rope"){
+            currentRope = collidingObj.GetComponentInParent<Rope>();
+        }else if (triggerType == "Ladder"){
+            currentLadder = collidingObj.GetComponentInParent<LadderObj>();
         }
-
-        return false;
     }
 
     //We may need to do this differently in the future for performance reasons, but if we want to actually handle collisions in Update(), we need
@@ -1242,7 +1160,7 @@ public class Player : Character {
 
             #region SPECIAL_CASES
             //can't bypass jumping code cause we need gravity to work to be bypassed by special movement states
-            if (canGrabRope && CheckForRopes()){
+            if (canGrabRope && CheckForTriggers("Rope")/*CheckForRopes()*/){
                 if (currentRope != null){
                     canGrabRope = false;
                     currentRope.GrabRope(this);
@@ -1250,7 +1168,7 @@ public class Player : Character {
                 }
             }
 
-            if (CheckForLadders()){
+            if (CheckForTriggers("Ladder")/*CheckForLadders()*/){
                 bool pressingUpOrDown = (moveInput.y > 0f || moveInput.y < 0f);
                 if ((currentLadder != null) && pressingUpOrDown && !IsClimbing()){
                     currentLadder.InitializeLadderVariables(this);
