@@ -68,9 +68,8 @@ public class Player : Character {
     //we may want to eventually use the rigidbody variable in Character.cs, although ain't no way we're keeping the name as "myRig"
     public Rigidbody2D rigidbody;
     private LayerMask floorLayer;
-    //don't need to worry about these two in the inspector
+    //don't need to worry about this in the inspector
     Tilemap tilemap;
-    TileBase tile;
     
     [System.NonSerialized] public const float MAX_WALK_SPEED = 12.5f;
     private const float GROUND_ACCELERATION = 5f, GROUND_DECELERATION = 20f;
@@ -620,7 +619,6 @@ public class Player : Character {
         if (tilemap != null){
             Vector3 hitWorldPos = hit.point;
             Vector3Int cellPosition = tilemap.WorldToCell(hitWorldPos);
-            tile = tilemap.GetTile(cellPosition);
             
             Vector3 tileWorldPos = tilemap.CellToWorld(cellPosition);
             float tileHeight = tilemap.cellSize.y;
