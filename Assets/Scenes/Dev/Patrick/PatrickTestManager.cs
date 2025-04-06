@@ -216,12 +216,13 @@ public class PatrickTestManager : NetworkComponent
                 // temp.GetComponent<PlayerController>().SendUpdate("START", n.PName + ";" + n.ColorSelected);
             }
             //!spawn your BS here
+            /*
             MyCore.NetCreateObject(13, Owner, new Vector3(1f, 0f, 0f), Quaternion.identity);
             MyCore.NetCreateObject(13, Owner, new Vector3(2f, 0f, 0f), Quaternion.identity);
             MyCore.NetCreateObject(13, Owner, new Vector3(3f, 0f, 0f), Quaternion.identity);
             MyCore.NetCreateObject(13, Owner, new Vector3(4f, 0f, 0f), Quaternion.identity);
             MyCore.NetCreateObject(13, Owner, new Vector3(5f, 0f, 0f), Quaternion.identity);
-
+*/
             
             //GameObject rope = MyCore.NetCreateObject(1, Owner, new Vector3(6.5f, -6.8f, 0), Quaternion.identity);
 
