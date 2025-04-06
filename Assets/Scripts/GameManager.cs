@@ -29,9 +29,16 @@ public class GameManager : NetworkComponent
     private static float LOWEST_PIECE_Y = -2f;
     public static float CENTER_PIECE_X = 0f;
 
-    private Text placeText;
+    private Text placeLbl;
     private GameObject gameUI;
-    private static bool timerStarted = false;
+
+    //the timer starts when the first player reaches the end door
+    //the timer ends the round so players don't have to wait on the last player forever
+    private Text timerLbl;
+    private int roundEndTime = 120;
+    private float curTimer;
+    public bool timerStarted = false;
+    public bool timerFinished = false;
 
     public static double levelTime;
     public static bool debugMode = true;
@@ -46,30 +53,44 @@ public class GameManager : NetworkComponent
     public override void HandleMessage(string flag, string value)
     {
         if (flag == "GAMESTART")
-        {            
+        {
             if (IsClient)
             {
                 gameUI.GetComponent<Canvas>().enabled = true;
                 gameStarted = true;
-                
+
                 foreach (NPM npm in FindObjectsOfType<NPM>())
-                {                    
+                {
                     if (npm.GetComponentInChildren<Canvas>() != null)
-                    {                        
+                    {
                         npm.gameObject.GetComponentInChildren<Canvas>().enabled = false;
                     }
                 }
             }
-        }        
-        else if(flag == "SCORE")
+        }
+        else if (flag == "SCORE")
         {
-            Debug.Log("score update received");
             Text roundScoreText = GameObject.FindGameObjectWithTag("SCORE").GetComponent<Text>();
             roundScoreText.enabled = true;
             PlayerController[] players = FindObjectsOfType<PlayerController>();
             for (int i = 0; i < players.Length; i++)
             {
                 roundScoreText.text += "Player " + (i + 1) + " score: " + Random.Range(0, 5) + '\n';
+            }
+        }
+        else if (flag == "TIMER_SHOW")
+        {
+            if (IsClient)
+            {
+                timerLbl.enabled = true;
+                timerStarted = true;
+            }
+        }
+        else if (flag == "TIMER")
+        {
+            if (IsClient)
+            {
+                timerLbl.text = value + "s";
             }
         }
         //for objects in scene before clients connect, can't use SendCommand because
@@ -93,8 +114,10 @@ public class GameManager : NetworkComponent
         GameObject start3 = GameObject.Find("P3Start");
         GameObject start4 = GameObject.Find("P4Start");
 
-        placeText = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
+        placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
         gameUI = GameObject.FindGameObjectWithTag("GAME_UI");
+        timerLbl = GameObject.FindGameObjectWithTag("TIMER").GetComponent<Text>();
+        curTimer = roundEndTime;
 
         starts[0] = start1.transform.position;
         starts[1] = start2.transform.position;
@@ -270,17 +293,38 @@ public class GameManager : NetworkComponent
 
         for(int i = 0; i < playerIdxsByHeight.Length; i++)
         {
-            int playerIdx = playerIdxsByHeight[i];
-            //Debug.Log("Rank " + (i+1) + " height: " + players[playerIdx].transform.position.y);
-            //now that players are ranked, send each and update with their placement (i+1)
+            int playerIdx = playerIdxsByHeight[i];            
+            //now that players are ranked, send each an update with their placement (i+1)
             players[playerIdx].SendUpdate("PLACE", (i+1).ToString());
         }        
     }
 
-    public IEnumerator GameUpdate(){
-        //do race place stuff here (1st, 2nd, 3rd...)
-        //could check placements of players and sendupdate with each place to the player instance
-        UpdatePlaces();
+    //called by EndDoor script
+    public IEnumerator StartTimer()
+    {
+        timerLbl.enabled = true;
+        timerStarted = true;
+        SendUpdate("TIMER_SHOW", "");
+
+        while (curTimer > 0)
+        {            
+            SendUpdate("TIMER", curTimer.ToString());
+            yield return new WaitForSeconds(1);
+            curTimer -= 1;
+            timerLbl.text = curTimer + "s";
+        }
+    }
+
+    public IEnumerator GameUpdate(){                
+        UpdatePlaces();        
+
+        if (timerFinished)
+        {
+            timerLbl.enabled = false;
+            Debug.Log("do something when timer ends!!");
+        }
+
+        //don't make this timer too fast as UpdatePlaces is somewhat high on performance
         yield return new WaitForSeconds(0.5f);
     }
 
@@ -344,13 +388,10 @@ public class GameManager : NetworkComponent
 
             //this is basically our regular Update()
             while (!gameOver)
-            {
-                //game is playing
-                //turn-based logic
-                //maintain score
-                //maintain metrics                
+            {                        
                 yield return GameUpdate();
             }
+
             Debug.Log("GAME OVER");            
             SendUpdate("GAMEOVER", "");
             //wait until game ends...

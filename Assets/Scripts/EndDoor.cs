@@ -10,6 +10,7 @@ public class EndDoor : NetworkComponent
 {
     private GameObject scorePanel;
     private Text roundScoreText;
+    private GameManager gm;
 
     public override void HandleMessage(string flag, string value)
     {
@@ -24,6 +25,7 @@ public class EndDoor : NetworkComponent
     {        
         scorePanel = GameObject.FindGameObjectWithTag("SCORE");
         roundScoreText = scorePanel.GetComponentInChildren<Text>();
+        gm = FindObjectOfType<GameManager>();
     }
 
     public override void NetworkedStart()
@@ -36,7 +38,7 @@ public class EndDoor : NetworkComponent
         if (IsServer)
         {
             if (other.gameObject.GetComponent<PlayerController>() != null)
-            {                
+            {
                 roundScoreText.enabled = true;
                 PlayerController[] players = FindObjectsOfType<PlayerController>();
                 for (int i = 0; i < players.Length; i++)
@@ -44,7 +46,11 @@ public class EndDoor : NetworkComponent
                     roundScoreText.text += "Player " + (i + 1) + " score: " + Random.Range(0, 5) + '\n';
                 }
                 SendUpdate("SCORE", roundScoreText.text);
+                
+                if (!gm.timerStarted)                                    
+                    StartCoroutine(gm.StartTimer());                
 
+                //to send back to main menu
                 //GameManager.gameOver = true;
             }
         }

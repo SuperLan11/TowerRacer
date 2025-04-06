@@ -15,6 +15,7 @@ TagManager:
   - END_PIECE
   - PLACE
   - GAME_UI
+  - TIMER
   layers:
   - Default
   - TransparentFX
