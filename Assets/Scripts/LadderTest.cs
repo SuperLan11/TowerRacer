@@ -70,15 +70,10 @@ public class LadderTest : NetworkComponent
 		if (IsServer)
 		{
 			PlayerController player = collision.gameObject.GetComponentInParent<PlayerController>();
-			bool touchingPlayer = player != null;
-
-			if(touchingPlayer)
-				Debug.Log("touching player");
+			bool touchingPlayer = player != null;			
 
 			if (touchingPlayer && !player.onLadder && (player.holdingDir == "up" || player.holdingDir == "down"))
-			{
-				Debug.Log("getting on ladder");
-
+			{				
 				Vector2 grabPos = transform.position;
 				grabPos.y = player.transform.position.y;
 				player.state = "LADDER";

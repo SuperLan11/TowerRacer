@@ -14,8 +14,7 @@ public class PlayerController : Character
     [System.NonSerialized] public int CharSelected = -1;
 
     //nonsync vars    
-    [System.NonSerialized] public Rope grabbedRope;    
-    private Color[] colors;
+    [System.NonSerialized] public Rope grabbedRope;        
 
     private Vector2 lastMoveInput;
     [System.NonSerialized] public string holdingDir = "none";
@@ -46,6 +45,12 @@ public class PlayerController : Character
     public float jumpStrength = 10f;
     [SerializeField] private float airSlowdownMult = 1f;
     private float arrowSensitivity = 0.2f;
+
+    private Camera cam;
+    [SerializeField] private float camAccel = 0.2f;
+    public static float highestCamY;
+    private Text placeText;
+    private Color32[] placeColors;
 
 
     public override void HandleMessage(string flag, string value)
@@ -133,15 +138,7 @@ public class PlayerController : Character
             {
                 myRig.velocity = new Vector2(myRig.velocity.x, 0);
             }
-        }
-        else if(flag == "JUMP_RELEASE")
-        {
-            myRig.velocity = new Vector2(myRig.velocity.x, 0);
-            if (IsServer)
-            {
-                SendUpdate("JUMP_RELEASE", "");
-            }
-        }
+        }       
         else if (flag == "GRAVITY")
         {
             if (IsClient)
@@ -204,6 +201,40 @@ public class PlayerController : Character
                 transform.position = dismountPos;
             }
         }
+        else if (flag == "CAM_END")
+        {
+            if (IsClient)
+            {
+                Debug.Log("set highest cam y to " + float.Parse(value));
+                PlayerController.highestCamY = float.Parse(value);
+            }
+        }
+        else if(flag == "PLACE")
+        {
+            if(IsLocalPlayer)
+            {                
+                if (value == "1")
+                {
+                    placeText.text = "1st";
+                }
+                else if(value == "2")
+                {
+                    placeText.text = "2nd";
+                }
+                else if(value == "3")
+                {
+                    placeText.text = "3rd";
+                }
+                else if(value == "4")
+                {
+                    placeText.text = "4th";
+                }
+                int place = (int)char.GetNumericValue(value[0]);
+                Debug.Log("place: " + place);
+                placeText.color = placeColors[place - 1];
+                Debug.Log("color: " + placeColors[place-1]);
+            }
+        }
         else if (flag == "DEBUG")
         {
             Debug.Log(value);
@@ -234,21 +265,29 @@ public class PlayerController : Character
         else if (GetComponentInChildren<NetworkTransform>() != null)
             OTHER_FLAGS = GetComponentInChildren<NetworkTransform>().FLAGS;
 
+        cam = Camera.main;
+        highestCamY = GameObject.FindGameObjectWithTag("END_PIECE").transform.position.y;
+
+        placeText = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
+
         arrowPivot = transform.GetChild(0).GetChild(1).gameObject;
         aimArrow = arrowPivot.transform.GetChild(0).gameObject;
-        spriteRender = GetComponent<SpriteRenderer>();
+        spriteRender = GetComponent<SpriteRenderer>();        
 
         myRig = GetComponent<Rigidbody2D>();
-        colors = new Color[3];
-        colors[0] = new Color(255, 0, 0, 255); //red
-        colors[1] = new Color(0, 0, 255, 255); //blue
-        colors[2] = new Color(0, 255, 0, 255); //green
+
+        //needs to be color32, otherwise colors are from 0 to 1
+        placeColors = new Color32[4];
+        placeColors[0] = new Color32(255, 220, 0, 255); //gold for first
+        placeColors[1] = new Color32(148, 148, 148, 255); //silver for second
+        placeColors[2] = new Color32(196, 132, 0, 255); //bronze for third
+        placeColors[3] = new Color32(255, 255, 255, 255); //white for fourth
     }
 
     public override void NetworkedStart()
     {
         GetComponent<SpriteRenderer>().flipX = true;
-        itemUI = GameObject.FindGameObjectWithTag("ITEM_UI");
+        itemUI = GameObject.FindGameObjectWithTag("ITEM_UI");            
     }
 
     public static PlayerController ClosestPlayerToPos(Vector2 pos)
@@ -453,8 +492,8 @@ public class PlayerController : Character
     }
 
     public override IEnumerator SlowUpdate()
-    {
-        while(IsConnected)
+    {        
+        while (IsConnected)
         { 
             if(IsServer)
             {
@@ -524,5 +563,16 @@ public class PlayerController : Character
                 myRig.velocity = Vector2.Lerp(myRig.velocity, newVel, acceleration);
             }            
         }
-    }       
+
+        if (IsLocalPlayer)
+        {
+            Vector3 newCamPos = new Vector3(0, 0, cam.transform.position.z);
+            newCamPos.x = GameManager.CENTER_PIECE_X;
+            //Mathf.infinity is not bad on performance at all since it is stored as some sort of constant
+            newCamPos.y = Mathf.Clamp(this.transform.position.y + 5, -Mathf.Infinity, highestCamY);
+
+            //use Vector3 lerp because Vector2.lerp puts camera z at 0 and messes up the view
+            cam.transform.position = Vector3.Lerp(cam.transform.position, newCamPos, camAccel);
+        }
+    }
 }

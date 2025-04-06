@@ -353,24 +353,17 @@ MonoBehaviour:
   MyId: {fileID: 0}
   IsDirty: 0
   speed: 7
-  grabbedRope: {fileID: 0}
-  holdingDir: 
   state: NORMAL
-  swingPos: {fileID: 0}
-  launchVec: {x: 0, y: 0}
-  swingPosHeight: 0
-  onLadder: 0
-  grabbedLadder: {fileID: 0}
-  inDismount: 0
-  launchCorrectionSpeed: 35
-  jumpStrength: 10
-  airSlowdownMult: 2
-  hasBomb: 0
   heroSprites:
   - {fileID: 21300000, guid: 467422b0027b5d64c8b319ce0c9dd59d, type: 3}
   - {fileID: 21300000, guid: 072956943ea842f45b83c55e3816debd, type: 3}
   - {fileID: 21300000, guid: 98b532af9d17d0744959efd674777f35, type: 3}
   - {fileID: 21300000, guid: a9e36bbcbe392c8449eee9e383b60611, type: 3}
+  acceleration: 0.3
+  launchCorrectionSpeed: 35
+  jumpStrength: 13
+  airSlowdownMult: 2
+  camAccel: 0.2
 --- !u!114 &2310169775686152334
 MonoBehaviour:
   m_ObjectHideFlags: 0

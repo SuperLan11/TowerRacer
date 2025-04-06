@@ -155,7 +155,7 @@ public class NetworkRB2D : NetworkComponent
                     IsDirty = false;
                 }
             }
-            yield return new WaitForSeconds(MyCore.MasterTimer);
+            yield return new WaitForSeconds(MyCore.MasterTimer);            
         }
     }
 

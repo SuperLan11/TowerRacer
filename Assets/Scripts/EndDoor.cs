@@ -44,18 +44,10 @@ public class EndDoor : NetworkComponent
                     roundScoreText.text += "Player " + (i + 1) + " score: " + Random.Range(0, 5) + '\n';
                 }
                 SendUpdate("SCORE", roundScoreText.text);
-                GameManager.gameOver = true;
+
+                //GameManager.gameOver = true;
             }
         }
-    }
-
-    private IEnumerator Wait(float seconds)
-    {
-        yield return new WaitForSeconds(seconds-0.05f);
-        SendUpdate("RESET", "");
-        yield return new WaitForSeconds(0.05f);
-        //MyCore.UI_Quit();
-        //SceneManager.LoadScene(0);
     }
 
     public override IEnumerator SlowUpdate()

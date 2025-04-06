@@ -26,12 +26,15 @@ public class GameManager : NetworkComponent
     private int roundNum = 0;
     private PlayerController[] overallPlayerLeaderboard;
     private PlayerController[] currentPlayerLeaderboard;
-    [SerializeField] private float LOWEST_PIECE_Y = -15f;
-    [SerializeField] private float CENTER_PIECE_X = 0f;
-    //these aren't serialized as they could break the game if accidentally changed in the inspector        
+    private static float LOWEST_PIECE_Y = -2f;
+    public static float CENTER_PIECE_X = 0f;
+
+    private Text placeText;
+    private GameObject gameUI;
+    private static bool timerStarted = false;
 
     public static double levelTime;
-    public static bool debugMode = true;    
+    public static bool debugMode = true;
 
     public enum gameState {
         LOBBY,
@@ -43,9 +46,10 @@ public class GameManager : NetworkComponent
     public override void HandleMessage(string flag, string value)
     {
         if (flag == "GAMESTART")
-        {
+        {            
             if (IsClient)
             {
+                gameUI.GetComponent<Canvas>().enabled = true;
                 gameStarted = true;
                 
                 foreach (NPM npm in FindObjectsOfType<NPM>())
@@ -56,10 +60,11 @@ public class GameManager : NetworkComponent
                     }
                 }
             }
-        }
+        }        
         else if(flag == "SCORE")
         {
-            Text roundScoreText = GameObject.FindGameObjectWithTag("SCORE").GetComponentInChildren<Text>();
+            Debug.Log("score update received");
+            Text roundScoreText = GameObject.FindGameObjectWithTag("SCORE").GetComponent<Text>();
             roundScoreText.enabled = true;
             PlayerController[] players = FindObjectsOfType<PlayerController>();
             for (int i = 0; i < players.Length; i++)
@@ -67,8 +72,8 @@ public class GameManager : NetworkComponent
                 roundScoreText.text += "Player " + (i + 1) + " score: " + Random.Range(0, 5) + '\n';
             }
         }
-        //for objects in scene before clients connect, can't use SendUpdate because
-        //SendUpdate only works if IsLocalPlayer and it's impossible to determine IsLocalPlayer
+        //for objects in scene before clients connect, can't use SendCommand because
+        //SendCommand only works if IsLocalPlayer and it's impossible to determine IsLocalPlayer
         //for an object already in the scene
         else if (flag == "DEBUG")
         {
@@ -87,6 +92,9 @@ public class GameManager : NetworkComponent
         GameObject start2 = GameObject.Find("P2Start");
         GameObject start3 = GameObject.Find("P3Start");
         GameObject start4 = GameObject.Find("P4Start");
+
+        placeText = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
+        gameUI = GameObject.FindGameObjectWithTag("GAME_UI");
 
         starts[0] = start1.transform.position;
         starts[1] = start2.transform.position;
@@ -107,26 +115,7 @@ public class GameManager : NetworkComponent
         }        
     }
 
-    private IEnumerator WaitToDisplayScores(float seconds)
-    {
-        yield return new WaitForSeconds(seconds);
-
-        Text roundScoreText = GameObject.FindGameObjectWithTag("SCORE").GetComponentInChildren<Text>();
-        roundScoreText.enabled = true;
-        PlayerController[] players = FindObjectsOfType<PlayerController>();
-        for (int i = 0; i < players.Length; i++)
-        {
-            roundScoreText.text += "Player " + (i + 1) + " score: " + Random.Range(0, 5) + '\n';
-        }
-
-        if (IsServer)
-        {
-            gameOver = true;
-            SendUpdate("SCORE", "");
-        }
-    }
-
-    // I'd like to only change static variables through wrapper functions
+    // nice to have this as a wrapper function
     // so we can debug in the function to see its value no matter when or
     // where we change the variable
     public static void AdjustReady(int change)
@@ -145,15 +134,22 @@ public class GameManager : NetworkComponent
     {        
         for (int i = 0; i < Idx.NUM_LEVEL_PIECES; i++)
         {
-            int randIdx = Random.Range(0, Idx.NUM_LEVEL_PIECES);            
+            int randIdx = Random.Range(0, Idx.NUM_LEVEL_PIECES);
+            if (i == Idx.NUM_LEVEL_PIECES - 1)
+            {
+                GameObject endPiece = MyCore.NetCreateObject(Idx.END_LEVEL_PIECE, this.Owner,
+                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);
+                break;
+            }
+                      
             GameObject piece = MyCore.NetCreateObject(Idx.FIRST_LEVEL_PIECE_IDX + randIdx, this.Owner,
                 new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);
 
             RandomlyPlaceRope(piece);
             RandomlyPlaceEnemies(piece);
             RandomlyPlaceItemBoxes(piece);
-            RandomlyPlaceLadders(piece);
-        }                
+            RandomlyPlaceLadders(piece);            
+        }
         //do jacob's translate thing here
     }
 
@@ -214,7 +210,7 @@ public class GameManager : NetworkComponent
             return;
         }
 
-        int randPos = Random.Range(0, itemPlaces.Count);        
+        int randPos = Random.Range(0, itemPlaces.Count);
         MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, itemPlaces[randPos], Quaternion.identity);
     }
 
@@ -228,8 +224,7 @@ public class GameManager : NetworkComponent
         }
 
         if (ladderPlaces.Count == 0)
-        {
-            Debug.LogWarning("No ladder positions found!");
+        {            
             return;
         }
 
@@ -247,11 +242,45 @@ public class GameManager : NetworkComponent
         }
     }
 
+    private void UpdatePlaces()
+    {
+        PlayerController[] players = FindObjectsOfType<PlayerController>();
+        int[] playerIdxsByHeight = new int[players.Length];
+
+        for(int i = 0; i < players.Length; i++)
+        {
+            playerIdxsByHeight[i] = i;
+        }        
+
+        //selection sort to rank players by height descending
+        for(int i = 0; i < playerIdxsByHeight.Length; i++)
+        {
+            float playerY1 = players[i].transform.position.y;
+            for (int j = i + 1; j < players.Length; j++)
+            {
+                float playerY2 = players[j].transform.position.y;
+                if(playerY2 > playerY1)
+                {
+                    int tempIdx = playerIdxsByHeight[i];
+                    playerIdxsByHeight[i] = playerIdxsByHeight[j];
+                    playerIdxsByHeight[j] = tempIdx;
+                }
+            }
+        }
+
+        for(int i = 0; i < playerIdxsByHeight.Length; i++)
+        {
+            int playerIdx = playerIdxsByHeight[i];
+            //Debug.Log("Rank " + (i+1) + " height: " + players[playerIdx].transform.position.y);
+            //now that players are ranked, send each and update with their placement (i+1)
+            players[playerIdx].SendUpdate("PLACE", (i+1).ToString());
+        }        
+    }
+
     public IEnumerator GameUpdate(){
-        //game is playing
-        //turn-based logic
-        //maintain score
-        //maintain metrics        
+        //do race place stuff here (1st, 2nd, 3rd...)
+        //could check placements of players and sendupdate with each place to the player instance
+        UpdatePlaces();
         yield return new WaitForSeconds(0.5f);
     }
 
@@ -303,8 +332,8 @@ public class GameManager : NetworkComponent
                 temp.GetComponentInChildren<Text>().text = n.PName;
                 player.SendUpdate("START", n.PName + ";" + n.ColorSelected + ";" + n.CharSelected);
             }
-            GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, new Vector3(-7, -3, 0), Quaternion.identity);
-            GameObject rope = MyCore.NetCreateObject(Idx.ROPE, Owner, new Vector3(0, 0, 0), Quaternion.identity);
+            /*GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, new Vector3(-7, -3, 0), Quaternion.identity);
+            GameObject rope = MyCore.NetCreateObject(Idx.ROPE, Owner, new Vector3(0, 0, 0), Quaternion.identity);*/
 
             GameObject itemBox1 = MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(8, -7, 0), Quaternion.identity);
             GameObject itemBox2 = MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(5, -7, 0), Quaternion.identity);

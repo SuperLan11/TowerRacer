@@ -12,6 +12,9 @@ TagManager:
   - ITEM_POS
   - LADDER_POS
   - ENEMY_POS
+  - END_PIECE
+  - PLACE
+  - GAME_UI
   layers:
   - Default
   - TransparentFX
