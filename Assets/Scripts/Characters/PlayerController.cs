@@ -49,7 +49,7 @@ public class PlayerController : Character
     private Camera cam;
     [SerializeField] private float camAccel = 0.2f;
     public static float highestCamY;
-    private Text placeText;
+    private Text placeLbl;
     private Color32[] placeColors;
 
 
@@ -215,24 +215,22 @@ public class PlayerController : Character
             {                
                 if (value == "1")
                 {
-                    placeText.text = "1st";
+                    placeLbl.text = "1st";
                 }
                 else if(value == "2")
                 {
-                    placeText.text = "2nd";
+                    placeLbl.text = "2nd";
                 }
                 else if(value == "3")
                 {
-                    placeText.text = "3rd";
+                    placeLbl.text = "3rd";
                 }
                 else if(value == "4")
                 {
-                    placeText.text = "4th";
+                    placeLbl.text = "4th";
                 }
-                int place = (int)char.GetNumericValue(value[0]);
-                Debug.Log("place: " + place);
-                placeText.color = placeColors[place - 1];
-                Debug.Log("color: " + placeColors[place-1]);
+                int place = (int)char.GetNumericValue(value[0]);                
+                placeLbl.color = placeColors[place - 1];
             }
         }
         else if (flag == "DEBUG")
@@ -266,9 +264,9 @@ public class PlayerController : Character
             OTHER_FLAGS = GetComponentInChildren<NetworkTransform>().FLAGS;
 
         cam = Camera.main;
-        highestCamY = GameObject.FindGameObjectWithTag("END_PIECE").transform.position.y;
-
-        placeText = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
+        highestCamY = GameObject.FindGameObjectWithTag("END_PIECE").transform.position.y;        
+        
+        placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
 
         arrowPivot = transform.GetChild(0).GetChild(1).gameObject;
         aimArrow = arrowPivot.transform.GetChild(0).gameObject;
@@ -287,7 +285,7 @@ public class PlayerController : Character
     public override void NetworkedStart()
     {
         GetComponent<SpriteRenderer>().flipX = true;
-        itemUI = GameObject.FindGameObjectWithTag("ITEM_UI");            
+        itemUI = GameObject.FindGameObjectWithTag("ITEM_UI");  
     }
 
     public static PlayerController ClosestPlayerToPos(Vector2 pos)

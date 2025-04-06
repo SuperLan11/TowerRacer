@@ -19,6 +19,7 @@ public class Idx : MonoBehaviour
     public static int END_DOOR = 15;
     public static int EXPLOSION = 16;
     public static int END_LEVEL_PIECE = 17;
+    public static int GAME_UI = 18;
 
     public static int FIRST_ENEMY_IDX = 9;
     public static int NUM_LEVEL_PIECES = 3;

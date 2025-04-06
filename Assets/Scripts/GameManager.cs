@@ -55,7 +55,8 @@ public class GameManager : NetworkComponent
         if (flag == "GAMESTART")
         {
             if (IsClient)
-            {
+            {                
+                //Debug.Log("gameUi == null: " + (gameUI == null));
                 gameUI.GetComponent<Canvas>().enabled = true;
                 gameStarted = true;
 
@@ -66,6 +67,17 @@ public class GameManager : NetworkComponent
                         npm.gameObject.GetComponentInChildren<Canvas>().enabled = false;
                     }
                 }
+            }
+        }
+        else if(flag == "INIT_UI")
+        {
+            if(IsClient)
+            {
+                gameUI = GameObject.FindGameObjectWithTag("GAME_UI");
+                placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
+                gameUI = GameObject.FindGameObjectWithTag("GAME_UI");
+                timerLbl = GameObject.FindGameObjectWithTag("TIMER").GetComponent<Text>();
+                Debug.Log("client got ui");
             }
         }
         else if (flag == "SCORE")
@@ -117,13 +129,15 @@ public class GameManager : NetworkComponent
         placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
         gameUI = GameObject.FindGameObjectWithTag("GAME_UI");
         timerLbl = GameObject.FindGameObjectWithTag("TIMER").GetComponent<Text>();
+        curTimer = roundEndTime;        
+
         curTimer = roundEndTime;
 
         starts[0] = start1.transform.position;
         starts[1] = start2.transform.position;
         starts[2] = start3.transform.position;
         starts[3] = start4.transform.position;
-    }
+    }    
 
     public override void NetworkedStart()
     {
@@ -134,7 +148,9 @@ public class GameManager : NetworkComponent
             if (debugMode){
                 Enemy[] enemies = GetAllEnemies();
                 DestroyAllEnemies(enemies);
-            }                        
+            }
+
+            SendUpdate("INIT_UI", "");
         }        
     }
 
@@ -313,16 +329,13 @@ public class GameManager : NetworkComponent
             curTimer -= 1;
             timerLbl.text = curTimer + "s";
         }
+        timerFinished = true;
+        timerLbl.enabled = false;
+        Debug.Log("do something when timer ends!!");
     }
 
     public IEnumerator GameUpdate(){                
-        UpdatePlaces();        
-
-        if (timerFinished)
-        {
-            timerLbl.enabled = false;
-            Debug.Log("do something when timer ends!!");
-        }
+        UpdatePlaces();
 
         //don't make this timer too fast as UpdatePlaces is somewhat high on performance
         yield return new WaitForSeconds(0.5f);
@@ -360,7 +373,7 @@ public class GameManager : NetworkComponent
                     case 3:
                         spawnPos = starts[3];
                         break;
-                }
+                }                
 
                 GameObject temp = MyCore.NetCreateObject(0, n.Owner, spawnPos, Quaternion.identity);
                 PlayerController player = temp.GetComponent<PlayerController>();
@@ -375,7 +388,8 @@ public class GameManager : NetworkComponent
 
                 temp.GetComponentInChildren<Text>().text = n.PName;
                 player.SendUpdate("START", n.PName + ";" + n.ColorSelected + ";" + n.CharSelected);
-            }
+            }            
+
             /*GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, new Vector3(-7, -3, 0), Quaternion.identity);
             GameObject rope = MyCore.NetCreateObject(Idx.ROPE, Owner, new Vector3(0, 0, 0), Quaternion.identity);*/
 
