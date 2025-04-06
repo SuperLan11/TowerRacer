@@ -12,6 +12,7 @@ using UnityEngine.InputSystem;
 using System;
 using Unity.VisualScripting;
 using UnityEngine.UI;
+using UnityEngine.Tilemaps;
 
 using NETWORK_ENGINE;
 
@@ -19,8 +20,9 @@ using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
 
 /*
-!ISSUES:
-    2. Possible suspsect is dashing code that goes straight into FALLING movement state when the dashing timer is over
+!Bugs:
+!    1. Why is jumping through platforms from the bottom smooth on server but janky on client? ASK TOWLE ON MONDAY!!!!!!!!
+    2. climbing ladders to the top will temporarily shoot the player up towards the middle of the screen
 */
 
 
@@ -66,6 +68,9 @@ public class Player : Character {
     //we may want to eventually use the rigidbody variable in Character.cs, although ain't no way we're keeping the name as "myRig"
     public Rigidbody2D rigidbody;
     private LayerMask floorLayer;
+    //don't need to worry about these two in the inspector
+    Tilemap tilemap;
+    TileBase tile;
     
     [System.NonSerialized] public const float MAX_WALK_SPEED = 12.5f;
     private const float GROUND_ACCELERATION = 5f, GROUND_DECELERATION = 20f;
@@ -116,6 +121,9 @@ public class Player : Character {
     private const float MAX_JUMP_COYOTE_TIME = 0.1f;
     private const float MAX_WALL_JUMP_TIME = 0.2f;
     private const float MAX_WALL_STICK_TIME = 3f;
+
+    private const float TILEMAP_PLATFORM_OFFSET = 2f;
+
 
     private float gravity;
     private float initialJumpVelocity;
@@ -550,11 +558,20 @@ public class Player : Character {
     #region COLLISION
     private bool CheckForGround(){
         if (IsServer){
+            bool jumpingThroughTilemap = false;
+
             Vector2 tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y - COLLISION_RAYCAST_LENGTH);
             RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, ~0);
 
             foreach (RaycastHit2D hit in hits){
-                if (!hit.collider.isTrigger && (hit.normal == upNormal)){
+                if (hit.collider.gameObject.name == "SuperPatrickTilemap"){
+                    tilemap = hit.collider.GetComponent<Tilemap>();
+                    float tileUpperY = GetTileUpperY(hit);
+                    
+                    jumpingThroughTilemap = ((verticalVelocity > 0f) && (feetCollider.bounds.min.y < tileUpperY + TILEMAP_PLATFORM_OFFSET));
+                }
+                
+                if (!hit.collider.isTrigger && (hit.normal == upNormal) && !jumpingThroughTilemap){
                     return true;
                 }
             }
@@ -567,7 +584,14 @@ public class Player : Character {
             hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, ~0);
 
             foreach (RaycastHit2D hit in hits){
-                if (!hit.collider.isTrigger && (hit.normal == upNormal)){
+                if (hit.collider.gameObject.name == "SuperPatrickTilemap"){
+                    tilemap = hit.collider.GetComponent<Tilemap>();
+                    float tileUpperY = GetTileUpperY(hit);
+                    
+                    jumpingThroughTilemap = ((verticalVelocity > 0f) && (feetCollider.bounds.min.y < tileUpperY + TILEMAP_PLATFORM_OFFSET));
+                }
+
+                if (!hit.collider.isTrigger && (hit.normal == upNormal) && !jumpingThroughTilemap){
                     return true;
                 }
             }
@@ -576,13 +600,39 @@ public class Player : Character {
             hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, ~0);
 
             foreach (RaycastHit2D hit in hits){
-                if (!hit.collider.isTrigger && (hit.normal == upNormal)){
+                if (hit.collider.gameObject.name == "SuperPatrickTilemap"){
+                    tilemap = hit.collider.GetComponent<Tilemap>();
+                    float tileUpperY = GetTileUpperY(hit);
+                    
+                    jumpingThroughTilemap = ((verticalVelocity > 0f) && (feetCollider.bounds.min.y < tileUpperY + TILEMAP_PLATFORM_OFFSET));
+                }
+
+                if (!hit.collider.isTrigger && (hit.normal == upNormal) && !jumpingThroughTilemap){
                     return true;
                 }
             }
         }
 
         return false;
+    }
+
+    float GetTileUpperY(RaycastHit2D hit){
+        if (tilemap != null){
+            Vector3 hitWorldPos = hit.point;
+            Vector3Int cellPosition = tilemap.WorldToCell(hitWorldPos);
+            tile = tilemap.GetTile(cellPosition);
+            
+            Vector3 tileWorldPos = tilemap.CellToWorld(cellPosition);
+            float tileHeight = tilemap.cellSize.y;
+
+            Debug.Log("Max tile y: " + (tileWorldPos.y + tileHeight));
+            Debug.Log("Min feetcollider y: " + feetCollider.bounds.min.y);
+
+            
+            return tileWorldPos.y + tileHeight;   
+        }else{
+            return -5000000f;
+        }
     }
 
 
@@ -592,7 +642,8 @@ public class Player : Character {
             RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.up, COLLISION_RAYCAST_LENGTH, ~0);
 
             foreach (RaycastHit2D hit in hits){
-                if (!hit.collider.isTrigger && (hit.normal == downNormal)){
+                if (!hit.collider.isTrigger && (hit.normal == downNormal) && (hit.collider.gameObject.name != "SuperPatrickTilemap")){
+                    //Debug.Log(hit.collider.gameObject.name);
                     return true;
                 }
             }
@@ -602,7 +653,7 @@ public class Player : Character {
             hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
 
             foreach (RaycastHit2D hit in hits){
-                if (!hit.collider.isTrigger && (hit.normal == downNormal)){
+                if (!hit.collider.isTrigger && (hit.normal == downNormal) && (hit.collider.gameObject.name != "SuperPatrickTilemap")){
                     return true;
                 }
             }
@@ -611,7 +662,7 @@ public class Player : Character {
             hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
 
             foreach (RaycastHit2D hit in hits){
-                if (!hit.collider.isTrigger && (hit.normal == downNormal)){
+                if (!hit.collider.isTrigger && (hit.normal == downNormal) && (hit.collider.gameObject.name != "SuperPatrickTilemap")){
                     return true;
                 }
             }
@@ -839,7 +890,7 @@ public class Player : Character {
     }
 
     public bool InTheAir(){
-        return (IsJumping() || IsFallingInTheAir() || IsLaunching());
+        return (IsJumping() || IsFallingInTheAir() || IsLaunching() || (IsDashing() && verticalVelocity > 0f));
     }
 
     public bool IsClimbing(){

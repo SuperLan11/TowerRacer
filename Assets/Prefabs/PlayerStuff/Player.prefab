@@ -281,9 +281,8 @@ MonoBehaviour:
   MyId: {fileID: 0}
   IsDirty: 0
   speed: 0
-  myRig: {fileID: 0}
   currentMovementState: 2
-  selectedCharacterClass: 2
+  selectedCharacterClass: 1
   groundLayer:
     serializedVersion: 2
     m_Bits: 0
@@ -542,6 +541,7 @@ MonoBehaviour:
   IsDirty: 0
   threshold: 0
   eThreshold: 0
+  myRig: {fileID: 0}
   useAdjustVel: 0
   useAdjustAngVel: 0
 --- !u!1 &9139354587404111702
