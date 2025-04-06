@@ -240,7 +240,7 @@ GameObject:
   - component: {fileID: 5344744293931812403}
   - component: {fileID: 1557813579390976381}
   - component: {fileID: 1504742809329571919}
-  - component: {fileID: 4252557458386667274}
+  - component: {fileID: 6674136651889543204}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -282,8 +282,8 @@ MonoBehaviour:
   IsDirty: 0
   speed: 0
   myRig: {fileID: 0}
-  currentMovementState: 0
-  selectedCharacterClass: 1
+  currentMovementState: 2
+  selectedCharacterClass: 2
   groundLayer:
     serializedVersion: 2
     m_Bits: 0
@@ -525,7 +525,7 @@ MonoBehaviour:
   UseLobby: 0
   UpdateFrequency: 0.1
   MyCore: {fileID: 0}
---- !u!114 &4252557458386667274
+--- !u!114 &6674136651889543204
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -540,8 +540,8 @@ MonoBehaviour:
   MyCore: {fileID: 0}
   MyId: {fileID: 0}
   IsDirty: 0
-  threshold: 0.01
-  eThreshold: 1
+  threshold: 0
+  eThreshold: 0
   useAdjustVel: 0
   useAdjustAngVel: 0
 --- !u!1 &9139354587404111702

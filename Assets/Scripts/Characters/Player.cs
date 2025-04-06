@@ -19,6 +19,12 @@ using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
 
 /*
+!ISSUES:
+    2. Possible suspsect is dashing code that goes straight into FALLING movement state when the dashing timer is over
+*/
+
+
+/*
 TODO
     4. start programming different abilities
     3. Camera code
@@ -59,6 +65,7 @@ public class Player : Character {
     [System.NonSerialized] public LadderObj currentLadder = null;
     //we may want to eventually use the rigidbody variable in Character.cs, although ain't no way we're keeping the name as "myRig"
     public Rigidbody2D rigidbody;
+    private LayerMask floorLayer;
     
     [System.NonSerialized] public const float MAX_WALK_SPEED = 12.5f;
     private const float GROUND_ACCELERATION = 5f, GROUND_DECELERATION = 20f;
@@ -251,6 +258,11 @@ public class Player : Character {
                 
                 hasBomb = false;
             }                        
+        }else if(flag == "DISMOUNT"){
+            if(IsClient){
+                Vector2 dismountPos = Vector2FromString(value);
+                transform.position = dismountPos;
+            }
         }else if (flag == "CURRENT_MOVEMENT_STATE"){
             //doing this for performance reasons since Enum.Parse<>() is apparently performance-intensive
             switch(value){
@@ -306,11 +318,9 @@ public class Player : Character {
             }
         }*/
         
-        else if (!OTHER_FLAGS.ContainsKey(flag))
-        {
+        else if (!OTHER_FLAGS.ContainsKey(flag)){
             Debug.LogWarning(flag + " is not a valid flag in " + this.GetType().Name + ".cs");
-            if (IsClient)
-            {
+            if (IsClient){
                 SendCommand("DEBUG", flag + " is not a valid flag in " + this.GetType().Name + ".cs");
             }
         }
@@ -436,13 +446,19 @@ public class Player : Character {
             Cursor.visible = false;
         }
 
-        currentMovementState = movementState.GROUND;
+        currentMovementState = movementState.FALLING;
     }
 
     void Start(){
         rigidbody = GetComponent<Rigidbody2D>();
         if (rigidbody == null){
             Debug.LogError("Thine rigidbody is missing, good sir!");
+        }
+
+        floorLayer = LayerMask.GetMask("Floor");
+        bool invalidFloor = (floorLayer == 0);
+        if (invalidFloor){
+            Debug.LogError("Thine floor layer is missing, good sir!");
         }
 
         if (GetComponent<NetworkRB2D>() != null)
@@ -535,7 +551,7 @@ public class Player : Character {
     private bool CheckForGround(){
         if (IsServer){
             Vector2 tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y - COLLISION_RAYCAST_LENGTH);
-            RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+            RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, ~0);
 
             foreach (RaycastHit2D hit in hits){
                 if (!hit.collider.isTrigger && (hit.normal == upNormal)){
@@ -543,9 +559,12 @@ public class Player : Character {
                 }
             }
 
+            DrawDebugNormal(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, false);
+
+
             //shoot left and right raycast only if middle raycast didn't detect anything
             tempPos.x = feetCollider.bounds.min.x;
-            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, ~0);
 
             foreach (RaycastHit2D hit in hits){
                 if (!hit.collider.isTrigger && (hit.normal == upNormal)){
@@ -554,7 +573,7 @@ public class Player : Character {
             }
 
             tempPos.x = feetCollider.bounds.max.x;
-            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, ~0);
 
             foreach (RaycastHit2D hit in hits){
                 if (!hit.collider.isTrigger && (hit.normal == upNormal)){
@@ -1132,16 +1151,13 @@ public class Player : Character {
     //we're checking collision here rather than in any of the OnCollision() Unity methods
     void Update()
     {    
-        //Debug.Log("CurrentMovementState: " + currentMovementState);
-        //Debug.Log("Move input" + moveInput);
-        //Debug.Log("Num jumps used: " + numJumpsUsed);
-        
         if (!MyId.IsInit){
             return;
         }
 
         //this may be how we do walking animation code
         if (IsClient){
+            CheckForGround();
             // float tempSpeed = this.rigidbody.velocity.magnitude;
             
             // if (tempSpeed <= 0.01f){
@@ -1153,7 +1169,12 @@ public class Player : Character {
 
 
         if (IsServer){
+            //Debug.Log("CurrentMovementState: " + currentMovementState);
+            //Debug.Log("Move input" + moveInput);
+            //Debug.Log("Num jumps used: " + numJumpsUsed);
+            
             bool onGround = CheckForGround();
+
 
              if (inMovementAbilityCooldown){
                 if (movementAbilityCooldownTimer > 0f){
@@ -1301,6 +1322,16 @@ public class Player : Character {
                     currentLadder.attachedPlayer = null;
                     currentLadder = null;                    
                     verticalVelocity = 0f;
+
+                    float yOffset = 0.2f;
+                    float height = bodyCollider.bounds.size.y + feetCollider.bounds.size.y + yOffset;
+					//raycast to floor instead
+					Vector3 playerTop = transform.position + new Vector3(0, height / 2, 0);
+					RaycastHit2D floor = Physics2D.Raycast(playerTop, Vector2.down, height*2, floorLayer);
+					Vector2 dismountPos = floor.point;
+					dismountPos.y += height / 2;
+
+                    SendUpdate("DISMOUNT", dismountPos.ToString());
                 }
                 
                 return;
