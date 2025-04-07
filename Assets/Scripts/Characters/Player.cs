@@ -29,7 +29,6 @@ using Vector3 = UnityEngine.Vector3;
 /*
 TODO
     4. start programming different abilities
-    3. Camera code
     ...
     5. Test IsDirty stuff once we have movement states other than ground that aren't dependent on input (climbing, swinging, etc)
 */
@@ -51,7 +50,6 @@ public class Player : Character {
     //I doubt we'll want run button in our game, but it's here just in case
     private bool holdingRun = false;
 
-    [SerializeField] private movementState currentMovementState;
     [SerializeField] private characterClass selectedCharacterClass;
 
     #endregion
@@ -186,6 +184,8 @@ public class Player : Character {
             DASHING,    //abiliy
     };
 
+    [SerializeField] private movementState currentMovementState;
+
     private enum characterClass
     {
             ARCHER,
@@ -302,52 +302,33 @@ public class Player : Character {
                 Vector2 dismountPos = Vector2FromString(value);
                 transform.position = dismountPos;
             }
-        }
-        else if (flag == "JUMP_ANIM") {
+        } else if (flag == "JUMP_ANIM") {
             if (IsClient) {
                 if(!anim.GetCurrentAnimatorStateInfo(0).IsName("Jump"))
                     anim.Play("Jump", -1, 0f);
             }
-        }
-        else if (flag == "LADDER_ANIM"){
+        } else if (flag == "IDLE_ANIM") {
+            if (IsClient) {
+                if(!anim.GetCurrentAnimatorStateInfo(0).IsName("Idle"))
+                    anim.Play("Idle", -1, 0f);
+            }
+        } else if (flag == "LADDER_ANIM"){
             if (IsClient) {
                 if(!anim.GetCurrentAnimatorStateInfo(0).IsName("Climb"))
                     anim.Play("Climb", -1, 0f);
             }
-            else if (flag == "CAM_END"){
-                if (IsClient){
-                    Debug.Log("set highest cam y to " + float.Parse(value));
-                    Player.highestCamY = float.Parse(value);
-                }
+        }else if (flag == "TURN"){
+            if (isFacingRight){
+                spriteRender.flipX = false;
+                //transform.Rotate(0f, 180f, 0f);
+            }else{
+                spriteRender.flipX = true;
+                //transform.Rotate(0f, -180f, 0f);
             }
-        }
-        else if (flag == "CURRENT_MOVEMENT_STATE"){
-            //doing this for performance reasons since Enum.Parse<>() is apparently performance-intensive
-            switch(value){
-                case "GROUND":
-                    currentMovementState = movementState.GROUND;
-                    break;
-                case "JUMPING":
-                    currentMovementState = movementState.JUMPING;
-                    break;
-                case "FALLING":
-                    currentMovementState = movementState.FALLING;
-                    break;
-                case "FAST_FALLING":
-                    currentMovementState = movementState.FAST_FALLING;
-                    break;
-                case "SWINGING":
-                    currentMovementState = movementState.SWINGING;
-                    break;
-                case "LAUNCHING":
-                    currentMovementState = movementState.LAUNCHING;
-                    break;
-                case "CLIMBING":
-                    currentMovementState = movementState.CLIMBING;
-                    break;
-                case "DASHING":
-                    currentMovementState = movementState.DASHING;
-                    break;
+        }else if (flag == "CAM_END"){
+            if (IsClient){
+                Debug.Log("set highest cam y to " + float.Parse(value));
+                Player.highestCamY = float.Parse(value);
             }
         }else if (flag == "SELECTED_CHARACTER_CLASS"){
             //doing this for performance reasons since Enum.Parse<>() is apparently performance-intensive
@@ -552,6 +533,11 @@ public class Player : Character {
             Cursor.visible = false;
         }
 
+        if (IsClient){
+            feetCollider.enabled = false;
+            bodyCollider.enabled = false;
+        }
+
         currentMovementState = movementState.FALLING;
     }
 
@@ -611,27 +597,27 @@ public class Player : Character {
     //only gets called in server
     private void Turn(bool turnRight){
         isFacingRight = turnRight;
+        SendUpdate("IS_FACING_RIGHT", isFacingRight.ToString());
 
         if (isFacingRight){
             transform.Rotate(0f, 180f, 0f);
         }else{
             transform.Rotate(0f, -180f, 0f);
         }
+        SendUpdate("TURN", "GoodMorning");
     }
 
     
     #region COLLISION
     private bool CheckForGround(){
-        //if (IsServer){
+        if (IsServer){
             bool jumpingThroughTilemap = false;
 
             Vector2 tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y - COLLISION_RAYCAST_LENGTH);
             RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, ~0);
 
             foreach (RaycastHit2D hit in hits){
-            //if (hit.collider.gameObject.name == "SuperPatrickTilemap"){
-            if (hit.collider.GetComponent<TilemapCollider2D>() != null)
-            {
+            if (hit.collider.GetComponent<TilemapCollider2D>() != null){
                 tilemap = hit.collider.GetComponent<Tilemap>();
                     float tileUpperY = GetTileUpperY(hit);
                     
@@ -651,7 +637,6 @@ public class Player : Character {
             hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, ~0);
 
             foreach (RaycastHit2D hit in hits){
-            //if (hit.collider.gameObject.name == "SuperPatrickTilemap"){
             if (hit.collider.GetComponent<TilemapCollider2D>() != null) { 
                 tilemap = hit.collider.GetComponent<Tilemap>();
                     float tileUpperY = GetTileUpperY(hit);
@@ -668,7 +653,6 @@ public class Player : Character {
             hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, ~0);
 
             foreach (RaycastHit2D hit in hits){
-            //if (hit.collider.gameObject.name == "SuperPatrickTilemap"){
             if (hit.collider.GetComponent<TilemapCollider2D>() != null) { 
                 tilemap = hit.collider.GetComponent<Tilemap>();
                     float tileUpperY = GetTileUpperY(hit);
@@ -680,7 +664,7 @@ public class Player : Character {
                     return true;
                 }
             }
-        //}
+        }
 
         return false;
     }
@@ -1148,6 +1132,7 @@ public class Player : Character {
 
         //isFacingRight = (moveInput.x > 0f);
         isFacingRight = !isFacingRight;
+        SendUpdate("IS_FACING_RIGHT", isFacingRight.ToString());
         numWallJumpsUsed++;
 
         //we're gonna give the horizontal boost in Update() cause that's where we change horizontal velocity
@@ -1171,9 +1156,9 @@ public class Player : Character {
                 if (IsDirty){
                     SendUpdate("IS_FACING_RIGHT", isFacingRight.ToString());
                     SendUpdate("HOLDING_RUN", holdingRun.ToString());
-                    SendUpdate("CURRENT_MOVEMENT_STATE", MovementStateToString(currentMovementState));
                     SendUpdate("SELECTED_CHARACTER_CLASS", CharacterClassToString(selectedCharacterClass));
                     SendUpdate("MOVEMENT_ABILITY_PRESSED", movementAbilityPressed.ToString()); 
+                    //SendUpdate("CURRENT_MOVEMENT_STATE", MovementStateToString(currentMovementState));
                     //SendUpdate("NAME", Pname);
                     
                     IsDirty = false;
@@ -1202,33 +1187,17 @@ public class Player : Character {
             cam.transform.position = Vector3.Lerp(cam.transform.position, newCamPos, camAccel);
         }
 
+        //!Make this be done entirely with flags in HandleMessage()!
         //this may be how we do walking animation code
         if (IsClient) {
-            bool inIdle = anim.GetCurrentAnimatorStateInfo(0).IsName("Idle");
-
-            bool onGround = false;
-            Vector2 playerBottom = feetCollider.bounds.min;
-            playerBottom.x = transform.position.x;
-            RaycastHit2D floorHit = Physics2D.Raycast(playerBottom, Vector2.down, 1f);
-            if (floorHit.collider != null && floorHit.collider.GetComponent<TilemapCollider2D>() != null){
-                Debug.Log("grounded: true");
-                onGround = true;
-            }
-            else{
-                Debug.Log("grounded: false");
-            }
-
-            Debug.Log("onGround: " + onGround);
-            //Debug.Log("inIdle: " + inIdle);
-
-            if (onGround && !inIdle){                
-                anim.Play("Idle", -1, 0f);
-            }
-
+            
+           /*
             if (rigidbody.velocity.x < -0.01f)
                 spriteRender.flipX = true;
             else
                 spriteRender.flipX = false;
+                */
+            
         }
 
 
@@ -1310,6 +1279,7 @@ public class Player : Character {
                     canGrabRope = false;
                     currentRope.GrabRope(this);
                     currentMovementState = movementState.SWINGING;
+                    SendUpdate("JUMP_ANIM", "");
                 }
             }
 
@@ -1372,7 +1342,11 @@ public class Player : Character {
                 }
                 else if (moveInput.y < 0f){
                     if (onGround){
-                        currentMovementState = movementState.GROUND;
+                        //need this cause we only want to SendUpdate() when the game state has changed
+                        if (!IsGrounded()){
+                            currentMovementState = movementState.GROUND;
+                            SendUpdate("IDLE_ANIM", "GoodMorning");
+                        }
                     }else{
                         rigidbody.velocity = new Vector2(0, -currentLadder.ladderSpeed);
                     }
@@ -1383,7 +1357,11 @@ public class Player : Character {
 
                 bool aboveLadder = (feetCollider.bounds.min.y > currentLadder.GetComponent<Collider2D>().bounds.max.y); 
                 if (aboveLadder){
-                    currentMovementState = movementState.GROUND;                  
+                    if (!IsGrounded()){
+                        currentMovementState = movementState.GROUND;
+                        SendUpdate("IDLE_ANIM", "GoodMorning");
+                    }                  
+                    
                     rigidbody.velocity = Vector2.zero;
                     currentLadder.attachedPlayer = null;
                     currentLadder = null;                    
@@ -1393,9 +1371,11 @@ public class Player : Character {
                     float height = bodyCollider.bounds.size.y + feetCollider.bounds.size.y + yOffset;
 					//raycast to floor instead
 					Vector3 playerTop = transform.position + new Vector3(0, height / 2, 0);
-					RaycastHit2D floor = Physics2D.Raycast(playerTop, Vector2.down, height*2, floorLayer);
-					Vector2 dismountPos = floor.point;
-					dismountPos.y += height / 2;
+					//if we have issues with tilemap being floor layer, we can change it back and just use ~0 for the last parameter here
+                    RaycastHit2D floor = Physics2D.Raycast(playerTop, Vector2.down, height*2, floorLayer);
+                    Vector2 dismountPos = new Vector2(this.transform.position.x, GetTileUpperY(floor));
+					dismountPos.y += (height / 2) + yOffset;
+                    transform.position = dismountPos;
 
                     SendUpdate("DISMOUNT", dismountPos.ToString());
                 }
@@ -1460,6 +1440,7 @@ public class Player : Character {
 
             if (normalJump){
                 InitiateJump(1);
+                SendUpdate("JUMP_ANIM", "");
                 
                 if (jumpReleasedDuringBuffer){
                     currentMovementState = movementState.FAST_FALLING;
@@ -1467,18 +1448,22 @@ public class Player : Character {
                 }
             }else if (wallJump){
                 InitiateWallJump();
+                SendUpdate("JUMP_ANIM", "");
             }else if (extraJump){
                 InitiateJump(1);
+                SendUpdate("JUMP_ANIM", "");
             }else if (airJump){
                 //forces player to only get one jump when they're falling, so they can't fall off a ledge and then jump twice.
                 InitiateJump(2);
+                SendUpdate("JUMP_ANIM", "");
                 
                 currentMovementState = movementState.FAST_FALLING;
             }
 
             bool justLanded = (InTheAir() && onGround && (verticalVelocity <= 0f));
             if (justLanded){
-                currentMovementState = movementState.GROUND;
+                currentMovementState = movementState.GROUND;    
+                SendUpdate("IDLE_ANIM", "GoodMorning");
                 JumpVariableCleanup();
                 RopeVariableCleanup();
                 
@@ -1577,7 +1562,11 @@ public class Player : Character {
             }
 
             if (onGround && !IsJumping() && !InSpecialMovementState()){
-                currentMovementState = movementState.GROUND;
+                if (!IsGrounded()){
+                    currentMovementState = movementState.GROUND;
+                    SendUpdate("IDLE_ANIM", "GoodMorning");
+                }
+                
                 JumpVariableCleanup();
             }
 
