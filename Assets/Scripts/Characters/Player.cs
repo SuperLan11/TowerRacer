@@ -234,8 +234,7 @@ public class Player : Character {
             jumpPressed = true;
             jumpReleased = false;
 
-            if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Jump"))
-            {
+            if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Jump")){
                 anim.Play("Jump", -1, 0f);
                 //anim.Play("Takeoff", -1, 0f);
             }
@@ -503,8 +502,9 @@ public class Player : Character {
         placeColors[2] = new Color32(196, 132, 0, 255); //bronze for third
         placeColors[3] = new Color32(255, 255, 255, 255); //white for fourth
 
-        // arrowPivot = transform.GetChild(0).GetChild(1).gameObject;
-        // aimArrow = arrowPivot.transform.GetChild(0).gameObject;
+        arrowPivot = transform.GetChild(0).GetChild(1).gameObject;
+        aimArrow = arrowPivot.transform.GetChild(0).gameObject;
+        placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
 
         //add this back in when we start doing player spawn eggs
         /*
