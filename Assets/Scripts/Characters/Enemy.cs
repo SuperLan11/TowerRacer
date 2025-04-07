@@ -8,8 +8,7 @@ public abstract class Enemy : Character
     protected Player[] players;
     protected LayerMask floorLayer;
     protected int dir = 1;
-    protected bool raycastingPaused = false;
-    protected Animator anim;
+    protected bool raycastingPaused = false;    
 
     // Start is called before the first frame update
     private void Start()

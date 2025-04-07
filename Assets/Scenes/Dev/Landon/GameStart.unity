@@ -699,15 +699,15 @@ MonoBehaviour:
   DisconnectScreen: {fileID: 0}
   ObjectCounter: 0
   SpawnPrefab:
-  - {fileID: 2277379359762873865, guid: 4da00e43f67683a42a93180cce75bb12, type: 3}
   - {fileID: 6711198667271264467, guid: cec0322b612f0c04d84db8f4e6d66574, type: 3}
   - {fileID: 8924587938452622133, guid: 265dc7031218c084ab0c8041ea0b6aab, type: 3}
   - {fileID: 8294106288819697315, guid: d37ba2250fcd4c943803b8c57ddb53e1, type: 3}
   - {fileID: 8796853660360515542, guid: ba91e94b5dbf9e7499df1b407be25d3d, type: 3}
   - {fileID: 9139246000337623366, guid: 57b5ee59bf50f4948a91114b0c7fba0e, type: 3}
-  - {fileID: 9139246000337623366, guid: 57b5ee59bf50f4948a91114b0c7fba0e, type: 3}
+  - {fileID: 9139246000337623366, guid: 9fb5cfbdd804b6545bde30a2a5b24e4e, type: 3}
+  - {fileID: 2640692001382439313, guid: b3f7e28d161723c4c81aa5fd1f23e392, type: 3}
   - {fileID: 3115436199796182571, guid: 6aa04897036dae743b9f785b598f522e, type: 3}
-  - {fileID: 1601401378870448655, guid: abbddbd4f28c5a8479ab6dad3e5fb1d4, type: 3}
+  - {fileID: 1601401378870448655, guid: 49bddbd9c8a197245bc392a98d639042, type: 3}
   - {fileID: 8108229472301237831, guid: 5646ae78084fdc2468b029419ffc12c2, type: 3}
   - {fileID: 8108229472301237831, guid: 3b443848c95dadb4a9b98b28959f5822, type: 3}
   - {fileID: 8108229472301237831, guid: b7c8c1abd5e59a442ade599ddd99714c, type: 3}
@@ -716,7 +716,11 @@ MonoBehaviour:
   - {fileID: 259042173564907836, guid: 12a8d3a2b43d226409c45536a281c3ba, type: 3}
   - {fileID: 3325059836219692533, guid: d5afa480175d334459d0f9eaa00d3172, type: 3}
   - {fileID: 259042173564907836, guid: 02d21c9d9705ecb4ebf4fdfcfe5f22c9, type: 3}
-  - {fileID: 9139246000337623366, guid: 9fb5cfbdd804b6545bde30a2a5b24e4e, type: 3}
+  - {fileID: 2640692001382439313, guid: b3f7e28d161723c4c81aa5fd1f23e392, type: 3}
+  - {fileID: 1504742809329571919, guid: b8631090b02029b46931e364c57abd42, type: 3}
+  - {fileID: 1504742809329571919, guid: 0d5df6a6a25719648a6b10cd60d96a92, type: 3}
+  - {fileID: 1504742809329571919, guid: 0e38e47b03eeef244870a2fd991349cd, type: 3}
+  - {fileID: 1504742809329571919, guid: 91e539099c5fe1f43a0563e16e5be71e, type: 3}
   NetworkPlayerManager: {fileID: 8924587938452622135, guid: 265dc7031218c084ab0c8041ea0b6aab, type: 3}
   DefaultReturnScene: 0
 --- !u!4 &408156394
@@ -2832,6 +2836,26 @@ PrefabInstance:
       propertyPath: LOWEST_PIECE_Y
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 2883408301281918175, guid: cec0322b612f0c04d84db8f4e6d66574, type: 3}
+      propertyPath: heroSprites.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 2883408301281918175, guid: cec0322b612f0c04d84db8f4e6d66574, type: 3}
+      propertyPath: heroSprites.Array.data[0]
+      value: 
+      objectReference: {fileID: 21300000, guid: 467422b0027b5d64c8b319ce0c9dd59d, type: 3}
+    - target: {fileID: 2883408301281918175, guid: cec0322b612f0c04d84db8f4e6d66574, type: 3}
+      propertyPath: heroSprites.Array.data[1]
+      value: 
+      objectReference: {fileID: 21300000, guid: 072956943ea842f45b83c55e3816debd, type: 3}
+    - target: {fileID: 2883408301281918175, guid: cec0322b612f0c04d84db8f4e6d66574, type: 3}
+      propertyPath: heroSprites.Array.data[2]
+      value: 
+      objectReference: {fileID: 21300000, guid: 98b532af9d17d0744959efd674777f35, type: 3}
+    - target: {fileID: 2883408301281918175, guid: cec0322b612f0c04d84db8f4e6d66574, type: 3}
+      propertyPath: heroSprites.Array.data[3]
+      value: 
+      objectReference: {fileID: 21300000, guid: a9e36bbcbe392c8449eee9e383b60611, type: 3}
     - target: {fileID: 8194096176259117141, guid: cec0322b612f0c04d84db8f4e6d66574, type: 3}
       propertyPath: m_RootOrder
       value: 9

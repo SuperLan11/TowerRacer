@@ -70,7 +70,7 @@ public class Player : Character {
     private LayerMask floorLayer;
     //don't need to worry about this in the inspector
     Tilemap tilemap;
-    
+
     [System.NonSerialized] public const float MAX_WALK_SPEED = 12.5f;
     private const float GROUND_ACCELERATION = 5f, GROUND_DECELERATION = 20f;
     private const float AIR_ACCELERATION = 5f, AIR_DECELERATION = 5f;
@@ -97,9 +97,7 @@ public class Player : Character {
     [SerializeField] private bool inMovementAbilityCooldown = false;
     private float dashSpeed;
     private float dashTimer;
-    private const float MAX_DASH_TIME = 0.5f;
-
-
+    private const float MAX_DASH_TIME = 0.5f;    
 
     private uint numWallJumpsUsed = 0;
     private bool onWall = false;
@@ -198,78 +196,101 @@ public class Player : Character {
     //!For the else {} debug to work, you NEED to check IsServer or IsClient INSIDE of the flag if statement!
     public override void HandleMessage(string flag, string value)
     {
-        if (flag == "MOVE"){
-            if (IsServer){
+        if (flag == "START") {
+            if (IsClient) {
+                //here in case we need to initialize stuff later
+            }
+        }
+        else if (flag == "MOVE") {
+            if (IsServer) {
                 //not a sync var, but still needs to be set on the server
                 moveInput = Player.Vector2FromString(value);
             }
-        }else if (flag == "JUMP_PRESSED"){
+        } else if (flag == "JUMP_PRESSED") {
             jumpPressed = true;
             jumpReleased = false;
-            
-            if (IsServer){
+
+            if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Jump"))
+            {
+                anim.Play("Jump", -1, 0f);
+                //anim.Play("Takeoff", -1, 0f);
+            }
+
+            if (IsServer) {
                 SendUpdate("JUMP_PRESSED", "GoodMorning");
             }
-        }else if (flag == "JUMP_RELEASED"){
+        } else if (flag == "JUMP_RELEASED") {
             jumpPressed = false;
             jumpReleased = true;
-            
-            if (IsServer){
+
+            if (IsServer) {
                 SendUpdate("JUMP_RELEASED", "GoodMorning");
             }
-        }else if (flag == "AIM_STICK"){
-            if (IsServer){
+        } else if (flag == "AIM_STICK") {
+            if (IsServer) {
                 Vector2 newAimDir = Vector2FromString(value);
-                
-                if (newAimDir.magnitude < 0.7f){
+
+                if (newAimDir.magnitude < 0.7f) {
                     //don't set aim dir if less a threshold so bomb does not have 0 velocity
                     aimArrow.GetComponent<SpriteRenderer>().enabled = false;
-                }else if (newAimDir.magnitude >= 0.7f){
+                } else if (newAimDir.magnitude >= 0.7f) {
                     lastAimDir = Vector2FromString(value);
                     aimArrow.GetComponent<SpriteRenderer>().enabled = true;
-                    
+
                     Vector3 aimDir = new Vector3(lastAimDir.x, lastAimDir.y, 0);
                     Vector3 newRot = arrowPivot.transform.eulerAngles;
-                    
+
                     newRot.z = DirToDegrees(aimDir);
                     arrowPivot.transform.eulerAngles = newRot;
                 }
             }
-        }else if (flag == "AIM_MOUSE"){
-            if (IsServer){
+        } else if (flag == "AIM_MOUSE") {
+            if (IsServer) {
                 lastAimDir = Vector2FromString(value);
             }
-        }else if (flag == "MOVEMENT_ABILITY_PRESSED"){
+        } else if (flag == "MOVEMENT_ABILITY_PRESSED") {
             movementAbilityPressed = bool.Parse(value);
 
-            if (IsServer){
+            if (IsServer) {
                 SendUpdate("MOVEMENT_ABILITY_PRESSED", value);
             }
-        }else if (flag == "IS_FACING_RIGHT"){
+        } else if (flag == "IS_FACING_RIGHT") {
             isFacingRight = bool.Parse(value);
-        }else if (flag == "HOLDING_RUN"){
+        } else if (flag == "HOLDING_RUN") {
             holdingRun = bool.Parse(value);
-        }else if(flag == "HAS_BOMB"){            
-            if (IsClient){
+        } else if (flag == "HAS_BOMB") {
+            if (IsClient) {
                 hasBomb = true;
             }
-        }else if (flag == "SHOOT_BOMB"){
-            if (IsServer){
+        } else if (flag == "SHOOT_BOMB") {
+            if (IsServer) {
                 Vector2 bombPos = transform.position;
                 float yOffset = 2f;
                 bombPos.y += ((bodyCollider.bounds.size.y / 2) + (feetCollider.bounds.size.y / 2) + yOffset);
-                
-                GameObject bombObj = MyCore.NetCreateObject(14, Owner, bombPos, Quaternion.identity);                
+
+                GameObject bombObj = MyCore.NetCreateObject(14, Owner, bombPos, Quaternion.identity);
                 Bomb bomb = bombObj.GetComponent<Bomb>();
-                bomb.launchVec = lastAimDir * bomb.launchSpeed;                
-                
+                bomb.launchVec = lastAimDir * bomb.launchSpeed;
+
                 hasBomb = false;
-            }                        
-        }else if(flag == "DISMOUNT"){
-            if(IsClient){
+            }
+        } else if (flag == "DISMOUNT") {
+            if (IsClient) {
                 Vector2 dismountPos = Vector2FromString(value);
                 transform.position = dismountPos;
             }
+        }
+        else if (flag == "JUMP_ANIM") {
+            if (IsClient) {
+                if(!anim.GetCurrentAnimatorStateInfo(0).IsName("Jump"))
+                    anim.Play("Jump", -1, 0f);
+            }
+        }
+        else if (flag == "LADDER_ANIM"){
+            if (IsClient) {
+                if(!anim.GetCurrentAnimatorStateInfo(0).IsName("Climb"))
+                    anim.Play("Climb", -1, 0f);
+            }        
         }else if (flag == "CURRENT_MOVEMENT_STATE"){
             //doing this for performance reasons since Enum.Parse<>() is apparently performance-intensive
             switch(value){
@@ -312,8 +333,8 @@ public class Player : Character {
                     break;
                 case "KNIGHT":
                     selectedCharacterClass = characterClass.KNIGHT;
-                    break;
-            }
+                    break;                
+            }            
         }
         
         //anything with a cooldown is gonna look something like this
@@ -429,15 +450,15 @@ public class Player : Character {
         myRig = null;
 
         switch(selectedCharacterClass){
-            case characterClass.ARCHER:
+            case characterClass.ARCHER:                
                 movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 20f;
                 break;
-            case characterClass.MAGE:
+            case characterClass.MAGE:                
                 movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 5f;
                 break;
             //why 3 jumps for a double jump? Cause Unity can't do something as simple as make a functional input system. Set this to 2 at your own
             //peril
-            case characterClass.BANDIT:
+            case characterClass.BANDIT:                
                 MAX_JUMPS = 3;
                 movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 0.0001f;
                 //maybe increase movement speed as well?
@@ -447,7 +468,7 @@ public class Player : Character {
                 break;
             
         }
-        
+
         if (!GameManager.debugMode){
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
@@ -467,6 +488,10 @@ public class Player : Character {
         if (invalidFloor){
             Debug.LogError("Thine floor layer is missing, good sir!");
         }
+
+        spriteRender = GetComponent<SpriteRenderer>();
+        sprite = spriteRender.sprite;
+        anim = GetComponent<Animator>();
 
         if (GetComponent<NetworkRB2D>() != null)
             OTHER_FLAGS = GetComponent<NetworkRB2D>().FLAGS;
@@ -556,15 +581,17 @@ public class Player : Character {
     
     #region COLLISION
     private bool CheckForGround(){
-        if (IsServer){
+        //if (IsServer){
             bool jumpingThroughTilemap = false;
 
             Vector2 tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y - COLLISION_RAYCAST_LENGTH);
             RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, ~0);
 
             foreach (RaycastHit2D hit in hits){
-                if (hit.collider.gameObject.name == "SuperPatrickTilemap"){
-                    tilemap = hit.collider.GetComponent<Tilemap>();
+            //if (hit.collider.gameObject.name == "SuperPatrickTilemap"){
+            if (hit.collider.GetComponent<TilemapCollider2D>() != null)
+            {
+                tilemap = hit.collider.GetComponent<Tilemap>();
                     float tileUpperY = GetTileUpperY(hit);
                     
                     jumpingThroughTilemap = ((verticalVelocity > 0f) && (feetCollider.bounds.min.y < tileUpperY + TILEMAP_PLATFORM_OFFSET));
@@ -583,8 +610,9 @@ public class Player : Character {
             hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, ~0);
 
             foreach (RaycastHit2D hit in hits){
-                if (hit.collider.gameObject.name == "SuperPatrickTilemap"){
-                    tilemap = hit.collider.GetComponent<Tilemap>();
+            //if (hit.collider.gameObject.name == "SuperPatrickTilemap"){
+            if (hit.collider.GetComponent<TilemapCollider2D>() != null) { 
+                tilemap = hit.collider.GetComponent<Tilemap>();
                     float tileUpperY = GetTileUpperY(hit);
                     
                     jumpingThroughTilemap = ((verticalVelocity > 0f) && (feetCollider.bounds.min.y < tileUpperY + TILEMAP_PLATFORM_OFFSET));
@@ -599,8 +627,9 @@ public class Player : Character {
             hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, ~0);
 
             foreach (RaycastHit2D hit in hits){
-                if (hit.collider.gameObject.name == "SuperPatrickTilemap"){
-                    tilemap = hit.collider.GetComponent<Tilemap>();
+            //if (hit.collider.gameObject.name == "SuperPatrickTilemap"){
+            if (hit.collider.GetComponent<TilemapCollider2D>() != null) { 
+                tilemap = hit.collider.GetComponent<Tilemap>();
                     float tileUpperY = GetTileUpperY(hit);
                     
                     jumpingThroughTilemap = ((verticalVelocity > 0f) && (feetCollider.bounds.min.y < tileUpperY + TILEMAP_PLATFORM_OFFSET));
@@ -610,7 +639,7 @@ public class Player : Character {
                     return true;
                 }
             }
-        }
+        //}
 
         return false;
     }
@@ -938,11 +967,11 @@ public class Player : Character {
     public void JumpAction(InputAction.CallbackContext context){
         if (IsLocalPlayer){
             if (context.started || context.performed){ 
-                SendCommand("JUMP_PRESSED", "GoodMorning");
+                SendCommand("JUMP_PRESSED", "GoodMorning");                
             }else if (context.canceled){
                 SendCommand("JUMP_RELEASED", "GoodMorning");
             }
-        }
+        }        
     }
 
     public void AimStick(InputAction.CallbackContext aim)
@@ -1122,16 +1151,24 @@ public class Player : Character {
             return;
         }
 
+                
         //this may be how we do walking animation code
-        if (IsClient){
-            CheckForGround();
-            // float tempSpeed = this.rigidbody.velocity.magnitude;
-            
-            // if (tempSpeed <= 0.01f){
-            //     animator.SetFloat("speedh", 0);
-            // }else{
-            //     animator.SetFloat("speedh", Mathf.Abs(tempSpeed));
-            // }
+        if (IsClient) {
+            bool inIdle = anim.GetCurrentAnimatorStateInfo(0).IsName("Idle");
+            bool onGround = CheckForGround();
+
+            Debug.Log("onGround: " + onGround);
+            //Debug.Log("inIdle: " + inIdle);
+
+            if (onGround && !inIdle)
+            {                
+                anim.Play("Idle", -1, 0f);
+            }
+
+            if (rigidbody.velocity.x < -0.01f)
+                spriteRender.flipX = true;
+            else
+                spriteRender.flipX = false;
         }
 
 
@@ -1139,11 +1176,10 @@ public class Player : Character {
             //Debug.Log("CurrentMovementState: " + currentMovementState);
             //Debug.Log("Move input" + moveInput);
             //Debug.Log("Num jumps used: " + numJumpsUsed);
-            
             bool onGround = CheckForGround();
 
 
-             if (inMovementAbilityCooldown){
+            if (inMovementAbilityCooldown){
                 if (movementAbilityCooldownTimer > 0f){
                     movementAbilityCooldownTimer -= Time.deltaTime;
                 }else{
@@ -1222,7 +1258,8 @@ public class Player : Character {
                 if ((currentLadder != null) && pressingUpOrDown && !IsClimbing()){
                     currentLadder.InitializeLadderVariables(this);
                     currentMovementState = movementState.CLIMBING;
-                }
+                    SendUpdate("LADDER_ANIM", "");
+                }                
             }
 
             if (IsSwinging()){
@@ -1260,6 +1297,7 @@ public class Player : Character {
                 bool ladderJump = (jumpPressed && IsClimbing());
                 if (ladderJump){
                     InitiateJump(1);
+                    SendUpdate("JUMP_ANIM", "");
 
                     if (jumpReleasedDuringBuffer){
                         currentMovementState = movementState.FAST_FALLING;
@@ -1269,7 +1307,7 @@ public class Player : Character {
                 
 
                 if (moveInput.y > 0f){
-                    rigidbody.velocity = new Vector2(0, currentLadder.ladderSpeed);
+                    rigidbody.velocity = new Vector2(0, currentLadder.ladderSpeed);                    
                 }
                 else if (moveInput.y < 0f){
                     if (onGround){

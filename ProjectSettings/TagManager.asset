@@ -16,6 +16,7 @@ TagManager:
   - PLACE
   - GAME_UI
   - TIMER
+  - KNIGHT
   layers:
   - Default
   - TransparentFX

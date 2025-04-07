@@ -42,6 +42,16 @@ public class EndDoor : NetworkComponent
 
     }
 
+    private int GetPlayerPlace(PlayerController player)
+    { 
+        for(int i = 0; i < playersFinished.Count; i++)
+        {
+            if(playersFinished[i] == player)           
+                return i + 1;
+        }
+        return -1;
+    }
+
     private IEnumerator FadeScorePanelIn(float seconds)
     {
         //say seconds is 2, alphaFreq is 0.2
@@ -74,8 +84,9 @@ public class EndDoor : NetworkComponent
             }
         }
         Button nextBtn = scorePanel.GetComponentInChildren<Button>();
-        nextBtn.enabled = true;
+        nextBtn.GetComponent<Image>().enabled = true;
         nextBtn.GetComponentInChildren<Text>().enabled = true;
+        //where to put button onclick?        
     }
 
     private IEnumerator Wait(float seconds)
@@ -92,7 +103,7 @@ public class EndDoor : NetworkComponent
             {
                 playersFinished.Add(other.gameObject.GetComponent<PlayerController>());
                 //re-enable these when round restarts
-                other.gameObject.GetComponent<SpriteRenderer>().enabled = false;
+                other.gameObject.GetComponent<Rigidbody2D>().gravityScale = 0f;
                 other.gameObject.GetComponent<Collider2D>().enabled = false;
                 
                 PlayerController[] players = FindObjectsOfType<PlayerController>();

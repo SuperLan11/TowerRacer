@@ -30,7 +30,7 @@ public class GameManager : NetworkComponent
     public static float CENTER_PIECE_X = 0f;
 
     private Text placeLbl;
-    private GameObject gameUI;
+    private GameObject gameUI;    
 
     //the timer starts when the first player reaches the end door
     //the timer ends the round so players don't have to wait on the last player forever
@@ -339,7 +339,7 @@ public class GameManager : NetworkComponent
 
         //don't make this timer too fast as UpdatePlaces is somewhat high on performance
         yield return new WaitForSeconds(0.5f);
-    }
+    } 
 
     public override IEnumerator SlowUpdate()
     {
@@ -375,23 +375,14 @@ public class GameManager : NetworkComponent
                         break;
                 }                
 
-                GameObject temp = MyCore.NetCreateObject(0, n.Owner, spawnPos, Quaternion.identity);
-                PlayerController player = temp.GetComponent<PlayerController>();
+                GameObject temp = MyCore.NetCreateObject(Idx.ARCHER + n.CharSelected, n.Owner, spawnPos, Quaternion.identity);                
+                Player player = temp.GetComponent<Player>();
                 if (player == null)
-                    Debug.Log("player is null!!");
-
-                player.ColorSelected = n.ColorSelected;
-                player.PName = n.PName;
-
-                Sprite spriteSelected = player.heroSprites[n.CharSelected];
-                temp.GetComponent<SpriteRenderer>().sprite = spriteSelected;
-
-                temp.GetComponentInChildren<Text>().text = n.PName;
-                player.SendUpdate("START", n.PName + ";" + n.ColorSelected + ";" + n.CharSelected);
+                    Debug.LogWarning("player is null!!");                                
             }            
 
-            /*GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, new Vector3(-7, -3, 0), Quaternion.identity);
-            GameObject rope = MyCore.NetCreateObject(Idx.ROPE, Owner, new Vector3(0, 0, 0), Quaternion.identity);*/
+            GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, new Vector3(-7, -3, 0), Quaternion.identity);
+            //GameObject rope = MyCore.NetCreateObject(Idx.ROPE, Owner, new Vector3(0, 0, 0), Quaternion.identity);
 
             GameObject itemBox1 = MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(8, -7, 0), Quaternion.identity);
             GameObject itemBox2 = MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(5, -7, 0), Quaternion.identity);
