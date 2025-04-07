@@ -71,6 +71,12 @@ public class Player : Character {
     //don't need to worry about this in the inspector
     Tilemap tilemap;
 
+    private Camera cam;
+    public static float highestCamY;
+    private float camAccel = 0.2f;
+    private Text placeLbl;
+    private Color32[] placeColors;
+
     [System.NonSerialized] public const float MAX_WALK_SPEED = 12.5f;
     private const float GROUND_ACCELERATION = 5f, GROUND_DECELERATION = 20f;
     private const float AIR_ACCELERATION = 5f, AIR_DECELERATION = 5f;
@@ -201,6 +207,24 @@ public class Player : Character {
                 //here in case we need to initialize stuff later
             }
         }
+        else if(flag == "PLACE"){
+            if (IsLocalPlayer){
+                if (value == "1"){
+                    placeLbl.text = "1st";
+                }
+                else if (value == "2"){
+                    placeLbl.text = "2nd";
+                }
+                else if (value == "3"){
+                    placeLbl.text = "3rd";
+                }
+                else if (value == "4"){
+                    placeLbl.text = "4th";
+                }
+                int place = (int)char.GetNumericValue(value[0]);
+                placeLbl.color = placeColors[place - 1];
+            }
+        }
         else if (flag == "MOVE") {
             if (IsServer) {
                 //not a sync var, but still needs to be set on the server
@@ -290,8 +314,15 @@ public class Player : Character {
             if (IsClient) {
                 if(!anim.GetCurrentAnimatorStateInfo(0).IsName("Climb"))
                     anim.Play("Climb", -1, 0f);
-            }        
-        }else if (flag == "CURRENT_MOVEMENT_STATE"){
+            }
+            else if (flag == "CAM_END"){
+                if (IsClient){
+                    Debug.Log("set highest cam y to " + float.Parse(value));
+                    Player.highestCamY = float.Parse(value);
+                }
+            }
+        }
+        else if (flag == "CURRENT_MOVEMENT_STATE"){
             //doing this for performance reasons since Enum.Parse<>() is apparently performance-intensive
             switch(value){
                 case "GROUND":
@@ -440,43 +471,6 @@ public class Player : Character {
 
     #endregion
 
-    public override void NetworkedStart(){
-        CalculateInitialConditions();
-        dashSpeed = initialJumpVelocity * 2f;
-        
-        isFacingRight = true;
-        //!WE ARE NOT USING SPEED OR MYRIG ON THE PLAYER!!!!!!
-        speed = -9000000;
-        myRig = null;
-
-        switch(selectedCharacterClass){
-            case characterClass.ARCHER:                
-                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 20f;
-                break;
-            case characterClass.MAGE:                
-                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 5f;
-                break;
-            //why 3 jumps for a double jump? Cause Unity can't do something as simple as make a functional input system. Set this to 2 at your own
-            //peril
-            case characterClass.BANDIT:                
-                MAX_JUMPS = 3;
-                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 0.0001f;
-                //maybe increase movement speed as well?
-                break;
-            case characterClass.KNIGHT:
-                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 2f;
-                break;
-            
-        }
-
-        if (!GameManager.debugMode){
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-        }
-
-        currentMovementState = movementState.FALLING;
-    }
-
     void Start(){
         rigidbody = GetComponent<Rigidbody2D>();
         if (rigidbody == null){
@@ -492,6 +486,7 @@ public class Player : Character {
         spriteRender = GetComponent<SpriteRenderer>();
         sprite = spriteRender.sprite;
         anim = GetComponent<Animator>();
+        cam = Camera.main;
 
         if (GetComponent<NetworkRB2D>() != null)
             OTHER_FLAGS = GetComponent<NetworkRB2D>().FLAGS;
@@ -501,6 +496,12 @@ public class Player : Character {
             OTHER_FLAGS = GetComponent<NetworkTransform>().FLAGS;
         else if (GetComponentInChildren<NetworkTransform>() != null)
             OTHER_FLAGS = GetComponentInChildren<NetworkTransform>().FLAGS;
+
+        placeColors = new Color32[4];
+        placeColors[0] = new Color32(255, 220, 0, 255); //gold for first
+        placeColors[1] = new Color32(148, 148, 148, 255); //silver for second
+        placeColors[2] = new Color32(196, 132, 0, 255); //bronze for third
+        placeColors[3] = new Color32(255, 255, 255, 255); //white for fourth
 
         // arrowPivot = transform.GetChild(0).GetChild(1).gameObject;
         // aimArrow = arrowPivot.transform.GetChild(0).gameObject;
@@ -512,6 +513,46 @@ public class Player : Character {
         */
 
         rigidbody.gravityScale = 0f;
+    }
+
+    public override void NetworkedStart()
+    {
+        CalculateInitialConditions();
+        dashSpeed = initialJumpVelocity * 2f;
+
+        isFacingRight = true;
+        //!WE ARE NOT USING SPEED OR MYRIG ON THE PLAYER!!!!!!
+        speed = -9000000;
+        myRig = null;
+
+        switch (selectedCharacterClass)
+        {
+            case characterClass.ARCHER:
+                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 20f;
+                break;
+            case characterClass.MAGE:
+                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 5f;
+                break;
+            //why 3 jumps for a double jump? Cause Unity can't do something as simple as make a functional input system. Set this to 2 at your own
+            //peril
+            case characterClass.BANDIT:
+                MAX_JUMPS = 3;
+                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 0.0001f;
+                //maybe increase movement speed as well?
+                break;
+            case characterClass.KNIGHT:
+                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 2f;
+                break;
+
+        }
+
+        if (!GameManager.debugMode)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+
+        currentMovementState = movementState.FALLING;
     }
 
     #region PHYSICS
@@ -1151,17 +1192,36 @@ public class Player : Character {
             return;
         }
 
-                
+        if (IsLocalPlayer){
+            Vector3 newCamPos = new Vector3(0, 0, cam.transform.position.z);
+            newCamPos.x = GameManager.CENTER_PIECE_X;
+            //Mathf.infinity is not bad on performance at all since it is stored as some sort of constant
+            newCamPos.y = Mathf.Clamp(this.transform.position.y + 5, -Mathf.Infinity, highestCamY);
+
+            //use Vector3 lerp because Vector2.lerp puts camera z at 0 and messes up the view
+            cam.transform.position = Vector3.Lerp(cam.transform.position, newCamPos, camAccel);
+        }
+
         //this may be how we do walking animation code
         if (IsClient) {
             bool inIdle = anim.GetCurrentAnimatorStateInfo(0).IsName("Idle");
-            bool onGround = CheckForGround();
+
+            bool onGround = false;
+            Vector2 playerBottom = feetCollider.bounds.min;
+            playerBottom.x = transform.position.x;
+            RaycastHit2D floorHit = Physics2D.Raycast(playerBottom, Vector2.down, 1f);
+            if (floorHit.collider != null && floorHit.collider.GetComponent<TilemapCollider2D>() != null){
+                Debug.Log("grounded: true");
+                onGround = true;
+            }
+            else{
+                Debug.Log("grounded: false");
+            }
 
             Debug.Log("onGround: " + onGround);
             //Debug.Log("inIdle: " + inIdle);
 
-            if (onGround && !inIdle)
-            {                
+            if (onGround && !inIdle){                
                 anim.Play("Idle", -1, 0f);
             }
 
@@ -1258,6 +1318,7 @@ public class Player : Character {
                 if ((currentLadder != null) && pressingUpOrDown && !IsClimbing()){
                     currentLadder.InitializeLadderVariables(this);
                     currentMovementState = movementState.CLIMBING;
+                    Debug.Log("start ladder anim");
                     SendUpdate("LADDER_ANIM", "");
                 }                
             }

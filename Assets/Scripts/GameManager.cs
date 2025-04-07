@@ -24,8 +24,8 @@ public class GameManager : NetworkComponent
     //non-sync vars
     private Vector3[] starts = new Vector3[4];
     private int roundNum = 0;
-    private PlayerController[] overallPlayerLeaderboard;
-    private PlayerController[] currentPlayerLeaderboard;
+    private Player[] overallPlayerLeaderboard;
+    private Player[] currentPlayerLeaderboard;
     private static float LOWEST_PIECE_Y = -2f;
     public static float CENTER_PIECE_X = 0f;
 
@@ -39,6 +39,7 @@ public class GameManager : NetworkComponent
     private float curTimer;
     public bool timerStarted = false;
     public bool timerFinished = false;
+    private float camEndY;
 
     public static double levelTime;
     public static bool debugMode = true;
@@ -84,7 +85,7 @@ public class GameManager : NetworkComponent
         {
             Text roundScoreText = GameObject.FindGameObjectWithTag("SCORE").GetComponent<Text>();
             roundScoreText.enabled = true;
-            PlayerController[] players = FindObjectsOfType<PlayerController>();
+            Player[] players = FindObjectsOfType<Player>();
             for (int i = 0; i < players.Length; i++)
             {
                 roundScoreText.text += "Player " + (i + 1) + " score: " + Random.Range(0, 5) + '\n';
@@ -178,6 +179,7 @@ public class GameManager : NetworkComponent
             {
                 GameObject endPiece = MyCore.NetCreateObject(Idx.END_LEVEL_PIECE, this.Owner,
                     new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);
+                camEndY = endPiece.transform.position.y;
                 break;
             }
                       
@@ -283,7 +285,7 @@ public class GameManager : NetworkComponent
 
     private void UpdatePlaces()
     {
-        PlayerController[] players = FindObjectsOfType<PlayerController>();
+        Player[] players = FindObjectsOfType<Player>();
         int[] playerIdxsByHeight = new int[players.Length];
 
         for(int i = 0; i < players.Length; i++)
@@ -378,7 +380,9 @@ public class GameManager : NetworkComponent
                 GameObject temp = MyCore.NetCreateObject(Idx.ARCHER + n.CharSelected, n.Owner, spawnPos, Quaternion.identity);                
                 Player player = temp.GetComponent<Player>();
                 if (player == null)
-                    Debug.LogWarning("player is null!!");                                
+                    Debug.LogWarning("player is null!!");
+
+                player.SendUpdate("CAM_END", camEndY.ToString());
             }            
 
             GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, new Vector3(-7, -3, 0), Quaternion.identity);
@@ -387,9 +391,9 @@ public class GameManager : NetworkComponent
             GameObject itemBox1 = MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(8, -7, 0), Quaternion.identity);
             GameObject itemBox2 = MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(5, -7, 0), Quaternion.identity);
 
-            SendUpdate("GAMESTART", "1");            
+            SendUpdate("GAMESTART", "1");
             //stops server from listening, so nobody new can join.
-            MyCore.NotifyGameStart();            
+            MyCore.NotifyGameStart();
 
             //this is basically our regular Update()
             while (!gameOver)
