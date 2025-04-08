@@ -22,6 +22,7 @@ using Vector3 = UnityEngine.Vector3;
 /*
 !Bugs:
 !    1. You can climb the ladder upwards even when you're above the ladder
+!    2. if you disable the collider for the client, you can walk through walls and go off the screen
 */
 
 
@@ -170,7 +171,8 @@ public class Player : Character {
     private Vector3 rightNormal = new Vector2(1f, 0);
 
     private const int BOMB_SPAWN_PREFAB_INDEX = 14;
-    private const int SWORD_SPAWN_PREFAB_INDEX = 19;
+    private const int SWORD_SPAWN_PREFAB_INDEX = 21;
+    private const int ROPE_ARROW_SPAWN_PREFAB_INDEX = 22;
 
     public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
 
@@ -1131,6 +1133,7 @@ public class Player : Character {
         //isFacingRight = (moveInput.x > 0f);
         isFacingRight = !isFacingRight;
         SendUpdate("IS_FACING_RIGHT", isFacingRight.ToString());
+        Turn(isFacingRight);
         numWallJumpsUsed++;
 
         //we're gonna give the horizontal boost in Update() cause that's where we change horizontal velocity
@@ -1216,8 +1219,17 @@ public class Player : Character {
             }
 
             if (movementAbilityPressed && !inMovementAbilityCooldown){
-                //at least for right now, the only way to double jump is going to be to hit jump twice
-                if (selectedCharacterClass == characterClass.MAGE){
+                if (selectedCharacterClass == characterClass.ARCHER){
+                    float yOffset = 4f;
+                    Vector2 ropeArrowPos = new Vector2(this.transform.position.x, this.transform.position.y + yOffset);
+                    float ropeArrowSpeed = 1f;
+                    
+                    GameObject ropeArrow = MyCore.NetCreateObject(ROPE_ARROW_SPAWN_PREFAB_INDEX, Owner, ropeArrowPos, Quaternion.identity);
+                    ropeArrow.GetComponent<Rigidbody2D>().velocity = new Vector2(0f, ropeArrowSpeed);
+                    
+                    inMovementAbilityCooldown = true;
+                }else if (selectedCharacterClass == characterClass.MAGE){ 
+                    //at least for right now, the only way to double jump is going to be to hit jump twice
                     currentMovementState = movementState.DASHING;
                     dashTimer = MAX_DASH_TIME;
                     

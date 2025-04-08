@@ -9,8 +9,10 @@ using UnityEngine;
 
 using NETWORK_ENGINE;
 
-public class Sword : NetworkComponent
+public class RopeArrow : NetworkComponent
 {
+    private const int ROPE_SPAWN_PREFAB_INDEX = 7;
+    
     public override void HandleMessage(string flag, string value)
     {
         //throw new System.NotImplementedException();
@@ -18,7 +20,7 @@ public class Sword : NetworkComponent
 
     public override void NetworkedStart()
     {
-        //throw new System.NotImplementedException();
+        GetComponent<Rigidbody2D>().gravityScale = 0f;
     }
 
     public override IEnumerator SlowUpdate(){
@@ -30,6 +32,9 @@ public class Sword : NetworkComponent
     void OnCollisionEnter2D(Collision2D collision){
         if (IsServer){
             GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+
+            MyCore.NetCreateObject(ROPE_SPAWN_PREFAB_INDEX, Owner, this.transform.position, Quaternion.identity);
+            MyCore.NetDestroyObject(this.NetId);
         }
     }
 }

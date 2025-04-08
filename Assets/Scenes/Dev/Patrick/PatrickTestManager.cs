@@ -210,9 +210,9 @@ public class PatrickTestManager : NetworkComponent
 
                 //spawn player
                 //GameObject temp = MyCore.NetCreateObject(0, n.Owner, Vector3.zero, Quaternion.identity);
-                int mage = 17, knight = 18;
+                int archer = 17, mage = 18, bandit = 19, knight = 20;
                 
-                GameObject temp = MyCore.NetCreateObject(mage, n.Owner, Vector3.zero, Quaternion.identity);
+                GameObject temp = MyCore.NetCreateObject(archer, n.Owner, Vector3.zero, Quaternion.identity);
 
                 
                 // temp.GetComponent<PlayerController>().ColorSelected = n.ColorSelected;
