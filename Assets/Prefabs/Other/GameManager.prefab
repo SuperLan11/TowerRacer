@@ -68,7 +68,7 @@ MonoBehaviour:
   MyCore: {fileID: 0}
   MyId: {fileID: 0}
   IsDirty: 0
-  levelPrefabs:
-  - {fileID: 2806658356500011862, guid: d37ba2250fcd4c943803b8c57ddb53e1, type: 3}
-  - {fileID: 2806658356500011862, guid: ba91e94b5dbf9e7499df1b407be25d3d, type: 3}
-  - {fileID: 2806658356500011862, guid: 57b5ee59bf50f4948a91114b0c7fba0e, type: 3}
+  LOWEST_PIECE_Y: 2
+  timerStarted: 0
+  timerFinished: 0
+  gameUiPrefab: {fileID: 2069822766281470445, guid: 268d597672d7d914f9dd8b1ab720d60a, type: 3}

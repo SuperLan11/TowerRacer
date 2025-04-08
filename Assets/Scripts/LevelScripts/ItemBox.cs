@@ -31,7 +31,7 @@ public class ItemBox : NetworkComponent
 					itemImage.transform.SetParent(itemUI.transform);
 				}
 			}
-		}				
+		}			
 		else if (flag == "DEBUG")
 		{
 			Debug.Log(value);
@@ -82,34 +82,21 @@ public class ItemBox : NetworkComponent
 		Player playerHit = collision.GetComponentInParent<Player>();
 		//PlayerController playerHit = collision.GetComponentInParent<PlayerController>();
 
-		if (IsClient)
+		if (IsServer)
 		{			
-			if (playerHit != null && playerHit.IsLocalPlayer && !LocalPlayerHasItem())
+			if (playerHit != null)
 			{
-				int randIdx = Random.Range(0, NUM_ITEMS);								
-
-				//only spawn the player's item on that player's screen				
-				GameObject itemImage = Instantiate(itemPrefabs[randIdx], itemUI.transform.position, Quaternion.identity);
-
-				if (randIdx == 2)
+				int randIdx = Random.Range(0, NUM_ITEMS);
+				SendUpdate("ITEM_UI", this.transform.position.ToString());
+				playerHit.SendUpdate("ITEM", randIdx.ToString());				
+				//put this in ITEM flag
+				/*if (randIdx == 2)
 				{
 					playerHit.hasBomb = true;
 					playerHit.SendUpdate("HAS_BOMB", "");
-				}
-
-				itemImage.transform.SetParent(itemUI.transform);
+				}*/
+				MyCore.NetDestroyObject(this.NetId);
 			}
-		}
-
-		if (IsServer && playerHit != null)
-		{
-			//wait to destroy item box so that clients can catch up and touch it before it is destroyed
-			// maybe not the cleanest solution, but hopefully it works well enough
-			// checking isclient in triggerenter didn't work because can't send command because Owner is from game manager, which creates the itemboxes
-			// checking isclient and isserver without a delay didn't work because server destroys item box before client touches it			
-
-			//fix later to only despawn when specifically players touch the box
-			StartCoroutine(WaitToDestroyBox(0.1f));
 		}
 	}
 

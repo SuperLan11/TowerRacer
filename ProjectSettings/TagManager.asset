@@ -17,6 +17,9 @@ TagManager:
   - GAME_UI
   - TIMER
   - KNIGHT
+  - DISCONNECT
+  - READY_LBL
+  - END_DOOR_POS
   layers:
   - Default
   - TransparentFX

@@ -26,15 +26,15 @@ public class GameManager : NetworkComponent
     private int roundNum = 0;
     private Player[] overallPlayerLeaderboard;
     private Player[] currentPlayerLeaderboard;
-    private static float LOWEST_PIECE_Y = -2f;
+    [SerializeField] private float LOWEST_PIECE_Y = -2f;
     public static float CENTER_PIECE_X = 0f;
 
     private Text placeLbl;
-    private GameObject gameUI;    
+    private GameObject gameUI;
+    private Text timerLbl;
 
     //the timer starts when the first player reaches the end door
-    //the timer ends the round so players don't have to wait on the last player forever
-    private Text timerLbl;
+    //the timer ends the round so players don't have to wait on the last player forever    
     private int roundEndTime = 120;
     private float curTimer;
     public bool timerStarted = false;
@@ -56,9 +56,8 @@ public class GameManager : NetworkComponent
         if (flag == "GAMESTART")
         {
             if (IsClient)
-            {                
-                //Debug.Log("gameUi == null: " + (gameUI == null));
-                gameUI.GetComponent<Canvas>().enabled = true;
+            {
+                //this isn't used but may help later
                 gameStarted = true;
 
                 foreach (NPM npm in FindObjectsOfType<NPM>())
@@ -69,16 +68,12 @@ public class GameManager : NetworkComponent
                     }
                 }
             }
-        }
+        }        
         else if(flag == "INIT_UI")
         {
             if(IsClient)
             {
-                gameUI = GameObject.FindGameObjectWithTag("GAME_UI");
-                placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
-                gameUI = GameObject.FindGameObjectWithTag("GAME_UI");
-                timerLbl = GameObject.FindGameObjectWithTag("TIMER").GetComponent<Text>();
-                Debug.Log("client got ui");
+                InitUI();
             }
         }
         else if (flag == "SCORE")
@@ -116,6 +111,10 @@ public class GameManager : NetworkComponent
                 Debug.Log(value);
             }
         }        
+        else
+        {
+            Debug.LogWarning(flag + " is not a valid flag in GameManager.cs!");            
+        }
     }
     
 
@@ -126,12 +125,7 @@ public class GameManager : NetworkComponent
         GameObject start2 = GameObject.Find("P2Start");
         GameObject start3 = GameObject.Find("P3Start");
         GameObject start4 = GameObject.Find("P4Start");
-
-        placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
-        gameUI = GameObject.FindGameObjectWithTag("GAME_UI");
-        timerLbl = GameObject.FindGameObjectWithTag("TIMER").GetComponent<Text>();
-        curTimer = roundEndTime;        
-
+        
         curTimer = roundEndTime;
 
         starts[0] = start1.transform.position;
@@ -149,9 +143,7 @@ public class GameManager : NetworkComponent
             if (debugMode){
                 Enemy[] enemies = GetAllEnemies();
                 DestroyAllEnemies(enemies);
-            }
-
-            SendUpdate("INIT_UI", "");
+            }            
         }        
     }
 
@@ -177,9 +169,14 @@ public class GameManager : NetworkComponent
             int randIdx = Random.Range(0, Idx.NUM_LEVEL_PIECES);
             if (i == Idx.NUM_LEVEL_PIECES - 1)
             {
+                /*GameObject endPiece = MyCore.NetCreateObject(Idx.END_LEVEL_PIECE, this.Owner,
+                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);*/
                 GameObject endPiece = MyCore.NetCreateObject(Idx.END_LEVEL_PIECE, this.Owner,
-                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);
+                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y-10, 0), Quaternion.identity);
+                PlaceDoor(endPiece);
+
                 camEndY = endPiece.transform.position.y;
+                Debug.Log("created end piece at: " + endPiece.transform.position.y);
                 break;
             }
                       
@@ -197,6 +194,17 @@ public class GameManager : NetworkComponent
     private void DisableRooms()
     {
 
+    }
+
+    private void PlaceDoor(GameObject endPiece)
+    {
+        for(int i = 0; i < endPiece.transform.childCount; i++)
+        {
+            if(endPiece.transform.GetChild(i).tag == "END_DOOR_POS")
+            {
+                MyCore.NetCreateObject(Idx.END_DOOR, Owner, endPiece.transform.GetChild(i).transform.position, Quaternion.identity);
+            }
+        }
     }
 
     private void RandomlyPlaceRope(GameObject levelPiece)
@@ -320,20 +328,41 @@ public class GameManager : NetworkComponent
     //called by EndDoor script
     public IEnumerator StartTimer()
     {
+        InitUI();
+
         timerLbl.enabled = true;
         timerStarted = true;
-        SendUpdate("TIMER_SHOW", "");
+        
+        //I tried doing this at the start of SlowUpdate but the clients did not run for some reason
+        SendUpdate("INIT_UI", "");
 
+        SendUpdate("TIMER_SHOW", "");
         while (curTimer > 0)
         {            
             SendUpdate("TIMER", curTimer.ToString());
             yield return new WaitForSeconds(1);
             curTimer -= 1;
             timerLbl.text = curTimer + "s";
+
+            if (EndDoor.roundDone)
+            {
+                break;
+            }
         }
-        timerFinished = true;
-        timerLbl.enabled = false;
-        Debug.Log("do something when timer ends!!");
+
+        if (!EndDoor.roundDone)
+        {
+            timerFinished = true;
+            timerLbl.enabled = false;
+            Debug.Log("do something when timer ends!!");
+        }
+    }
+
+    private void InitUI()
+    {        
+        gameUI = GameObject.FindGameObjectWithTag("GAME_UI");
+        placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
+        timerLbl = GameObject.FindGameObjectWithTag("TIMER").GetComponent<Text>();
     }
 
     public IEnumerator GameUpdate(){                
@@ -341,18 +370,20 @@ public class GameManager : NetworkComponent
 
         //don't make this timer too fast as UpdatePlaces is somewhat high on performance
         yield return new WaitForSeconds(0.5f);
-    } 
+    }   
 
     public override IEnumerator SlowUpdate()
     {
         if (IsServer)
         {
-            RandomizeLevel();
-            
+            InitUI();
+
             while (!gameStarted)
             {
                 yield return new WaitForSeconds(0.5f);
-            }            
+            }
+
+            RandomizeLevel();                              
 
             NPM[] players = GameObject.FindObjectsOfType<NPM>();
             foreach (NPM n in players)
@@ -375,17 +406,17 @@ public class GameManager : NetworkComponent
                     case 3:
                         spawnPos = starts[3];
                         break;
-                }                
+                }
 
                 GameObject temp = MyCore.NetCreateObject(Idx.ARCHER + n.CharSelected, n.Owner, spawnPos, Quaternion.identity);                
                 Player player = temp.GetComponent<Player>();
                 if (player == null)
                     Debug.LogWarning("player is null!!");
 
-                player.SendUpdate("CAM_END", camEndY.ToString());
+                player.SendUpdate("CAM_END", camEndY.ToString());                
             }            
 
-            GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, new Vector3(-7, -3, 0), Quaternion.identity);
+            GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, new Vector3(-7, -3, 0), Quaternion.identity);            
             //GameObject rope = MyCore.NetCreateObject(Idx.ROPE, Owner, new Vector3(0, 0, 0), Quaternion.identity);
 
             GameObject itemBox1 = MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(8, -7, 0), Quaternion.identity);

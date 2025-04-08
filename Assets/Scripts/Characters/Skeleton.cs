@@ -6,8 +6,7 @@ public class Skeleton : Enemy
 {    
     private STATE state = STATE.MOVING;
     [SerializeField] private float shootTime = 1f;    
-    private bool canShoot = true;
-    private int ARROW_IDX = 2;    
+    private bool canShoot = true;      
     private List<Player> playersInRange = new List<Player>();
 
     enum STATE
@@ -151,7 +150,7 @@ public class Skeleton : Enemy
         Vector2 arrowPos = transform.position;
         arrowPos.x += dir * GetComponent<Collider2D>().bounds.size.x;         
 
-        GameObject arrow = MyCore.NetCreateObject(ARROW_IDX, Owner, arrowPos, Quaternion.identity);
+        GameObject arrow = MyCore.NetCreateObject(Idx.SKELETON_ARROW, Owner, arrowPos, Quaternion.identity);
         arrow.GetComponent<Arrow>().dir = dir;
         arrow.GetComponent<Arrow>().SendUpdate("SPAWN", "");
     }

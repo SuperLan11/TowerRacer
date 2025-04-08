@@ -74,7 +74,11 @@ public class Player : Character {
     private Camera cam;
     public static float highestCamY;
     private float camAccel = 0.2f;
+    
     private Text placeLbl;
+    private GameObject gameUI;
+    private Text timerLbl;
+
     private Color32[] placeColors;
 
     [System.NonSerialized] public const float MAX_WALK_SPEED = 12.5f;
@@ -125,8 +129,7 @@ public class Player : Character {
     private const float MAX_WALL_JUMP_TIME = 0.2f;
     private const float MAX_WALL_STICK_TIME = 3f;
 
-    private const float TILEMAP_PLATFORM_OFFSET = 2f;
-
+    private const float TILEMAP_PLATFORM_OFFSET = 2f;    
 
     private float gravity;
     private float initialJumpVelocity;
@@ -202,12 +205,7 @@ public class Player : Character {
     //!For the else {} debug to work, you NEED to check IsServer or IsClient INSIDE of the flag if statement!
     public override void HandleMessage(string flag, string value)
     {
-        if (flag == "START") {
-            if (IsClient) {
-                //here in case we need to initialize stuff later
-            }
-        }
-        else if(flag == "PLACE"){
+        if(flag == "PLACE"){
             if (IsLocalPlayer){
                 if (value == "1"){
                     placeLbl.text = "1st";
@@ -502,9 +500,14 @@ public class Player : Character {
         placeColors[2] = new Color32(196, 132, 0, 255); //bronze for third
         placeColors[3] = new Color32(255, 255, 255, 255); //white for fourth
 
-        arrowPivot = transform.GetChild(0).GetChild(1).gameObject;
+        arrowPivot = transform.GetChild(0).gameObject;
         aimArrow = arrowPivot.transform.GetChild(0).gameObject;
+
+        gameUI = GameObject.FindGameObjectWithTag("GAME_UI");
         placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
+        timerLbl = GameObject.FindGameObjectWithTag("TIMER").GetComponent<Text>();
+
+        Debug.Log("player Owner: " + Owner);
 
         //add this back in when we start doing player spawn eggs
         /*
@@ -516,7 +519,7 @@ public class Player : Character {
     }
 
     public override void NetworkedStart()
-    {
+    {       
         CalculateInitialConditions();
         dashSpeed = initialJumpVelocity * 2f;
 
@@ -1211,14 +1214,14 @@ public class Player : Character {
             playerBottom.x = transform.position.x;
             RaycastHit2D floorHit = Physics2D.Raycast(playerBottom, Vector2.down, 1f);
             if (floorHit.collider != null && floorHit.collider.GetComponent<TilemapCollider2D>() != null){
-                Debug.Log("grounded: true");
+                //Debug.Log("grounded: true");
                 onGround = true;
             }
             else{
-                Debug.Log("grounded: false");
+                //Debug.Log("grounded: false");
             }
 
-            Debug.Log("onGround: " + onGround);
+            //Debug.Log("onGround: " + onGround);
             //Debug.Log("inIdle: " + inIdle);
 
             if (onGround && !inIdle){                
