@@ -21,24 +21,7 @@ public class EndDoor : NetworkComponent
 
     public override void HandleMessage(string flag, string value)
     {
-        if (flag == "FADE_IN")
-        {
-            if (IsClient)
-            {
-                float seconds = float.Parse(value);
-                Debug.Log("fading in on client");
-                StartCoroutine(FadeScorePanelIn(seconds));
-            }
-        }
-        else if (flag == "FADE_OUT")
-        {
-            if (IsClient)
-            {
-                float seconds = float.Parse(value);
-                StartCoroutine(FadeScorePanelOut(seconds));
-            }
-        }        
-        else if (flag == "DEBUG")
+        if (flag == "DEBUG")
         {
             Debug.Log(value);
             if (IsClient)
@@ -84,86 +67,7 @@ public class EndDoor : NetworkComponent
                 return i + 1;
         }
         return -1;
-    }
-
-    private IEnumerator FadeScorePanelIn(float seconds)
-    {        
-        if (IsServer)
-        {
-            SendUpdate("FADE_IN", seconds.ToString());
-        }
-
-        Debug.Log("start of fadein");
-        //set background color based on place later
-        Image scoreBackground = scorePanel.GetComponent<Image>();
-
-        Image[] images = scorePanel.GetComponentsInChildren<Image>();
-        Text[] labels = scorePanel.GetComponentsInChildren<Text>();
-        Debug.Log("got to middle");
-        while(images[0].color.a < 1)
-        {
-            //using yield return with another coroutine pauses this coroutine until the other one finishes
-            yield return Wait(alphaUpdateFreq);
-
-            Color newPanelColor = scoreBackground.color;
-            newPanelColor.a += alphaUpdateFreq/(2*seconds);
-            scoreBackground.color = newPanelColor;
-
-            foreach (Image image in images)
-            {
-                Color newColor = image.color;
-                newColor.a += alphaUpdateFreq / seconds;
-                image.color = newColor;                                
-            }
-
-            foreach(Text text in labels)
-            {
-                Color newColor = text.color;
-                newColor.a += alphaUpdateFreq / seconds;
-                text.color = newColor;
-            }
-        }
-
-        yield return Wait(resultsTimer);
-        StartCoroutine(FadeScorePanelOut(1f));
-    }
-
-    private IEnumerator FadeScorePanelOut(float seconds)
-    {
-        if (IsServer)
-        {
-            SendUpdate("FADE_OUT", seconds.ToString());
-        }
-        
-        Image scoreBackground = scorePanel.GetComponent<Image>();
-
-        Image[] images = scorePanel.GetComponentsInChildren<Image>();
-        Text[] labels = scorePanel.GetComponentsInChildren<Text>();
-
-        while (images[0].color.a > 0)
-        {
-            //using yield return with another coroutine pauses this coroutine until the other one finishes
-            yield return Wait(alphaUpdateFreq);
-
-            Color newPanelColor = scoreBackground.color;
-            newPanelColor.a -= alphaUpdateFreq / (2 * seconds);
-            scoreBackground.color = newPanelColor;
-
-            foreach (Image image in images)
-            {
-                Color newColor = image.color;
-                newColor.a -= alphaUpdateFreq / seconds;
-                image.color = newColor;
-            }
-
-            foreach (Text text in labels)
-            {
-                Color newColor = text.color;
-                newColor.a -= alphaUpdateFreq / seconds;
-                text.color = newColor;
-            }
-        }
-    }
+    }    
 
     private IEnumerator Wait(float seconds)
     {
@@ -198,69 +102,34 @@ public class EndDoor : NetworkComponent
         {
             Player playerHit = other.gameObject.GetComponentInParent<Player>();
             if (playerHit != null && !playersFinished.Contains(playerHit))
-            {
-                Debug.Log("end door hit player");
+            {                
                 playersFinished.Add(playerHit);
 
-                /*if (playersFinished.Count == 1)
+                if (playersFinished.Count == 1)
                     playerHit.wins++;
-                
-                playerHit.SendUpdate("CAM_FREEZE", "');
-                
+
+                //if(playerHit.wins >= 3)
+                //show a winscreen of the player                
+                //GameManager.gameOver = true;
+                //make sure to reset all stats on game over!!!
+
+                playerHit.SendUpdate("CAM_FREEZE", "");
                 playerHit.transform.position = playerHit.startPos;
-                playerHit.SendUpdate("TELEPORT", "");
-                
-                Player[] players = FindObjectsOfType<Player>();
-                if(playersFinished.Count == players.Length)
-                {
-                    playersFinished.Clear();                    
-                    timerStopped = true;
-
-                    StartCoroutine(GameManager.ResetRound());
-
-                    in reset round...
-                    yield return FadeScorePanelIn(1f);                                        
-
-                    TilemapCollider2D[] pieces = FindObjectsOfType<TilemapCollider2D>();
-                    foreach(TilemapCollider2D piece in pieces)
-                    {
-                        MyCore.NetDestroyObject(piece.GetComponent<NetworkID>().NetID);
-                    }
-                    RandomizeLevel();
-
-                    yield return Wait(5f);
-                    StartCoroutine(FadeScorePanelOut(1f));
-                    
-                    Player[] players = FindObjectsOfType<Player>();
-                    foreach(Player player in players)
-                    {
-                        player.SendUpdate("CAM_UNFREEZE", "");
-                    }
-                
-                    yield return Wait(3f);
-                    SendUpdate("COUNTDOWN", "");
-                }
-                else if (!gm.timerStarted)           
-                {
-                    StartCoroutine(gm.StartTimer());
-                }
-                 */
+                playerHit.SendUpdate("TELEPORT", playerHit.startPos.ToString());
 
                 Player[] players = FindObjectsOfType<Player>();
-                if(playersFinished.Count == players.Length)
-                {                    
-                    StartCoroutine(FadeScorePanelIn(1f));
-                    //prepare for next round
+                if (playersFinished.Count == players.Length)
+                {
                     playersFinished.Clear();
                     timerStopped = true;
-                    //teleport players and level after a few seconds
+
+                    StartCoroutine(gm.ResetRound());
+                }
+                else if (!gm.timerStarted)
+                {
+                    StartCoroutine(gm.StartTimer());
                 }                
                 
-                if (!gm.timerStarted)
-                    StartCoroutine(gm.StartTimer());
-
-                //to send back to main menu
-                //GameManager.gameOver = true;
             }
         }
     }

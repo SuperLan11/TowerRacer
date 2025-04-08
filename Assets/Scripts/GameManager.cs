@@ -32,6 +32,8 @@ public class GameManager : NetworkComponent
     private Text placeLbl;
     private GameObject gameUI;
     private Text timerLbl;
+    private GameObject scorePanel;
+    private Text countdownLbl;
 
     //the timer starts when the first player reaches the end door
     //the timer ends the round so players don't have to wait on the last player forever    
@@ -40,6 +42,9 @@ public class GameManager : NetworkComponent
     public bool timerStarted = false;
     public bool timerFinished = false;
     private float camEndY;
+
+    private float resultsTimer = 5f;
+    private float alphaUpdateFreq = 0.01f;
 
     public static double levelTime;
     public static bool debugMode = true;
@@ -68,12 +73,30 @@ public class GameManager : NetworkComponent
                     }
                 }
             }
-        }        
-        else if(flag == "INIT_UI")
+        }
+        else if (flag == "INIT_UI")
         {
-            if(IsClient)
+            if (IsClient)
             {
+                Debug.Log("client is getting ui...");
                 InitUI();
+            }
+        }
+        else if (flag == "FADE_IN")
+        {
+            if (IsClient)
+            {
+                float seconds = float.Parse(value);
+                Debug.Log("fading in on client");
+                StartCoroutine(FadeScorePanelIn(seconds));
+            }
+        }
+        else if (flag == "FADE_OUT")
+        {
+            if (IsClient)
+            {
+                float seconds = float.Parse(value);
+                StartCoroutine(FadeScorePanelOut(seconds));
             }
         }
         else if (flag == "SCORE")
@@ -86,7 +109,7 @@ public class GameManager : NetworkComponent
                 roundScoreText.text += "Player " + (i + 1) + " score: " + Random.Range(0, 5) + '\n';
             }
         }
-        else if (flag == "TIMER_SHOW")
+        else if (flag == "SHOW_TIMER")
         {
             if (IsClient)
             {
@@ -94,11 +117,49 @@ public class GameManager : NetworkComponent
                 timerStarted = true;
             }
         }
+        else if (flag == "HIDE_TIMER")
+        {
+            if (IsClient)
+            {
+                timerLbl.enabled = false;
+            }
+        }
         else if (flag == "TIMER")
         {
             if (IsClient)
             {
                 timerLbl.text = value + "s";
+            }
+        }
+        else if (flag == "SHOW_PLACE")
+        {
+            if (IsClient)
+            {
+                placeLbl.enabled = true;
+            }
+        }
+        else if (flag == "HIDE_PLACE")
+        {
+            if (IsClient)
+            {
+                placeLbl.enabled = false;
+            }
+        }
+        else if (flag == "COUNTDOWN")
+        {
+            if (IsClient)
+            {                
+                countdownLbl.enabled = true;
+                countdownLbl.text = value;
+                Debug.Log("countdown text: " + countdownLbl.text);
+                Debug.Log("countdown enabled: " + countdownLbl.enabled);
+            }
+        }
+        else if(flag == "HIDE_COUNTDOWN")
+        {
+            if(IsClient)
+            {
+                countdownLbl.enabled = false;
             }
         }
         //for objects in scene before clients connect, can't use SendCommand because
@@ -110,10 +171,10 @@ public class GameManager : NetworkComponent
             {
                 Debug.Log(value);
             }
-        }        
+        }
         else
         {
-            Debug.LogWarning(flag + " is not a valid flag in GameManager.cs!");            
+            Debug.LogWarning(flag + " is not a valid flag in GameManager.cs!");
         }
     }
     
@@ -169,14 +230,13 @@ public class GameManager : NetworkComponent
             int randIdx = Random.Range(0, Idx.NUM_LEVEL_PIECES);
             if (i == Idx.NUM_LEVEL_PIECES - 1)
             {
-                /*GameObject endPiece = MyCore.NetCreateObject(Idx.END_LEVEL_PIECE, this.Owner,
-                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);*/
                 GameObject endPiece = MyCore.NetCreateObject(Idx.END_LEVEL_PIECE, this.Owner,
-                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y-10, 0), Quaternion.identity);
+                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);
+                /*GameObject endPiece = MyCore.NetCreateObject(Idx.END_LEVEL_PIECE, this.Owner,
+                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y - 10, 0), Quaternion.identity);*/
                 PlaceDoor(endPiece);
 
-                camEndY = endPiece.transform.position.y;
-                Debug.Log("created end piece at: " + endPiece.transform.position.y);
+                camEndY = endPiece.transform.position.y;                
                 break;
             }
                       
@@ -329,14 +389,13 @@ public class GameManager : NetworkComponent
     public IEnumerator StartTimer()
     {
         InitUI();
-
-        timerLbl.enabled = true;
-        timerStarted = true;
-        
-        //I tried doing this at the start of SlowUpdate but the clients did not run for some reason
         SendUpdate("INIT_UI", "");
 
-        SendUpdate("TIMER_SHOW", "");
+        timerLbl.enabled = true;
+        SendUpdate("SHOW_TIMER", "");        
+        timerStarted = true;
+        //I tried doing this at the start of SlowUpdate but the clients did not run for some reason
+        
         while (curTimer > 0)
         {            
             SendUpdate("TIMER", curTimer.ToString());
@@ -363,19 +422,145 @@ public class GameManager : NetworkComponent
         yield return new WaitForSeconds(seconds);
     }
 
+    private IEnumerator FadeScorePanelIn(float seconds)
+    {
+        if (IsServer)
+        {
+            SendUpdate("FADE_IN", seconds.ToString());
+        }
+        
+        //set background color based on place later
+        Image scoreBackground = scorePanel.GetComponent<Image>();
+
+        Image[] images = scorePanel.GetComponentsInChildren<Image>();
+        Text[] labels = scorePanel.GetComponentsInChildren<Text>();
+        
+        while (images[0].color.a < 1)
+        {
+            //using yield return with another coroutine pauses this coroutine until the other one finishes
+            yield return Wait(alphaUpdateFreq);
+
+            Color newPanelColor = scoreBackground.color;
+            newPanelColor.a += alphaUpdateFreq / (2 * seconds);
+            scoreBackground.color = newPanelColor;
+
+            foreach (Image image in images)
+            {
+                Color newColor = image.color;
+                newColor.a += alphaUpdateFreq / seconds;
+                image.color = newColor;
+            }
+
+            foreach (Text text in labels)
+            {
+                Color newColor = text.color;
+                newColor.a += alphaUpdateFreq / seconds;
+                text.color = newColor;
+            }
+        }
+    }
+
+    private IEnumerator FadeScorePanelOut(float seconds)
+    {
+        if (IsServer)
+        {
+            SendUpdate("FADE_OUT", seconds.ToString());
+        }
+
+        Image scoreBackground = scorePanel.GetComponent<Image>();
+
+        Image[] images = scorePanel.GetComponentsInChildren<Image>();
+        Text[] labels = scorePanel.GetComponentsInChildren<Text>();
+
+        while (images[0].color.a > 0)
+        {
+            //using yield return with another coroutine pauses this coroutine until the other one finishes
+            yield return Wait(alphaUpdateFreq);
+
+            Color newPanelColor = scoreBackground.color;
+            newPanelColor.a -= alphaUpdateFreq / (2 * seconds);
+            scoreBackground.color = newPanelColor;
+
+            foreach (Image image in images)
+            {
+                Color newColor = image.color;
+                newColor.a -= alphaUpdateFreq / seconds;
+                image.color = newColor;
+            }
+
+            foreach (Text text in labels)
+            {
+                Color newColor = text.color;
+                newColor.a -= alphaUpdateFreq / seconds;
+                text.color = newColor;
+            }
+        }
+    }
+
     public IEnumerator ResetRound()
     {
         if(IsServer)
         {
+            timerLbl.enabled = false;
+            SendUpdate("HIDE_TIMER", "");
+
+            //yield return prevents the following lines from running until the coroutine is done
+            yield return FadeScorePanelIn(1f);
+
+            TilemapCollider2D[] pieces = FindObjectsOfType<TilemapCollider2D>();
+            foreach (TilemapCollider2D piece in pieces)
+            {
+                MyCore.NetDestroyObject(piece.GetComponentInParent<NetworkID>().NetId);
+            }
+            RandomizeLevel();
+
+            //5 seconds to look at results panel before fading out the panel
             yield return Wait(5f);
+            
+            Player[] players = FindObjectsOfType<Player>();
+            foreach (Player player in players)
+            {                
+                player.SendUpdate("CAM_UNFREEZE", "");
+            }
+
+            placeLbl.enabled = false;
+            SendUpdate("HIDE_PLACE", "");
+
+            StartCoroutine(FadeScorePanelOut(1f));                                
+            yield return Wait(3f);
+
+            Debug.Log("countdown 3");
+            SendUpdate("COUNTDOWN", "3");
+            yield return Wait(1f);
+            
+            Debug.Log("countdown 2");
+            SendUpdate("COUNTDOWN", "2");
+            yield return Wait(1f);
+
+            Debug.Log("countdown 1");
+            SendUpdate("COUNTDOWN", "1");            
+            yield return Wait(1f);
+
+            SendUpdate("HIDE_COUNTDOWN", "");
+
+            placeLbl.enabled = true;
+            SendUpdate("SHOW_PLACE", "");
         }
     }
 
     private void InitUI()
     {        
         gameUI = GameObject.FindGameObjectWithTag("GAME_UI");
+        scorePanel = GameObject.FindGameObjectWithTag("SCORE");
         placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
         timerLbl = GameObject.FindGameObjectWithTag("TIMER").GetComponent<Text>();
+        countdownLbl = GameObject.FindGameObjectWithTag("COUNTDOWN").GetComponent<Text>();
+
+        Debug.Log("gameUI == null: " + (gameUI == null));
+        Debug.Log("scorePanel == null: " + (scorePanel == null));
+        Debug.Log("placeLbl == null: " + (placeLbl == null));
+        Debug.Log("timerLbl == null: " + (timerLbl == null));
+        Debug.Log("countdownLbl == null: " + (countdownLbl == null));
     }
 
     public IEnumerator GameUpdate(){                
@@ -389,7 +574,7 @@ public class GameManager : NetworkComponent
     {
         if (IsServer)
         {
-            InitUI();
+            InitUI();            
 
             while (!gameStarted)
             {
@@ -427,10 +612,11 @@ public class GameManager : NetworkComponent
                     Debug.LogWarning("player is null!!");
 
                 player.SendUpdate("CAM_END", camEndY.ToString());                
-            }            
+            }
+            //this doesn't work at the start of slow update for some reason
+            SendUpdate("INIT_UI", "");
 
-            GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, new Vector3(-7, -3, 0), Quaternion.identity);            
-            //GameObject rope = MyCore.NetCreateObject(Idx.ROPE, Owner, new Vector3(0, 0, 0), Quaternion.identity);
+            GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, new Vector3(-7, -3, 0), Quaternion.identity);                        
 
             GameObject itemBox1 = MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(8, -7, 0), Quaternion.identity);
             GameObject itemBox2 = MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(5, -7, 0), Quaternion.identity);
@@ -441,7 +627,8 @@ public class GameManager : NetworkComponent
 
             //this is basically our regular Update()
             while (!gameOver)
-            {                        
+            {                       
+                //yield return is blocking, so the lines after it won't run until GameUpdate finishes
                 yield return GameUpdate();
             }
 

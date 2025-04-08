@@ -282,24 +282,24 @@ MonoBehaviour:
   MyId: {fileID: 0}
   IsDirty: 0
   speed: 0
-  currentMovementState: 2
   selectedCharacterClass: 2
   groundLayer:
     serializedVersion: 2
     m_Bits: 0
   feetCollider: {fileID: 2941317128191888691}
   bodyCollider: {fileID: 4394980080252175982}
-  rigidbody: {fileID: 0}
+  camFrozen: 0
+  itemPrefabs:
+  - {fileID: 6531251911950882678, guid: ceaf47fdf1a1b9a4487c0b1710e68104, type: 3}
+  - {fileID: 4902897762067080654, guid: 1ded338bb0a6dab4d814fd3e03406f95, type: 3}
+  - {fileID: 8871953084031675785, guid: 12a8d3a2b43d226409c45536a281c3ba, type: 3}
   MAX_JUMPS: 1
   inMovementAbilityCooldown: 0
-  swingPosHeight: 0
-  ropeLaunchVec: {x: 0, y: 0}
   launchCorrectionSpeed: 8
   airSlowdownMult: 1
-  aimArrow: {fileID: 3672279392424741280}
-  arrowPivot: {fileID: 1937393265323724454}
   movementAbilityCooldownTimer: 0
   MAX_MOVEMENT_ABILITY_COOLDOWN: 0
+  currentMovementState: 2
 --- !u!212 &4906707819597775948
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -541,7 +541,7 @@ MonoBehaviour:
   MyId: {fileID: 0}
   IsDirty: 0
   threshold: 0.01
-  eThreshold: 1
+  eThreshold: 0.1
   myRig: {fileID: 0}
   useAdjustVel: 0
   useAdjustAngVel: 0

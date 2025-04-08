@@ -20,6 +20,7 @@ TagManager:
   - DISCONNECT
   - READY_LBL
   - END_DOOR_POS
+  - COUNTDOWN
   layers:
   - Default
   - TransparentFX

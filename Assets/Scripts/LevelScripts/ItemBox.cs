@@ -88,13 +88,7 @@ public class ItemBox : NetworkComponent
 			{
 				int randIdx = Random.Range(0, NUM_ITEMS);
 				SendUpdate("ITEM_UI", this.transform.position.ToString());
-				playerHit.SendUpdate("ITEM", randIdx.ToString());				
-				//put this in ITEM flag
-				/*if (randIdx == 2)
-				{
-					playerHit.hasBomb = true;
-					playerHit.SendUpdate("HAS_BOMB", "");
-				}*/
+				playerHit.SendUpdate("ITEM", randIdx.ToString());								
 				MyCore.NetDestroyObject(this.NetId);
 			}
 		}

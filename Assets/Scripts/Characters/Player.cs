@@ -66,16 +66,22 @@ public class Player : Character {
     [System.NonSerialized] public Rope currentRope = null;
     [System.NonSerialized] public LadderObj currentLadder = null;
     //we may want to eventually use the rigidbody variable in Character.cs, although ain't no way we're keeping the name as "myRig"
-    public Rigidbody2D rigidbody;
+    [System.NonSerialized] public Rigidbody2D rigidbody;
     private LayerMask floorLayer;
     //don't need to worry about this in the inspector
     Tilemap tilemap;
 
     private Camera cam;
     public static float highestCamY;
-    private float camAccel = 0.2f;
+    private float camAccel = 0.12f;
+    public bool camFrozen = false;
     private Text placeLbl;
     private Color32[] placeColors;
+    [System.NonSerialized] public Vector2 startPos;
+    
+    private GameObject itemUI;
+    public GameObject[] itemPrefabs;
+    [System.NonSerialized] public int wins = 0;
 
     [System.NonSerialized] public const float MAX_WALK_SPEED = 12.5f;
     private const float GROUND_ACCELERATION = 5f, GROUND_DECELERATION = 20f;
@@ -113,7 +119,7 @@ public class Player : Character {
 
     //!RENAME THIS LATER
     private bool canGrabRope = true;
-    public int swingPosHeight = 0;
+    [System.NonSerialized] public int swingPosHeight = 0;
     [System.NonSerialized] public Transform swingPos;
     [System.NonSerialized] public const float MAX_SWING_SPEED = 7.0f;
     private const float MAX_LAUNCH_SPEED = MAX_WALK_SPEED * 20f;
@@ -135,7 +141,7 @@ public class Player : Character {
     [System.NonSerialized] public float verticalVelocity;
     private Vector2 moveVelocity;
     [System.NonSerialized] public Vector2 moveInput;
-    public Vector2 ropeLaunchVec = Vector2.zero;
+    [System.NonSerialized] public Vector2 ropeLaunchVec = Vector2.zero;
     
     //how fast you can change directions midair
     [SerializeField] private float launchCorrectionSpeed = 32f;      //previously 8f
@@ -159,8 +165,8 @@ public class Player : Character {
     //private Item currentlyEquippedItem = null;
     [System.NonSerialized] public bool hasBomb = false;
     private Vector2 lastAimDir;
-    [SerializeField] private GameObject aimArrow;
-    [SerializeField] private GameObject arrowPivot;
+    private GameObject aimArrow;
+    private GameObject arrowPivot;
     private const float ARROW_SENSITIVITY = 0.2f;
 
     [SerializeField] private float movementAbilityCooldownTimer;
@@ -208,12 +214,14 @@ public class Player : Character {
     //!For the else {} debug to work, you NEED to check IsServer or IsClient INSIDE of the flag if statement!
     public override void HandleMessage(string flag, string value)
     {
-        if (flag == "START") {
-            if (IsClient) {
+        if (flag == "START")
+        {
+            if (IsClient)
+            {
                 //here in case we need to initialize stuff later
             }
         }
-        else if(flag == "PLACE"){
+        else if (flag == "PLACE"){
             if (IsLocalPlayer){
                 if (value == "1"){
                     placeLbl.text = "1st";
@@ -231,38 +239,87 @@ public class Player : Character {
                 placeLbl.color = placeColors[place - 1];
             }
         }
-        else if (flag == "MOVE") {
-            if (IsServer) {
+        else if (flag == "ITEM"){
+            if (IsLocalPlayer){
+                int itemIdx = int.Parse(value);
+                GameObject itemImage = Instantiate(itemPrefabs[itemIdx], itemUI.transform.position, Quaternion.identity);
+                itemImage.transform.SetParent(itemUI.transform);
+
+                if (itemIdx == 2)
+                {
+                    hasBomb = true;                    
+                }
+            }
+        }
+        else if (flag == "CAM_FREEZE"){
+            if (IsClient){                
+                camFrozen = true;
+            }
+        }       
+        else if (flag == "CAM_UNFREEZE"){
+            if (IsClient){                
+                camFrozen = false;
+            }
+        }
+        else if (flag == "CAM_END"){
+            if (IsClient){
+                //Debug.Log("set highest cam y to " + float.Parse(value));
+                Player.highestCamY = float.Parse(value);
+            }
+        }
+        else if(flag == "TELEPORT"){
+            if (IsClient) {
+                Vector2 teleportPos = Vector2FromString(value);
+                this.transform.position = teleportPos;
+            }
+        }
+        else if (flag == "MOVE")
+        {
+            if (IsServer)
+            {
                 //not a sync var, but still needs to be set on the server
                 moveInput = Player.Vector2FromString(value);
             }
-        } else if (flag == "JUMP_PRESSED") {
+        }
+        else if (flag == "JUMP_PRESSED")
+        {
             jumpPressed = true;
             jumpReleased = false;
 
-            if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Jump")){
+            if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Jump"))
+            {
                 anim.Play("Jump", -1, 0f);
                 //anim.Play("Takeoff", -1, 0f);
             }
 
-            if (IsServer) {
+            if (IsServer)
+            {
                 SendUpdate("JUMP_PRESSED", "GoodMorning");
             }
-        } else if (flag == "JUMP_RELEASED") {
+        }
+        else if (flag == "JUMP_RELEASED")
+        {
             jumpPressed = false;
             jumpReleased = true;
 
-            if (IsServer) {
+            if (IsServer)
+            {
                 SendUpdate("JUMP_RELEASED", "GoodMorning");
             }
-        } else if (flag == "AIM_STICK") {
-            if (IsServer) {
+        }
+        else if (flag == "AIM_STICK")
+        {
+            if (IsServer)
+            {
                 Vector2 newAimDir = Vector2FromString(value);
 
-                if (newAimDir.magnitude < 0.7f) {
+                if (newAimDir.magnitude < 0.7f)
+                {
                     //don't set aim dir if less a threshold so bomb does not have 0 velocity
                     aimArrow.GetComponent<SpriteRenderer>().enabled = false;
-                } else if (newAimDir.magnitude >= 0.7f) {
+                }
+                else if (newAimDir.magnitude >= 0.7f)
+                {
                     lastAimDir = Vector2FromString(value);
                     aimArrow.GetComponent<SpriteRenderer>().enabled = true;
 
@@ -273,26 +330,42 @@ public class Player : Character {
                     arrowPivot.transform.eulerAngles = newRot;
                 }
             }
-        } else if (flag == "AIM_MOUSE") {
-            if (IsServer) {
+        }
+        else if (flag == "AIM_MOUSE")
+        {
+            if (IsServer)
+            {
                 lastAimDir = Vector2FromString(value);
             }
-        } else if (flag == "MOVEMENT_ABILITY_PRESSED") {
+        }
+        else if (flag == "MOVEMENT_ABILITY_PRESSED")
+        {
             movementAbilityPressed = bool.Parse(value);
 
-            if (IsServer) {
+            if (IsServer)
+            {
                 SendUpdate("MOVEMENT_ABILITY_PRESSED", value);
             }
-        } else if (flag == "IS_FACING_RIGHT") {
+        }
+        else if (flag == "IS_FACING_RIGHT")
+        {
             isFacingRight = bool.Parse(value);
-        } else if (flag == "HOLDING_RUN") {
+        }
+        else if (flag == "HOLDING_RUN")
+        {
             holdingRun = bool.Parse(value);
-        } else if (flag == "HAS_BOMB") {
-            if (IsClient) {
+        }
+        else if (flag == "HAS_BOMB")
+        {
+            if (IsClient)
+            {
                 hasBomb = true;
             }
-        } else if (flag == "SHOOT_BOMB") {
-            if (IsServer) {
+        }
+        else if (flag == "SHOOT_BOMB")
+        {
+            if (IsServer)
+            {
                 Vector2 bombPos = transform.position;
                 float yOffset = 2f;
                 bombPos.y += ((bodyCollider.bounds.size.y / 2) + (feetCollider.bounds.size.y / 2) + yOffset);
@@ -303,42 +376,57 @@ public class Player : Character {
 
                 hasBomb = false;
             }
-        } else if (flag == "DISMOUNT") {
-            if (IsClient) {
+        }
+        else if (flag == "DISMOUNT")
+        {
+            if (IsClient)
+            {
                 Vector2 dismountPos = Vector2FromString(value);
                 transform.position = dismountPos;
             }
-        } else if (flag == "JUMP_ANIM") {
-            if (IsClient) {
-                if(!anim.GetCurrentAnimatorStateInfo(0).IsName("Jump"))
+        }
+        else if (flag == "JUMP_ANIM")
+        {
+            if (IsClient)
+            {
+                if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Jump"))
                     anim.Play("Jump", -1, 0f);
             }
-        } else if (flag == "IDLE_ANIM") {
-            if (IsClient) {
-                if(!anim.GetCurrentAnimatorStateInfo(0).IsName("Idle"))
+        }
+        else if (flag == "IDLE_ANIM")
+        {
+            if (IsClient)
+            {
+                if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Idle"))
                     anim.Play("Idle", -1, 0f);
             }
-        } else if (flag == "LADDER_ANIM"){
-            if (IsClient) {
-                if(!anim.GetCurrentAnimatorStateInfo(0).IsName("Climb"))
+        }
+        else if (flag == "LADDER_ANIM")
+        {
+            if (IsClient)
+            {
+                if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Climb"))
                     anim.Play("Climb", -1, 0f);
             }
-        }else if (flag == "TURN"){
-            if (isFacingRight){
+        }
+        else if (flag == "TURN")
+        {
+            if (isFacingRight)
+            {
                 spriteRender.flipX = false;
                 //transform.Rotate(0f, 180f, 0f);
-            }else{
+            }
+            else
+            {
                 spriteRender.flipX = true;
                 //transform.Rotate(0f, -180f, 0f);
             }
-        }else if (flag == "CAM_END"){
-            if (IsClient){
-                //Debug.Log("set highest cam y to " + float.Parse(value));
-                Player.highestCamY = float.Parse(value);
-            }
-        }else if (flag == "SELECTED_CHARACTER_CLASS"){
+        }
+        else if (flag == "SELECTED_CHARACTER_CLASS")
+        {
             //doing this for performance reasons since Enum.Parse<>() is apparently performance-intensive
-            switch(value){
+            switch (value)
+            {
                 case "ARCHER":
                     selectedCharacterClass = characterClass.ARCHER;
                     break;
@@ -350,10 +438,10 @@ public class Player : Character {
                     break;
                 case "KNIGHT":
                     selectedCharacterClass = characterClass.KNIGHT;
-                    break;                
-            }            
+                    break;
+            }
         }
-        
+
         //anything with a cooldown is gonna look something like this
         /*else if (flag == "ATTACK"){
             if (IsServer){
@@ -362,10 +450,12 @@ public class Player : Character {
                 animator.Play("Attack1h1", 0);
             }
         }*/
-        
-        else if (!OTHER_FLAGS.ContainsKey(flag)){
+
+        else if (!OTHER_FLAGS.ContainsKey(flag))
+        {
             Debug.LogWarning(flag + " is not a valid flag in " + this.GetType().Name + ".cs");
-            if (IsClient){
+            if (IsClient)
+            {
                 SendCommand("DEBUG", flag + " is not a valid flag in " + this.GetType().Name + ".cs");
             }
         }
@@ -492,6 +582,7 @@ public class Player : Character {
         arrowPivot = transform.GetChild(0).gameObject;
         aimArrow = arrowPivot.transform.GetChild(0).gameObject;
         placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
+        itemUI = GameObject.FindGameObjectWithTag("ITEM_UI");
 
         //add this back in when we start doing player spawn eggs
         /*
@@ -506,6 +597,8 @@ public class Player : Character {
     {
         CalculateInitialConditions();
         dashSpeed = initialJumpVelocity * 2f;
+
+        startPos = this.transform.position;
 
         isFacingRight = true;
         //!WE ARE NOT USING SPEED OR MYRIG ON THE PLAYER!!!!!!
@@ -1181,28 +1274,19 @@ public class Player : Character {
         }
 
         if (IsLocalPlayer){
-            Vector3 newCamPos = new Vector3(0, 0, cam.transform.position.z);
-            newCamPos.x = GameManager.CENTER_PIECE_X;
-            //Mathf.infinity is not bad on performance at all since it is stored as some sort of constant
-            newCamPos.y = Mathf.Clamp(this.transform.position.y + 5, -Mathf.Infinity, highestCamY);
+            if (!camFrozen){
+                //Debug.Log("cam is moving!");
+                Vector3 newCamPos = new Vector3(0, 0, cam.transform.position.z);
+                newCamPos.x = GameManager.CENTER_PIECE_X;
+                //Mathf.infinity is not bad on performance at all since it is stored as some sort of constant
+                newCamPos.y = Mathf.Clamp(this.transform.position.y + 5, -Mathf.Infinity, highestCamY);
 
-            //use Vector3 lerp because Vector2.lerp puts camera z at 0 and messes up the view
-            cam.transform.position = Vector3.Lerp(cam.transform.position, newCamPos, camAccel);
+                //use Vector3 lerp because Vector2.lerp puts camera z at 0 and messes up the view
+                cam.transform.position = Vector3.Lerp(cam.transform.position, newCamPos, camAccel);
+            }
+            /*else
+                Debug.Log("cam is frozen");*/
         }
-
-        //!Make this be done entirely with flags in HandleMessage()!
-        //this may be how we do walking animation code
-        if (IsClient) {
-            
-           /*
-            if (rigidbody.velocity.x < -0.01f)
-                spriteRender.flipX = true;
-            else
-                spriteRender.flipX = false;
-                */
-            
-        }
-
 
         if (IsServer){
             //Debug.Log("CurrentMovementState: " + currentMovementState);
