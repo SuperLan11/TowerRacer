@@ -169,6 +169,9 @@ public class Player : Character {
     private Vector2 leftNormal = new Vector2(-1f, 0);
     private Vector3 rightNormal = new Vector2(1f, 0);
 
+    private const int BOMB_SPAWN_PREFAB_INDEX = 14;
+    private const int SWORD_SPAWN_PREFAB_INDEX = 19;
+
     public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
 
     private enum movementState
@@ -290,7 +293,7 @@ public class Player : Character {
                 float yOffset = 2f;
                 bombPos.y += ((bodyCollider.bounds.size.y / 2) + (feetCollider.bounds.size.y / 2) + yOffset);
 
-                GameObject bombObj = MyCore.NetCreateObject(14, Owner, bombPos, Quaternion.identity);
+                GameObject bombObj = MyCore.NetCreateObject(BOMB_SPAWN_PREFAB_INDEX, Owner, bombPos, Quaternion.identity);
                 Bomb bomb = bombObj.GetComponent<Bomb>();
                 bomb.launchVec = lastAimDir * bomb.launchSpeed;
 
@@ -533,8 +536,8 @@ public class Player : Character {
         }
 
         if (IsClient){
-            feetCollider.enabled = false;
-            bodyCollider.enabled = false;
+            // feetCollider.enabled = false;
+            // bodyCollider.enabled = false;
         }
 
         currentMovementState = movementState.FALLING;
@@ -1255,6 +1258,23 @@ public class Player : Character {
                     //bypassing both gravity and horizontal velocity code
                     inMovementAbilityCooldown = true;
                     return;
+                }else if (selectedCharacterClass == characterClass.KNIGHT){
+                    Vector2 swordPos = new Vector2(this.transform.position.x, this.transform.position.y);
+                    float xOffset = 4f;
+                    float swordSpeed;
+                    
+                    if (isFacingRight){
+                        swordPos.x += xOffset;
+                        swordSpeed = 1f;
+                    }else{
+                        swordPos.x -= xOffset;
+                        swordSpeed = -1f;
+                    }
+
+                    GameObject sword = MyCore.NetCreateObject(SWORD_SPAWN_PREFAB_INDEX, Owner, swordPos, Quaternion.identity);
+                    sword.GetComponent<Rigidbody2D>().velocity = new Vector2(swordSpeed, 0f);
+                    
+                    inMovementAbilityCooldown = true;
                 }
 
                 //inMovementAbilityCooldown = true;
