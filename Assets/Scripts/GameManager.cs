@@ -344,17 +344,30 @@ public class GameManager : NetworkComponent
             curTimer -= 1;
             timerLbl.text = curTimer + "s";
 
-            if (EndDoor.roundDone)
+            if (EndDoor.timerStopped)
             {
                 break;
             }
         }
 
-        if (!EndDoor.roundDone)
+        if (!EndDoor.timerStopped)
         {
             timerFinished = true;
             timerLbl.enabled = false;
             Debug.Log("do something when timer ends!!");
+        }
+    }
+
+    private IEnumerator Wait(float seconds)
+    {
+        yield return new WaitForSeconds(seconds);
+    }
+
+    public IEnumerator ResetRound()
+    {
+        if(IsServer)
+        {
+            yield return Wait(5f);
         }
     }
 

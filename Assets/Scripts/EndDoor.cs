@@ -14,7 +14,7 @@ public class EndDoor : NetworkComponent
     
     public float alphaUpdateFreq = 0.01f;
     //private int playersFinished = 0;
-    public static bool roundDone = false;
+    public static bool timerStopped = false;
     private List<Player> playersFinished = new List<Player>();
 
     public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
@@ -180,6 +180,18 @@ public class EndDoor : NetworkComponent
 
     }
 
+    /*
+     * 1. inc wins for first player to touch door
+     * 2. SendUpdate to set camFreeze
+     * 3. teleport player to startPos and SendUpdate
+     * 4. Fade in scores
+     * 5. Randomize level
+     * 6. Wait 5 seconds
+     * 7. Fade out scores and unfreeze camera
+     * 8. Wait 3 seconds
+     * 9. SendUpdate to start countdown
+     * */
+
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (IsServer)
@@ -188,25 +200,63 @@ public class EndDoor : NetworkComponent
             if (playerHit != null && !playersFinished.Contains(playerHit))
             {
                 Debug.Log("end door hit player");
-                playersFinished.Add(playerHit);                
+                playersFinished.Add(playerHit);
+
+                /*if (playersFinished.Count == 1)
+                    playerHit.wins++;
                 
-                //re-enable these when round restarts
-                playerHit.GetComponent<SpriteRenderer>().enabled = false;
-                //playerHit.camFrozen = true;
-                //other.transform.position = other.GetComponent<Player>().startPos;
-                //SendUpdate to hide
+                playerHit.SendUpdate("CAM_FREEZE", "');
                 
+                playerHit.transform.position = playerHit.startPos;
+                playerHit.SendUpdate("TELEPORT", "");
+                
+                Player[] players = FindObjectsOfType<Player>();
+                if(playersFinished.Count == players.Length)
+                {
+                    playersFinished.Clear();                    
+                    timerStopped = true;
+
+                    StartCoroutine(GameManager.ResetRound());
+
+                    in reset round...
+                    yield return FadeScorePanelIn(1f);                                        
+
+                    TilemapCollider2D[] pieces = FindObjectsOfType<TilemapCollider2D>();
+                    foreach(TilemapCollider2D piece in pieces)
+                    {
+                        MyCore.NetDestroyObject(piece.GetComponent<NetworkID>().NetID);
+                    }
+                    RandomizeLevel();
+
+                    yield return Wait(5f);
+                    StartCoroutine(FadeScorePanelOut(1f));
+                    
+                    Player[] players = FindObjectsOfType<Player>();
+                    foreach(Player player in players)
+                    {
+                        player.SendUpdate("CAM_UNFREEZE", "");
+                    }
+                
+                    yield return Wait(3f);
+                    SendUpdate("COUNTDOWN", "");
+                }
+                else if (!gm.timerStarted)           
+                {
+                    StartCoroutine(gm.StartTimer());
+                }
+                 */
+
                 Player[] players = FindObjectsOfType<Player>();
                 if(playersFinished.Count == players.Length)
                 {                    
                     StartCoroutine(FadeScorePanelIn(1f));
                     //prepare for next round
                     playersFinished.Clear();
-                    roundDone = true;
+                    timerStopped = true;
                     //teleport players and level after a few seconds
                 }                
                 
-                if (!gm.timerStarted)           
+                if (!gm.timerStarted)
                     StartCoroutine(gm.StartTimer());
 
                 //to send back to main menu
