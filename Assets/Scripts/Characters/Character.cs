@@ -26,4 +26,8 @@ public abstract class Character : NetworkComponent
     {
         //do something
     }
+
+    protected void TakeDamage(){
+        //health--;?
+    }
 }
