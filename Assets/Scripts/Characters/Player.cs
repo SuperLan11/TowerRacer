@@ -21,8 +21,7 @@ using Vector3 = UnityEngine.Vector3;
 
 /*
 !Bugs:
-!    1. Why is jumping through platforms from the bottom smooth on server but janky on client? ASK TOWLE ON MONDAY!!!!!!!!
-    2. climbing ladders to the top will temporarily shoot the player up towards the middle of the screen
+!    1. You can climb the ladder upwards even when you're above the ladder
 */
 
 
@@ -327,7 +326,7 @@ public class Player : Character {
             }
         }else if (flag == "CAM_END"){
             if (IsClient){
-                Debug.Log("set highest cam y to " + float.Parse(value));
+                //Debug.Log("set highest cam y to " + float.Parse(value));
                 Player.highestCamY = float.Parse(value);
             }
         }else if (flag == "SELECTED_CHARACTER_CLASS"){
@@ -483,7 +482,7 @@ public class Player : Character {
         placeColors[2] = new Color32(196, 132, 0, 255); //bronze for third
         placeColors[3] = new Color32(255, 255, 255, 255); //white for fourth
 
-        arrowPivot = transform.GetChild(0).GetChild(1).gameObject;
+        arrowPivot = transform.GetChild(0).gameObject;
         aimArrow = arrowPivot.transform.GetChild(0).gameObject;
         placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
 
@@ -677,10 +676,6 @@ public class Player : Character {
             Vector3 tileWorldPos = tilemap.CellToWorld(cellPosition);
             float tileHeight = tilemap.cellSize.y;
 
-            Debug.Log("Max tile y: " + (tileWorldPos.y + tileHeight));
-            Debug.Log("Min feetcollider y: " + feetCollider.bounds.min.y);
-
-            
             return tileWorldPos.y + tileHeight;   
         }else{
             return -5000000f;
@@ -1288,7 +1283,6 @@ public class Player : Character {
                 if ((currentLadder != null) && pressingUpOrDown && !IsClimbing()){
                     currentLadder.InitializeLadderVariables(this);
                     currentMovementState = movementState.CLIMBING;
-                    Debug.Log("start ladder anim");
                     SendUpdate("LADDER_ANIM", "");
                 }                
             }
