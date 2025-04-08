@@ -28,9 +28,11 @@ using Vector3 = UnityEngine.Vector3;
 
 /*
 TODO
-    4. start programming different abilities
-    ...
-    5. Test IsDirty stuff once we have movement states other than ground that aren't dependent on input (climbing, swinging, etc)
+    1. Level tiles (although not that many)
+    2. End trigger for level where it waits for all 4 players and round resetting
+    3. Speed powerup and chicken powerup (invincibility) fully programmed
+    4. Placeholder art for enemies (and MAKE SURE it's actually placeholder so we don't leave them in the final game. Make them Ronald McDonald 
+    or something)
 */
 
 public class Player : Character {
