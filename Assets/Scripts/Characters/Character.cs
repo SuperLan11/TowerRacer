@@ -27,7 +27,14 @@ public abstract class Character : NetworkComponent
         //do something
     }
 
-    protected void TakeDamage(){
-        //health--;?
+    protected void TakeDamage(int damage){
+        health -= damage;
+        if (health <= 0){
+            if (GetComponent<Player>() != null){
+                //GetComponent<Player>().Stun();
+            }else{      //enemy
+                MyCore.NetDestroyObject(this.NetId);
+            }    
+        }
     }
 }
