@@ -101,8 +101,6 @@ public class Player : Character {
     private const float WALL_JUMP_ACCELERATION = AIR_ACCELERATION * 4f;     //totally fine if we want to make it independent
 
     private const float MAX_RUN_SPEED = 20f;
-
-    private bool hitGround = false;
     
     //these values will probably need to change based on the size of the Player
     
@@ -809,10 +807,10 @@ public class Player : Character {
             RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, ~0);
 
             foreach (RaycastHit2D hit in hits){
-            if (hit.collider.GetComponent<TilemapCollider2D>() != null){
-                tilemap = hit.collider.GetComponent<Tilemap>();
+                if (hit.collider.GetComponent<TilemapCollider2D>() != null){
+                    tilemap = hit.collider.GetComponent<Tilemap>();
                     float tileUpperY = GetTileUpperY(hit);
-                    
+                        
                     jumpingThroughTilemap = ((verticalVelocity > 0f) && (feetCollider.bounds.min.y < tileUpperY + TILEMAP_PLATFORM_OFFSET));
                 }
 
@@ -834,8 +832,8 @@ public class Player : Character {
             hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, ~0);
 
             foreach (RaycastHit2D hit in hits){
-            if (hit.collider.GetComponent<TilemapCollider2D>() != null) { 
-                tilemap = hit.collider.GetComponent<Tilemap>();
+                if (hit.collider.GetComponent<TilemapCollider2D>() != null) { 
+                    tilemap = hit.collider.GetComponent<Tilemap>();
                     float tileUpperY = GetTileUpperY(hit);
                     
                     jumpingThroughTilemap = ((verticalVelocity > 0f) && (feetCollider.bounds.min.y < tileUpperY + TILEMAP_PLATFORM_OFFSET));
@@ -855,8 +853,8 @@ public class Player : Character {
             hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, ~0);
 
             foreach (RaycastHit2D hit in hits){
-            if (hit.collider.GetComponent<TilemapCollider2D>() != null) { 
-                tilemap = hit.collider.GetComponent<Tilemap>();
+                if (hit.collider.GetComponent<TilemapCollider2D>() != null) { 
+                    tilemap = hit.collider.GetComponent<Tilemap>();
                     float tileUpperY = GetTileUpperY(hit);
                     
                     jumpingThroughTilemap = ((verticalVelocity > 0f) && (feetCollider.bounds.min.y < tileUpperY + TILEMAP_PLATFORM_OFFSET));
@@ -1398,7 +1396,11 @@ public class Player : Character {
                 StartCoroutine(InvincibilityCooldown(TAKE_DAMAGE_INVINCIBILITY_TIME));
             }
         }
+<<<<<<< HEAD
     }   
+=======
+    }
+>>>>>>> 7bb598ad802dd57c1255c4a4a9c84915fe42c298
 
     public override IEnumerator SlowUpdate(){
         while (IsConnected){
@@ -1431,10 +1433,8 @@ public class Player : Character {
         if (IsLocalPlayer){
             //in IsLocalPlayer...
             if (winningPlayer != null){
-                Vector3 camPos = winningPlayer.transform.position;
-                camPos.z = cam.transform.position.z;
-                Camera.main.transform.position = camPos;
-                Camera.main.orthographicSize = 5f;
+                Camera.main.transform.position = winningPlayer.transform.position;
+                Camera.main.orthographicSize = 7f;
             }
             else if (!camFrozen){
                 //Debug.Log("cam is moving!");
@@ -1448,7 +1448,11 @@ public class Player : Character {
             }            
         }
 
+<<<<<<< HEAD
         if (IsServer){            
+=======
+        if (IsServer){
+>>>>>>> 7bb598ad802dd57c1255c4a4a9c84915fe42c298
             if (playerFrozen)
                 return;
 
