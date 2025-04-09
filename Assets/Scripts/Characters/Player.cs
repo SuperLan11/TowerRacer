@@ -1396,11 +1396,7 @@ public class Player : Character {
                 StartCoroutine(InvincibilityCooldown(TAKE_DAMAGE_INVINCIBILITY_TIME));
             }
         }
-<<<<<<< HEAD
-    }   
-=======
     }
->>>>>>> 7bb598ad802dd57c1255c4a4a9c84915fe42c298
 
     public override IEnumerator SlowUpdate(){
         while (IsConnected){
@@ -1448,11 +1444,7 @@ public class Player : Character {
             }            
         }
 
-<<<<<<< HEAD
-        if (IsServer){            
-=======
         if (IsServer){
->>>>>>> 7bb598ad802dd57c1255c4a4a9c84915fe42c298
             if (playerFrozen)
                 return;
 
