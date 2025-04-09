@@ -650,9 +650,9 @@ public class Player : Character {
         arrowPivot = transform.GetChild(0).gameObject;
         aimArrow = arrowPivot.transform.GetChild(0).gameObject;
         
-        placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
-        itemUI = GameObject.FindGameObjectWithTag("ITEM_UI");
-        scorePanel = GameObject.FindGameObjectWithTag("SCORE");        
+        //placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
+        //itemUI = GameObject.FindGameObjectWithTag("ITEM_UI");
+        //scorePanel = GameObject.FindGameObjectWithTag("SCORE");        
 
         //add this back in when we start doing player spawn eggs
         /*

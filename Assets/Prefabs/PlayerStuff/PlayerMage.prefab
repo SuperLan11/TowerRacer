@@ -510,6 +510,22 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: f45322e1-f1a6-490b-8932-10c7d2031e34
     m_ActionName: PlayerActions/MoveAbility[/Keyboard/i]
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 798786563735217055}
+        m_TargetAssemblyTypeName: Player, Assembly-CSharp
+        m_MethodName: UseItemAction
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 2ac91ab2-0df4-4d0d-9a88-6bf554a36300
+    m_ActionName: PlayerActions/UseItem[/Keyboard/e,/XInputControllerWindows/buttonWest]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: PlayerActions
