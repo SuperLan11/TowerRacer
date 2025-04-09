@@ -252,7 +252,7 @@ GameObject:
   - component: {fileID: 8924587938452622133}
   - component: {fileID: 8924587938452622134}
   m_Layer: 0
-  m_Name: NPM
+  m_Name: NewNPM
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

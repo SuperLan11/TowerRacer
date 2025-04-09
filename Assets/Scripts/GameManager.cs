@@ -12,6 +12,7 @@ using UnityEngine.UI;
 using NETWORK_ENGINE;
 using UnityEngine.Tilemaps;
 using UnityEngine.InputSystem.LowLevel;
+using UnityEngine.SceneManagement;
 
 public class GameManager : NetworkComponent
 {    
@@ -88,8 +89,7 @@ public class GameManager : NetworkComponent
         {
             if (IsClient)
             {
-                float seconds = float.Parse(value);
-                Debug.Log("fading in on client");
+                float seconds = float.Parse(value);                
                 StartCoroutine(FadeScorePanelIn(seconds));
             }
         }
@@ -152,9 +152,7 @@ public class GameManager : NetworkComponent
             if (IsClient)
             {
                 countdownLbl.enabled = true;
-                countdownLbl.text = value;
-                Debug.Log("countdown text: " + countdownLbl.text);
-                Debug.Log("countdown enabled: " + countdownLbl.enabled);
+                countdownLbl.text = value;                
             }
         }
         else if (flag == "HIDE_COUNTDOWN")
@@ -227,7 +225,7 @@ public class GameManager : NetworkComponent
         playersReady += change;
         int numPlayers = FindObjectsOfType<NPM>().Length;
         // change to numPlayers > 1 later
-        if (playersReady >= numPlayers && numPlayers > 0)
+        if (playersReady >= numPlayers && numPlayers >= 1)
         {
             gameStarted = true;
         }        
@@ -620,12 +618,12 @@ public class GameManager : NetworkComponent
         Debug.Log("countdownLbl == null: " + (countdownLbl == null));*/
     }
 
-    public IEnumerator GameUpdate(){                
+    public IEnumerator GameUpdate(){  
         UpdatePlaces();
 
         //don't make this timer too fast as UpdatePlaces is somewhat high on performance
         yield return new WaitForSeconds(0.5f);
-    }     
+    }
 
     public override IEnumerator SlowUpdate()
     {
@@ -674,8 +672,7 @@ public class GameManager : NetworkComponent
             }            
             SendUpdate("INIT_UI", "");
 
-            GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, new Vector3(-7, -3, 0), Quaternion.identity);                        
-
+            GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, new Vector3(-7, -3, 0), Quaternion.identity);
             GameObject itemBox1 = MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(8, -7, 0), Quaternion.identity);
             GameObject itemBox2 = MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(5, -7, 0), Quaternion.identity);
 
@@ -689,17 +686,15 @@ public class GameManager : NetworkComponent
                 //yield return is blocking, so the lines after it won't run until GameUpdate finishes
                 yield return GameUpdate();
             }
-
-            Debug.Log("GAME OVER");
+            
             //zooms in on player that won          
             FindObjectOfType<Player>().SendUpdate("WINNER_CAM", winningPlayer.Owner.ToString());
               
             yield return new WaitForSeconds(5f);
-            
-            Debug.Log("QUITTING GAME");
+                        
             gameStarted = false;
-            /*MyId.NotifyDirty();
-            MyCore.UI_Quit();*/
+            MyId.NotifyDirty();
+            MyCore.UI_Quit();
         }
         yield return new WaitForSeconds(0.1f);
     }

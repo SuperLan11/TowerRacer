@@ -97,6 +97,8 @@ public class Player : Character {
     private const float WALL_JUMP_ACCELERATION = AIR_ACCELERATION * 4f;     //totally fine if we want to make it independent
 
     private const float MAX_RUN_SPEED = 20f;
+
+    private bool hitGround = false;
     
     //these values will probably need to change based on the size of the Player
     
@@ -1354,6 +1356,25 @@ public class Player : Character {
         }
     }
 
+    private void OnCollisionEnter2D(Collision2D collision){
+        if(IsServer){
+            for (int i = 0; i < collision.contactCount; i++){
+                bool hitFloor = collision.GetContact(i).collider.gameObject.layer == floorLayer || 
+                    collision.GetContact(i).collider.gameObject.tag == "FLOOR" || 
+                    collision.GetContact(i).otherCollider.gameObject.layer == floorLayer ||
+                    collision.GetContact(i).otherCollider.gameObject.tag == "FLOOR";
+
+                hitGround = true;
+                Debug.Log("hit " + collision.gameObject.name);
+                if (hitFloor && verticalVelocity < 0){
+                    Debug.Log("hit floor!");
+                    currentMovementState = movementState.GROUND;
+                    rigidbody.velocity = Vector2.zero;
+                }
+            }
+        }    
+    }   
+
     public override IEnumerator SlowUpdate(){
         while (IsConnected){
             if (IsServer){
@@ -1385,8 +1406,10 @@ public class Player : Character {
         if (IsLocalPlayer){
             //in IsLocalPlayer...
             if (winningPlayer != null){
-                Camera.main.transform.position = winningPlayer.transform.position;
-                Camera.main.orthographicSize = 7f;
+                Vector3 camPos = winningPlayer.transform.position;
+                camPos.z = cam.transform.position.z;
+                Camera.main.transform.position = camPos;
+                Camera.main.orthographicSize = 5f;
             }
             else if (!camFrozen){
                 //Debug.Log("cam is moving!");
@@ -1401,6 +1424,8 @@ public class Player : Character {
         }
 
         if (IsServer){
+            Debug.Log("movementState: " + currentMovementState);
+
             if (playerFrozen)
                 return;
 
@@ -1646,7 +1671,7 @@ public class Player : Character {
                 }
 
                 //letting go of jump while still moving upwards is what causes fast falling
-                if (IsJumping() && verticalVelocity > 0f){
+                if (IsJumping() && verticalVelocity > 0f && !hitGround){
                     currentMovementState = movementState.FAST_FALLING;
                     
                     if (isPastApexThreshold){
