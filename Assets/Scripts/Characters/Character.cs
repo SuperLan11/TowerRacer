@@ -6,7 +6,7 @@ using NETWORK_ENGINE;
 public abstract class Character : NetworkComponent
 {
     //sync vars
-    protected int health;        
+    public int health;        
     [SerializeField] protected float speed;    
 
     //non-sync vars
@@ -27,14 +27,5 @@ public abstract class Character : NetworkComponent
         //do something
     }
 
-    protected void TakeDamage(int damage){
-        health -= damage;
-        if (health <= 0){
-            if (GetComponent<Player>() != null){
-                //GetComponent<Player>().Stun();
-            }else{      //enemy
-                MyCore.NetDestroyObject(this.NetId);
-            }    
-        }
-    }
+    public abstract void TakeDamage(int damage);
 }

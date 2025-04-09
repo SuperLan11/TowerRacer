@@ -167,7 +167,15 @@ public class Player : Character {
 
     //can't do this cause references to items is funky
     //private Item currentlyEquippedItem = null;
+    //!Towle may not like this, but all these variables are exclusively client-side. They ARE NOT sync vars!
+    [System.NonSerialized] public bool hasChicken = false;
+    [System.NonSerialized] public bool hasSpeedBoost = false;
     [System.NonSerialized] public bool hasBomb = false;
+
+    [System.NonSerialized] public bool isInvincible = false;
+    private const float CHICKEN_INVINCIBILITY_TIME = 5f, TAKE_DAMAGE_INVINCIBILITY_TIME = 0.5f;
+    public bool isStunned = false;
+
     private Vector2 lastAimDir;
     private GameObject aimArrow;
     private GameObject arrowPivot;
@@ -247,8 +255,11 @@ public class Player : Character {
                 GameObject itemImage = Instantiate(itemPrefabs[itemIdx], itemUI.transform.position, Quaternion.identity);
                 itemImage.transform.SetParent(itemUI.transform);
 
-                if (itemIdx == 2)
-                {
+                if (itemIdx == 0){
+                    hasChicken = true;
+                }else if (itemIdx == 1){
+                    hasSpeedBoost = true;
+                }else if (itemIdx == 2){
                     hasBomb = true;                    
                 }
             }
@@ -366,13 +377,6 @@ public class Player : Character {
         {
             holdingRun = bool.Parse(value);
         }
-        else if (flag == "HAS_BOMB")
-        {
-            if (IsClient)
-            {
-                hasBomb = true;
-            }
-        }
         else if (flag == "SHOOT_BOMB")
         {
             if (IsServer)
@@ -384,8 +388,15 @@ public class Player : Character {
                 GameObject bombObj = MyCore.NetCreateObject(BOMB_SPAWN_PREFAB_INDEX, Owner, bombPos, Quaternion.identity);
                 Bomb bomb = bombObj.GetComponent<Bomb>();
                 bomb.launchVec = lastAimDir * bomb.launchSpeed;
-
-                hasBomb = false;
+            }
+        }else if (flag == "USE_ITEM"){
+            if (IsServer){
+                if (hasChicken){
+                    isInvincible = true;
+                    StartCoroutine(InvincibilityCooldown(CHICKEN_INVINCIBILITY_TIME));
+                }else if (hasSpeedBoost){
+                    //speed boost logic
+                }
             }
         }
         else if (flag == "DISMOUNT")
@@ -592,10 +603,8 @@ public class Player : Character {
 
         arrowPivot = transform.GetChild(0).gameObject;
         aimArrow = arrowPivot.transform.GetChild(0).gameObject;
-
-        placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
-        itemUI = GameObject.FindGameObjectWithTag("ITEM_UI");
-        scorePanel = GameObject.FindGameObjectWithTag("SCORE");
+        //placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
+        //itemUI = GameObject.FindGameObjectWithTag("ITEM_UI");
 
         //add this back in when we start doing player spawn eggs
         /*
@@ -617,6 +626,8 @@ public class Player : Character {
         //!WE ARE NOT USING SPEED OR MYRIG ON THE PLAYER!!!!!!
         speed = -9000000;
         myRig = null;
+
+        health = 3;
 
         switch (selectedCharacterClass)
         {
@@ -1184,6 +1195,27 @@ public class Player : Character {
         }
     }
 
+    public void UseItemAction(InputAction.CallbackContext context)
+    {
+        bool hasExactlyOneItem = ((hasChicken && !hasSpeedBoost) || (!hasChicken && hasSpeedBoost));
+        if (!hasExactlyOneItem){
+            return;
+        }
+        
+        if (IsLocalPlayer)
+        {
+            if (context.started){                
+                SendCommand("USE_ITEM", "GoodMorning");
+            }else if (context.canceled){
+                if (hasChicken){
+                    hasChicken = false;
+                }else if (hasSpeedBoost){
+                    hasSpeedBoost = false;
+                }
+            }
+        }
+    }
+
     public void MovementAbilityAction(InputAction.CallbackContext context){
         if (IsLocalPlayer){
             if (context.started || context.performed){
@@ -1256,6 +1288,33 @@ public class Player : Character {
         yield return new WaitForSeconds(seconds);        
         
         canGrabRope = true;        
+    }
+
+    private IEnumerator InvincibilityCooldown(float cooldown){
+        yield return new WaitForSecondsRealtime(cooldown);
+
+        isInvincible = false;
+    }
+
+    private IEnumerator StunCooldown(float cooldown){
+        yield return new WaitForSecondsRealtime(cooldown);
+
+        isStunned = false;
+        health = 3;
+    }
+
+    public override void TakeDamage(int damage){
+        if (!isInvincible && !isStunned){
+            health -= damage;
+
+            if (health <= 0){
+                isStunned = true;
+                StartCoroutine(StunCooldown(0.5f));
+            }else{      //give player a moment of brief invincibility after taking a hit of damage
+                isInvincible = true;
+                StartCoroutine(InvincibilityCooldown(TAKE_DAMAGE_INVINCIBILITY_TIME));
+            }
+        }
     }
 
     public override IEnumerator SlowUpdate(){
@@ -1705,6 +1764,10 @@ public class Player : Character {
 
             
             if (moveInput != Vector2.zero){     //accelerate
+                if (isStunned){
+                    return;
+                }
+                
                 TurnCheck();
                 
                 Vector2 targetVelocity = new Vector2(moveInput.x, 0);

@@ -573,4 +573,9 @@ public class PlayerController : Character
             cam.transform.position = Vector3.Lerp(cam.transform.position, newCamPos, camAccel);
         }
     }
+
+    public override void TakeDamage(int damage)
+    {
+        //throw new System.NotImplementedException();
+    }
 }

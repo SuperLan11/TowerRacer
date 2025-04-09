@@ -71,4 +71,9 @@ public class Chicken : Item
 	{
 
 	}
+
+    protected override void UseItem()
+    {
+        Debug.LogError("Thou hasn't yet implementeth thine Chicken powerup!");
+    }
 }
