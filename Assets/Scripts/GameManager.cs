@@ -35,12 +35,14 @@ public class GameManager : NetworkComponent
     private GameObject scorePanel;
     private Text countdownLbl;
 
+    private Player winningPlayer = null;
+
     //the timer starts when the first player reaches the end door
     //the timer ends the round so players don't have to wait on the last player forever    
     private int roundEndTime = 120;
     private float curTimer;
-    public bool timerStarted = false;
-    public bool timerFinished = false;
+    [System.NonSerialized] public bool timerStarted = false;
+    [System.NonSerialized] public bool timerFinished = false;
     private float camEndY;
 
     private float resultsTimer = 5f;
@@ -148,20 +150,70 @@ public class GameManager : NetworkComponent
         else if (flag == "COUNTDOWN")
         {
             if (IsClient)
-            {                
+            {
                 countdownLbl.enabled = true;
                 countdownLbl.text = value;
                 Debug.Log("countdown text: " + countdownLbl.text);
                 Debug.Log("countdown enabled: " + countdownLbl.enabled);
             }
         }
-        else if(flag == "HIDE_COUNTDOWN")
+        else if (flag == "HIDE_COUNTDOWN")
         {
-            if(IsClient)
+            if (IsClient)
             {
                 countdownLbl.enabled = false;
             }
         }
+        else if (flag == "FLASH_WIN")
+        {
+            if (IsClient)
+            {
+                int roundWinOwner = int.Parse(value.Split(";")[0]);
+                int wins = int.Parse(value.Split(";")[1]);
+                StartCoroutine(FlashWinPoint(roundWinOwner, wins, 5, 0.2f));
+            }
+        }
+        /*else if (flag == "WINNER_CAM")
+        {
+            if (IsClient)
+            {
+                int winningOwner = int.Parse(value);
+                Player[] players = FindObjectsOfType<Player>();
+                foreach(Player player in players)
+                {
+                    if (player.Owner == winningOwner)
+                    {
+                        winningPlayer = player;
+                         
+                        //in IsLocalPlayer...
+                        if (winningPlayer != null)
+                        {
+                            Camera.main.transform.position = winningPlayer.transform.position;
+                            Camera.main.orthographicSize = 7f;
+                        }
+                    }
+                }
+            }
+        }
+        else if(flag == "SET_CHAR_IMAGE")
+        {
+            if (IsClient)
+            {
+                NPM[] playerNPMs = FindObjectsOfType<NPM>();
+                //iterate over npms instead of players so you have the owner and character chosen
+                foreach(NPM npm in playerNPMs)
+                {
+                    int owner = npm.Owner;
+                    int charChosen = npm.CharSelected;
+                    Debug.Log("owner: " + owner);
+                    Debug.Log("charChosen: " + charChosen);
+                    Debug.Log("heroSprites.Length: " + heroSprites.Length);
+                    Image charImage = scorePanel.transform.GetChild(owner).GetChild(0).GetComponent<Image>();                    
+                    charImage.sprite = heroSprites[charChosen];
+                    Debug.Log("image obj changed: " + charImage.name);
+                }                                                
+            }
+        }*/
         //for objects in scene before clients connect, can't use SendCommand because
         //SendCommand only works if IsLocalPlayer and it's impossible to determine IsLocalPlayer
         //for an object already in the scene
@@ -403,13 +455,11 @@ public class GameManager : NetworkComponent
             curTimer -= 1;
             timerLbl.text = curTimer + "s";
 
-            if (EndDoor.timerStopped)
-            {
-                break;
-            }
+            if (EndDoor.roundOver)            
+                break;            
         }
 
-        if (!EndDoor.timerStopped)
+        if (!EndDoor.roundOver)
         {
             timerFinished = true;
             timerLbl.enabled = false;
@@ -497,6 +547,28 @@ public class GameManager : NetworkComponent
         }
     }
 
+    private IEnumerator FlashWinPoint(int roundWinOwner, int wins, int numFlashes, float flashTime)
+    {        
+        Image dotToFlash = scorePanel.transform.GetChild(roundWinOwner).GetChild(1).GetChild(wins-1).GetComponent<Image>();        
+
+        Color32 normalColor = dotToFlash.color;
+        Color32 flashColor = new Color32(255, 220, 0, 255);
+
+        for(int i = 0; i < numFlashes; i++)
+        {            
+            if(i % 2 == 0)
+            {
+                dotToFlash.color = flashColor;
+            }
+            //make sure dot does not end on normal color
+            else if(i % 2 == 1 && (i != numFlashes-1))
+            {
+                dotToFlash.color = normalColor;
+            }
+            yield return Wait(flashTime);
+        }        
+    }
+
     public IEnumerator ResetRound()
     {
         if(IsServer)
@@ -514,20 +586,44 @@ public class GameManager : NetworkComponent
             }
             RandomizeLevel();
 
+            Player[] players = FindObjectsOfType<Player>();
+            foreach (Player player in players)
+            {
+                if (player.isRoundWinner)
+                {
+                    int owner = player.Owner;
+                    int wins = player.wins;
+                    SendUpdate("FLASH_WIN", owner + ";" + wins);
+                    player.isRoundWinner = false;
+                }
+            }
+
             //5 seconds to look at results panel before fading out the panel
             yield return Wait(5f);
             
-            Player[] players = FindObjectsOfType<Player>();
+            //finding one player is enough to unfreeze all instances of the camera
+            FindObjectOfType<Player>().SendUpdate("CAM_UNFREEZE", "");
             foreach (Player player in players)
-            {                
-                player.SendUpdate("CAM_UNFREEZE", "");
+            {                                
+                if(player.wins >= 3)
+                {
+                    winningPlayer = player;
+                    
+                    placeLbl.enabled = false;
+                    SendUpdate("HIDE_PLACE", "");
+                    StartCoroutine(FadeScorePanelOut(1f));
+
+                    GameManager.gameOver = true;                    
+                    //cool way to exit early from a ienumerator I just learned
+                    yield break;
+                }
             }
 
             placeLbl.enabled = false;
             SendUpdate("HIDE_PLACE", "");
 
             StartCoroutine(FadeScorePanelOut(1f));                                
-            yield return Wait(3f);
+            yield return Wait(2f);
             
             SendUpdate("COUNTDOWN", "3");
             yield return Wait(1f);
@@ -570,13 +666,16 @@ public class GameManager : NetworkComponent
 
         //don't make this timer too fast as UpdatePlaces is somewhat high on performance
         yield return new WaitForSeconds(0.5f);
-    }   
+    }     
 
     public override IEnumerator SlowUpdate()
     {
         if (IsServer)
         {
-            InitUI();            
+            InitUI();
+            //!SENDUPDATE WILL NOT WORK HERE UNTIL THE NPM'S HAVE BEEN CREATED
+            //DO NOT USE SENDUPDATE UNTIL AFTER THE NPM FOREACH LOOP BELOW
+            //UNLESS YOU SENDUPDATE ON THE PLAYER AS YOU CREATE IT            
 
             while (!gameStarted)
             {
@@ -609,13 +708,11 @@ public class GameManager : NetworkComponent
                 }
 
                 GameObject temp = MyCore.NetCreateObject(Idx.ARCHER + n.CharSelected, n.Owner, spawnPos, Quaternion.identity);                
-                Player player = temp.GetComponent<Player>();
-                if (player == null)
-                    Debug.LogWarning("player is null!!");
+                Player player = temp.GetComponent<Player>();                       
 
-                player.SendUpdate("CAM_END", camEndY.ToString());                
-            }
-            //this doesn't work at the start of slow update for some reason
+                player.SendUpdate("CAM_END", camEndY.ToString());
+                player.SendUpdate("SET_CHAR_IMAGE", "");
+            }            
             SendUpdate("INIT_UI", "");
 
             GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, new Vector3(-7, -3, 0), Quaternion.identity);                        
@@ -634,17 +731,16 @@ public class GameManager : NetworkComponent
                 yield return GameUpdate();
             }
 
-            Debug.Log("GAME OVER");            
-            SendUpdate("GAMEOVER", "");
-            //wait until game ends...
-            //disable controls or delete player
-            //Show scores
+            Debug.Log("GAME OVER");
+            //zooms in on player that won          
+            FindObjectOfType<Player>().SendUpdate("WINNER", winningPlayer.Owner.ToString());
+              
             yield return new WaitForSeconds(5f);
             
             Debug.Log("QUITTING GAME");
             gameStarted = false;
-            MyId.NotifyDirty();
-            MyCore.UI_Quit();
+            /*MyId.NotifyDirty();
+            MyCore.UI_Quit();*/
         }
         yield return new WaitForSeconds(0.1f);
     }

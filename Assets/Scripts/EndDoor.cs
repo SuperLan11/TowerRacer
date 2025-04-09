@@ -14,7 +14,7 @@ public class EndDoor : NetworkComponent
     
     public float alphaUpdateFreq = 0.01f;
     //private int playersFinished = 0;
-    public static bool timerStopped = false;
+    public static bool roundOver = false;
     private List<Player> playersFinished = new List<Player>();
 
     public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
@@ -85,17 +85,23 @@ public class EndDoor : NetworkComponent
             //make sure player hit is not frozen in case of weird double collisions when teleporting
             if (playerHit != null && !playersFinished.Contains(playerHit) && !playerHit.playerFrozen)
             {                
-                playersFinished.Add(playerHit);                
+                playersFinished.Add(playerHit);
+                //send place a final time when player hits door before locking it                                 
                 playerHit.playerFrozen = true;
+                playerHit.SendUpdate("FROZEN", "true");
+                playerHit.SendUpdate("PLACE", playersFinished.Count.ToString());
+                
                 playerHit.rigidbody.velocity = Vector2.zero;
 
                 if (playersFinished.Count == 1)
+                {
                     playerHit.wins++;
+                    playerHit.isRoundWinner = true;                    
+                }
 
-                //if(playerHit.wins >= 3)
-                //show a winscreen of the player                
+                //show a winscreen of the player
                 //GameManager.gameOver = true;
-                //make sure to reset all stats on game over!!!                
+                //make sure to reset all stats on game over!!!
 
                 playerHit.SendUpdate("CAM_FREEZE", "");
                 playerHit.transform.position = playerHit.startPos;                
@@ -103,17 +109,15 @@ public class EndDoor : NetworkComponent
 
                 Player[] players = FindObjectsOfType<Player>();
                 if (playersFinished.Count == players.Length)
-                {
+                {                    
                     playersFinished.Clear();
-                    timerStopped = true;
-
-                    StartCoroutine(gm.ResetRound());
+                    roundOver = true;
+                    StartCoroutine(gm.ResetRound());                    
                 }
                 else if (!gm.timerStarted)
                 {
                     StartCoroutine(gm.StartTimer());
                 }                
-                
             }
         }
     }

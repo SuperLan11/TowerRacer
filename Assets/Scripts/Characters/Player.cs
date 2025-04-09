@@ -81,6 +81,7 @@ public class Player : Character {
     private Text placeLbl;
     private Color32[] placeColors;
     [System.NonSerialized] public Vector2 startPos;
+    public bool isRoundWinner = false;
     
     private GameObject itemUI;
     private GameObject scorePanel;
