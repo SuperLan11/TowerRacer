@@ -672,7 +672,7 @@ public class GameManager : NetworkComponent
             }            
             SendUpdate("INIT_UI", "");
 
-            GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, new Vector3(-7, -3, 0), Quaternion.identity);
+            GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, new Vector3(-8, -3, 0), Quaternion.identity);
             GameObject itemBox1 = MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(8, -7, 0), Quaternion.identity);
             GameObject itemBox2 = MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(5, -7, 0), Quaternion.identity);
 

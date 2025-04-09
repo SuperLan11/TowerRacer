@@ -82,7 +82,7 @@ GameObject:
   - component: {fileID: 1256392513247512774}
   - component: {fileID: 8802904734195338703}
   - component: {fileID: 3869248715343561601}
-  m_Layer: 6
+  m_Layer: 7
   m_Name: Tilemap
   m_TagString: FLOOR
   m_Icon: {fileID: 0}
@@ -991,7 +991,7 @@ CompositeCollider2D:
   m_UsedByEffector: 1
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
-  m_GeometryType: 0
+  m_GeometryType: 1
   m_GenerationType: 0
   m_EdgeRadius: 0
   m_ColliderPaths:

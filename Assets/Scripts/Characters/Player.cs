@@ -51,6 +51,10 @@ public class Player : Character {
 
     private Player winningPlayer;
 
+    //int represents the index of the layer
+    private int noJumpThruLayer;
+    private int normalLayer;
+
     //I doubt we'll want run button in our game, but it's here just in case
     private bool holdingRun = false;
 
@@ -239,7 +243,7 @@ public class Player : Character {
             }
         }
         else if (flag == "PLACE"){
-            if (IsLocalPlayer && !playerFrozen){
+            if (IsLocalPlayer && !playerFrozen){                
                 if (value == "1"){
                     placeLbl.text = "1st";
                 }
@@ -492,6 +496,16 @@ public class Player : Character {
                 playerFrozen = true;
             }
         }
+        else if(flag == "ENABLE_JUMP_THRU_COLLISION"){
+            if(IsClient){
+                this.gameObject.layer = normalLayer;
+            }
+        }
+        else if (flag == "DISABLE_JUMP_THRU_COLLISION"){
+            if (IsClient){
+                this.gameObject.layer = noJumpThruLayer;
+            }
+        }
         else if (flag == "SELECTED_CHARACTER_CLASS")
         {
             //doing this for performance reasons since Enum.Parse<>() is apparently performance-intensive
@@ -651,10 +665,14 @@ public class Player : Character {
 
         arrowPivot = transform.GetChild(0).gameObject;
         aimArrow = arrowPivot.transform.GetChild(0).gameObject;
-        
-        //placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
-        //itemUI = GameObject.FindGameObjectWithTag("ITEM_UI");
-        //scorePanel = GameObject.FindGameObjectWithTag("SCORE");        
+
+        //need to do name to layer to get index. GetMask has runtime error
+        noJumpThruLayer = LayerMask.NameToLayer("NoJumpThru");
+        normalLayer = this.gameObject.layer;
+
+        placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
+        itemUI = GameObject.FindGameObjectWithTag("ITEM_UI");
+        scorePanel = GameObject.FindGameObjectWithTag("SCORE");        
 
         //add this back in when we start doing player spawn eggs
         /*
@@ -787,6 +805,7 @@ public class Player : Character {
             bool jumpingThroughTilemap = false;
 
             Vector2 tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y - COLLISION_RAYCAST_LENGTH);
+
             RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, ~0);
 
             foreach (RaycastHit2D hit in hits){
@@ -797,12 +816,12 @@ public class Player : Character {
                     jumpingThroughTilemap = ((verticalVelocity > 0f) && (feetCollider.bounds.min.y < tileUpperY + TILEMAP_PLATFORM_OFFSET));
                 }
 
-                if (jumpingThroughTilemap){
+                /*if (jumpingThroughTilemap){
                     clientCollidersEnabled = false;
                     SendUpdate("DISABLE_COLLIDERS", "GoodMorning");
-                }
+                }*/
                 
-                if (!hit.collider.isTrigger && (hit.normal == upNormal) && !jumpingThroughTilemap){
+                if (!hit.collider.isTrigger && (hit.normal == upNormal)/* && !jumpingThroughTilemap*/){
                     return true;
                 }
             }
@@ -822,12 +841,12 @@ public class Player : Character {
                     jumpingThroughTilemap = ((verticalVelocity > 0f) && (feetCollider.bounds.min.y < tileUpperY + TILEMAP_PLATFORM_OFFSET));
                 }
 
-                if (jumpingThroughTilemap){
+               /* if (jumpingThroughTilemap){
                     clientCollidersEnabled = false;
                     SendUpdate("DISABLE_COLLIDERS", "GoodMorning");
-                }
+                }*/
 
-                if (!hit.collider.isTrigger && (hit.normal == upNormal) && !jumpingThroughTilemap){
+                if (!hit.collider.isTrigger && (hit.normal == upNormal)/* && !jumpingThroughTilemap*/){
                     return true;
                 }
             }
@@ -843,12 +862,12 @@ public class Player : Character {
                     jumpingThroughTilemap = ((verticalVelocity > 0f) && (feetCollider.bounds.min.y < tileUpperY + TILEMAP_PLATFORM_OFFSET));
                 }
 
-                if (jumpingThroughTilemap){
+                /*if (jumpingThroughTilemap){
                     clientCollidersEnabled = false;
                     SendUpdate("DISABLE_COLLIDERS", "GoodMorning");
-                }
+                }*/
 
-                if (!hit.collider.isTrigger && (hit.normal == upNormal) && !jumpingThroughTilemap){
+                if (!hit.collider.isTrigger && (hit.normal == upNormal)/* && !jumpingThroughTilemap*/){
                     return true;
                 }
             }
@@ -875,7 +894,7 @@ public class Player : Character {
     private bool CheckForCeiling(){
         if (IsServer){
             Vector2 tempPos = new Vector2(bodyCollider.bounds.center.x, bodyCollider.bounds.max.y + COLLISION_RAYCAST_LENGTH);
-            RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.up, COLLISION_RAYCAST_LENGTH, ~0);
+            RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.up, COLLISION_RAYCAST_LENGTH, noJumpThruLayer, ~0);            
 
             foreach (RaycastHit2D hit in hits){
                 if (!hit.collider.isTrigger && (hit.normal == downNormal) && (hit.collider.gameObject.name != "SuperPatrickTilemap")){
@@ -1379,25 +1398,6 @@ public class Player : Character {
                 StartCoroutine(InvincibilityCooldown(TAKE_DAMAGE_INVINCIBILITY_TIME));
             }
         }
-    }
-
-    private void OnCollisionEnter2D(Collision2D collision){
-        if(IsServer){
-            for (int i = 0; i < collision.contactCount; i++){
-                bool hitFloor = collision.GetContact(i).collider.gameObject.layer == floorLayer || 
-                    collision.GetContact(i).collider.gameObject.tag == "FLOOR" || 
-                    collision.GetContact(i).otherCollider.gameObject.layer == floorLayer ||
-                    collision.GetContact(i).otherCollider.gameObject.tag == "FLOOR";
-
-                hitGround = true;
-                Debug.Log("hit " + collision.gameObject.name);
-                if (hitFloor && verticalVelocity < 0){
-                    Debug.Log("hit floor!");
-                    currentMovementState = movementState.GROUND;
-                    rigidbody.velocity = Vector2.zero;
-                }
-            }
-        }    
     }   
 
     public override IEnumerator SlowUpdate(){
@@ -1448,11 +1448,23 @@ public class Player : Character {
             }            
         }
 
-        if (IsServer){
-            Debug.Log("movementState: " + currentMovementState);
-
+        if (IsServer){            
             if (playerFrozen)
                 return;
+
+            //only sendupdate when switching layers
+            //phase through jump thrus when jumping up
+            if (verticalVelocity > 0.000001f && this.gameObject.layer == normalLayer && currentMovementState != movementState.CLIMBING)
+            {
+                this.gameObject.layer = noJumpThruLayer;
+                SendUpdate("DISABLE_JUMP_THRU_COLLISION", "");
+            }
+            //enable jump thru collision when falling
+            else if (verticalVelocity < 0.000001f && this.gameObject.layer == noJumpThruLayer && currentMovementState != movementState.CLIMBING)
+            {                
+                this.gameObject.layer = normalLayer;
+                SendUpdate("ENABLE_JUMP_THRU_COLLISION", "");
+            }
 
             //Debug.Log("CurrentMovementState: " + currentMovementState);
             //Debug.Log("Move input" + moveInput);
@@ -1696,7 +1708,7 @@ public class Player : Character {
                 }
 
                 //letting go of jump while still moving upwards is what causes fast falling
-                if (IsJumping() && verticalVelocity > 0f && !hitGround){
+                if (IsJumping() && verticalVelocity > 0f){
                     currentMovementState = movementState.FAST_FALLING;
                     
                     if (isPastApexThreshold){

@@ -72,7 +72,7 @@ public class TestPlayer : MonoBehaviour
     {
         Vector2 input = Vector2.zero;
 
-        if(Input.GetKey((KeyCode.D)))
+        /*if(Input.GetKey((KeyCode.D)))
         {
             input.x += 1;
             holdingDir = "right";
@@ -94,7 +94,7 @@ public class TestPlayer : MonoBehaviour
         if(input.x == 0)
         {
             holdingDir = "";
-        }
+        }*/
 
         if (state == "SWINGING")
         {
@@ -124,11 +124,11 @@ public class TestPlayer : MonoBehaviour
         else if(state == "NORMAL")
         {           
             rig.velocity = new Vector2(input.x, 0) * speed + new Vector2(0, rig.velocity.y);
-            if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+            /*if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
             {
                 rig.velocity += new Vector2(0, jumpStrength);
                 isGrounded = false;
-            }
+            }*/
         }        
     }
 }
