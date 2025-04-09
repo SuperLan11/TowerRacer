@@ -244,7 +244,7 @@ public class GameManager : NetworkComponent
                 new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);
 
             RandomlyPlaceRope(piece);
-            RandomlyPlaceEnemies(piece);
+            //RandomlyPlaceEnemies(piece);
             RandomlyPlaceItemBoxes(piece);
             RandomlyPlaceLadders(piece);            
         }
@@ -528,20 +528,22 @@ public class GameManager : NetworkComponent
 
             StartCoroutine(FadeScorePanelOut(1f));                                
             yield return Wait(3f);
-
-            Debug.Log("countdown 3");
+            
             SendUpdate("COUNTDOWN", "3");
             yield return Wait(1f);
-            
-            Debug.Log("countdown 2");
+                        
             SendUpdate("COUNTDOWN", "2");
             yield return Wait(1f);
-
-            Debug.Log("countdown 1");
+            
             SendUpdate("COUNTDOWN", "1");            
             yield return Wait(1f);
 
             SendUpdate("HIDE_COUNTDOWN", "");
+
+            foreach (Player player in players)
+            {
+                player.playerFrozen = false;
+            }
 
             placeLbl.enabled = true;
             SendUpdate("SHOW_PLACE", "");

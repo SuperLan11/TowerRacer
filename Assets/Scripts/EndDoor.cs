@@ -104,6 +104,8 @@ public class EndDoor : NetworkComponent
             if (playerHit != null && !playersFinished.Contains(playerHit))
             {                
                 playersFinished.Add(playerHit);
+                playerHit.playerFrozen = true;
+                playerHit.rigidbody.velocity = Vector2.zero;
 
                 if (playersFinished.Count == 1)
                     playerHit.wins++;

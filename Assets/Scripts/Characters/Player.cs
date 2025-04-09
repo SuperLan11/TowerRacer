@@ -75,6 +75,7 @@ public class Player : Character {
     public static float highestCamY;
     private float camAccel = 0.12f;
     public bool camFrozen = false;
+    public bool playerFrozen = false;
     private Text placeLbl;
     private Color32[] placeColors;
     [System.NonSerialized] public Vector2 startPos;
@@ -250,7 +251,7 @@ public class Player : Character {
                     hasBomb = true;                    
                 }
             }
-        }
+        }        
         else if (flag == "CAM_FREEZE"){
             if (IsClient){                
                 camFrozen = true;
@@ -1289,6 +1290,9 @@ public class Player : Character {
         }
 
         if (IsServer){
+            if (playerFrozen)
+                return;
+
             //Debug.Log("CurrentMovementState: " + currentMovementState);
             //Debug.Log("Move input" + moveInput);
             //Debug.Log("Num jumps used: " + numJumpsUsed);
