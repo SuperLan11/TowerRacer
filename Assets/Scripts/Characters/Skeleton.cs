@@ -50,10 +50,12 @@ public class Skeleton : Enemy
         }
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
+    protected override void OnCollisionEnter2D(Collision2D collision)
     {
         if (IsServer)
         {
+            base.OnCollisionEnter2D(collision);
+
             if(collision.gameObject.GetComponent<Enemy>() != null)
             {
                 dir *= -1;

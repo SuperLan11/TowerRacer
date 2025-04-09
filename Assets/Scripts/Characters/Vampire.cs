@@ -70,10 +70,12 @@ public class Vampire : Enemy
 		
 	}
 
-	private void OnCollisionEnter2D(Collision2D collision)
+	protected override void OnCollisionEnter2D(Collision2D collision)
 	{
 		if (IsServer)
 		{
+            base.OnCollisionEnter2D(collision);
+			
 			//the index of the layer on the layers list			
 			bool hitFloor = collision.gameObject.layer == 6;	
 			

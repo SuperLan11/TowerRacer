@@ -62,4 +62,22 @@ public abstract class Enemy : Character
         yield return new WaitForSeconds(seconds);
         raycastingPaused = false;
     }
+
+    public override void TakeDamage(int damage){
+        health -= damage;
+        
+        if (health <= 0){
+            MyCore.NetDestroyObject(this.NetId);
+        }
+    }
+
+    protected virtual void OnCollisionEnter2D(Collision2D collider){
+        if (IsServer){
+            Debug.Log("Collding with something");
+            if (collider.gameObject.GetComponentInParent<Player>() != null){
+                Debug.Log("Colliding with the player");
+                collider.gameObject.GetComponentInParent<Player>().TakeDamage(1);
+            }
+        }
+    }
 }

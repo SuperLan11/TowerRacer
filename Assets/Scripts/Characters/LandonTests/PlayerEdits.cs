@@ -1815,4 +1815,9 @@ public class PlayerEdits : Character
             }
         }
     }
+
+    public override void TakeDamage(int damage)
+    {
+        //throw new NotImplementedException();
+    }
 }

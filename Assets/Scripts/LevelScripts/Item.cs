@@ -46,8 +46,5 @@ public abstract class Item : NetworkComponent
 
 	}
 	
-	private void UseItem()
-	{
-
-	}
+	protected abstract void UseItem();
 }

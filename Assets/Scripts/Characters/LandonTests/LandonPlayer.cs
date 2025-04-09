@@ -511,4 +511,9 @@ public class LandonPlayer : Character
             }
         }
     }
+
+    public override void TakeDamage(int damage)
+    {
+        //throw new System.NotImplementedException();
+    }
 }
