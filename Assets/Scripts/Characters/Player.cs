@@ -65,6 +65,8 @@ public class Player : Character {
     [SerializeField] private BoxCollider2D bodyCollider;
     [System.NonSerialized] public Rope currentRope = null;
     [System.NonSerialized] public LadderObj currentLadder = null;
+    public bool inDismountTrigger = false;
+
     //we may want to eventually use the rigidbody variable in Character.cs, although ain't no way we're keeping the name as "myRig"
     [System.NonSerialized] public Rigidbody2D rigidbody;
     private LayerMask floorLayer;
@@ -81,6 +83,7 @@ public class Player : Character {
     [System.NonSerialized] public Vector2 startPos;
     
     private GameObject itemUI;
+    private GameObject scorePanel;
     public GameObject[] itemPrefabs;
     [System.NonSerialized] public int wins = 0;
 
@@ -215,10 +218,8 @@ public class Player : Character {
     //!For the else {} debug to work, you NEED to check IsServer or IsClient INSIDE of the flag if statement!
     public override void HandleMessage(string flag, string value)
     {
-        if (flag == "START")
-        {
-            if (IsClient)
-            {
+        if (flag == "START"){
+            if (IsClient){
                 //here in case we need to initialize stuff later
             }
         }
@@ -268,10 +269,19 @@ public class Player : Character {
                 Player.highestCamY = float.Parse(value);
             }
         }
-        else if(flag == "TELEPORT"){
-            if (IsClient) {
-                Vector2 teleportPos = Vector2FromString(value);
-                this.transform.position = teleportPos;
+        else if(flag == "HIT_DOOR"){
+            if (IsClient) {               
+                this.transform.position = startPos;
+                
+                //only change the color of the local player's score background
+                if (IsLocalPlayer){
+                    int place = int.Parse(value);
+                    Color32 placeColor = placeColors[place - 1];
+                    placeColor.a = 0;
+                    Debug.Log("place: " + place);
+                    //make score panel color correct for player's place                
+                    scorePanel.GetComponent<Image>().color = placeColor;
+                }
             }
         }
         else if (flag == "MOVE")
@@ -582,8 +592,10 @@ public class Player : Character {
 
         arrowPivot = transform.GetChild(0).gameObject;
         aimArrow = arrowPivot.transform.GetChild(0).gameObject;
+
         placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
         itemUI = GameObject.FindGameObjectWithTag("ITEM_UI");
+        scorePanel = GameObject.FindGameObjectWithTag("SCORE");
 
         //add this back in when we start doing player spawn eggs
         /*
@@ -1402,7 +1414,7 @@ public class Player : Character {
 
             if (CheckForTriggers("Ladder")/*CheckForLadders()*/){
                 bool pressingUpOrDown = (moveInput.y > 0f || moveInput.y < 0f);
-                if ((currentLadder != null) && pressingUpOrDown && !IsClimbing()){
+                if ((currentLadder != null) && pressingUpOrDown && !IsClimbing() && !inDismountTrigger){
                     currentLadder.InitializeLadderVariables(this);
                     currentMovementState = movementState.CLIMBING;
                     SendUpdate("LADDER_ANIM", "");

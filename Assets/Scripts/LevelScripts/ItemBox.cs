@@ -78,17 +78,16 @@ public class ItemBox : NetworkComponent
     }
 
 	private void OnTriggerEnter2D(Collider2D collision)
-    {
-		Player playerHit = collision.GetComponentInParent<Player>();
-		//PlayerController playerHit = collision.GetComponentInParent<PlayerController>();
-
+    {		
 		if (IsServer)
-		{			
-			if (playerHit != null)
+		{
+			Player playerHit = collision.GetComponentInParent<Player>();
+			bool hasItem = itemUI.transform.childCount >= 1;
+			if (playerHit != null && !hasItem)
 			{
 				int randIdx = Random.Range(0, NUM_ITEMS);
 				SendUpdate("ITEM_UI", this.transform.position.ToString());
-				playerHit.SendUpdate("ITEM", randIdx.ToString());								
+				playerHit.SendUpdate("ITEM", randIdx.ToString());
 				MyCore.NetDestroyObject(this.NetId);
 			}
 		}

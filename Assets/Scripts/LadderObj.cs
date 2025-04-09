@@ -48,14 +48,6 @@ public class LadderObj : NetworkComponent
 
 	}
 
-    private void OnTriggerStay2D(Collider2D collision)
-    {
-		if (IsServer)
-		{			
-			
-		}
-    }
-
 	public void InitializeLadderVariables(Player p){
 		if (IsServer){
 			Player player = p;
@@ -70,42 +62,7 @@ public class LadderObj : NetworkComponent
 			}
 		}
 	}
-
-    private void OnTriggerExit2D(Collider2D collision)
-    {
-		if (IsServer)
-		{
-			bool playerExited = collision.gameObject.GetComponentInParent<PlayerController>() != null;
-
-			//comment from here
-            /*if (playerExited)
-            {
-                if (attachedPlayer == null)
-                    return;
-
-                //means player got to top of ladder
-                if (attachedPlayer.currentLadder != null)
-                {                    
-                    attachedPlayer.myRig.velocity = Vector2.zero;                    
-                    attachedPlayer.currentLadder = null;
-                    attachedPlayer.myRig.gravityScale = 1f;
-					attachedPlayer.transform.position
-
-					float height = GetComponent<Collider2D>().bounds.size.y;
-					//raycast to floor instead
-					RaycastHit2D floor = Physics2D.Raycast(dismountHit.transform.position, Vector2.down, height, floorLayer);
-					Vector2 dismountPos = floor.point;
-					dismountPos.y += height / 2;
-					SendUpdate("DISMOUNT", dismountPos.ToString());
-
-					SendUpdate("GRAVITY", attachedPlayer.name.ToString());
-                    attachedPlayer = null;
-                }
-            }*/
-        }
-    }
-
-
+    
     public override IEnumerator SlowUpdate()
 	{
 		while (IsConnected)

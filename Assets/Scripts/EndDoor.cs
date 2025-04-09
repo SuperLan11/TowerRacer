@@ -59,30 +59,10 @@ public class EndDoor : NetworkComponent
         
     }
 
-    private int GetPlayerPlace(Player player)
-    { 
-        for(int i = 0; i < playersFinished.Count; i++)
-        {
-            if(playersFinished[i] == player)           
-                return i + 1;
-        }
-        return -1;
-    }    
-
     private IEnumerator Wait(float seconds)
     {
         yield return new WaitForSeconds(seconds);        
     }    
-
-    private void ShowOverallResults()
-    {
-
-    }
-
-    private void StartNextRound()
-    {
-
-    }
 
     /*
      * 1. inc wins for first player to touch door
@@ -101,9 +81,11 @@ public class EndDoor : NetworkComponent
         if (IsServer)
         {
             Player playerHit = other.gameObject.GetComponentInParent<Player>();
-            if (playerHit != null && !playersFinished.Contains(playerHit))
+            
+            //make sure player hit is not frozen in case of weird double collisions when teleporting
+            if (playerHit != null && !playersFinished.Contains(playerHit) && !playerHit.playerFrozen)
             {                
-                playersFinished.Add(playerHit);
+                playersFinished.Add(playerHit);                
                 playerHit.playerFrozen = true;
                 playerHit.rigidbody.velocity = Vector2.zero;
 
@@ -113,11 +95,11 @@ public class EndDoor : NetworkComponent
                 //if(playerHit.wins >= 3)
                 //show a winscreen of the player                
                 //GameManager.gameOver = true;
-                //make sure to reset all stats on game over!!!
+                //make sure to reset all stats on game over!!!                
 
                 playerHit.SendUpdate("CAM_FREEZE", "");
-                playerHit.transform.position = playerHit.startPos;
-                playerHit.SendUpdate("TELEPORT", playerHit.startPos.ToString());
+                playerHit.transform.position = playerHit.startPos;                
+                playerHit.SendUpdate("HIT_DOOR", playersFinished.Count.ToString());
 
                 Player[] players = FindObjectsOfType<Player>();
                 if (playersFinished.Count == players.Length)

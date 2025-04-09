@@ -230,10 +230,10 @@ public class GameManager : NetworkComponent
             int randIdx = Random.Range(0, Idx.NUM_LEVEL_PIECES);
             if (i == Idx.NUM_LEVEL_PIECES - 1)
             {
-                GameObject endPiece = MyCore.NetCreateObject(Idx.END_LEVEL_PIECE, this.Owner,
-                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);
                 /*GameObject endPiece = MyCore.NetCreateObject(Idx.END_LEVEL_PIECE, this.Owner,
-                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y - 10, 0), Quaternion.identity);*/
+                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);*/
+                GameObject endPiece = MyCore.NetCreateObject(Idx.END_LEVEL_PIECE, this.Owner,
+                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y - 10, 0), Quaternion.identity);
                 PlaceDoor(endPiece);
 
                 camEndY = endPiece.transform.position.y;                
@@ -502,7 +502,7 @@ public class GameManager : NetworkComponent
         if(IsServer)
         {
             timerLbl.enabled = false;
-            SendUpdate("HIDE_TIMER", "");
+            SendUpdate("HIDE_TIMER", "");            
 
             //yield return prevents the following lines from running until the coroutine is done
             yield return FadeScorePanelIn(1f);
@@ -558,11 +558,11 @@ public class GameManager : NetworkComponent
         timerLbl = GameObject.FindGameObjectWithTag("TIMER").GetComponent<Text>();
         countdownLbl = GameObject.FindGameObjectWithTag("COUNTDOWN").GetComponent<Text>();
 
-        Debug.Log("gameUI == null: " + (gameUI == null));
+        /*Debug.Log("gameUI == null: " + (gameUI == null));
         Debug.Log("scorePanel == null: " + (scorePanel == null));
         Debug.Log("placeLbl == null: " + (placeLbl == null));
         Debug.Log("timerLbl == null: " + (timerLbl == null));
-        Debug.Log("countdownLbl == null: " + (countdownLbl == null));
+        Debug.Log("countdownLbl == null: " + (countdownLbl == null));*/
     }
 
     public IEnumerator GameUpdate(){                

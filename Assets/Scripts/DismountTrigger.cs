@@ -50,11 +50,27 @@ public class DismountTrigger : NetworkComponent
     {
 		if (IsServer)
 		{
-			
+			Player playerHit = collision.GetComponentInParent<Player>();
+			if(playerHit != null)
+            {
+				playerHit.inDismountTrigger = true;
+            }
 		}
     }
 
-    public override IEnumerator SlowUpdate()
+	private void OnTriggerExit2D(Collider2D collision)
+	{
+		if (IsServer)
+		{
+			Player playerExited = collision.GetComponentInParent<Player>();
+			if (playerExited != null)
+			{
+				playerExited.inDismountTrigger = false;
+			}
+		}
+	}
+
+	public override IEnumerator SlowUpdate()
 	{
 		while (IsConnected)
 		{
