@@ -1,3 +1,8 @@
+/*
+@Authors - Landon
+@Description - Abstract class for enemies.
+*/
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -73,9 +78,7 @@ public abstract class Enemy : Character
 
     protected virtual void OnCollisionEnter2D(Collision2D collider){
         if (IsServer){
-            Debug.Log("Collding with something");
             if (collider.gameObject.GetComponentInParent<Player>() != null){
-                Debug.Log("Colliding with the player");
                 collider.gameObject.GetComponentInParent<Player>().TakeDamage(1);
             }
         }

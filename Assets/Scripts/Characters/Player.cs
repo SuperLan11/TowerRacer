@@ -179,6 +179,7 @@ public class Player : Character {
     [System.NonSerialized] public bool isInvincible = false;
     private const float CHICKEN_INVINCIBILITY_TIME = 5f, TAKE_DAMAGE_INVINCIBILITY_TIME = 0.5f;
     public bool isStunned = false;
+    private bool clientCollidersEnabled = true;
 
     private Vector2 lastAimDir;
     private GameObject aimArrow;
@@ -445,6 +446,16 @@ public class Player : Character {
             {
                 spriteRender.flipX = true;
                 //transform.Rotate(0f, -180f, 0f);
+            }
+        }else if (flag == "ENABLE_COLLIDERS"){
+            if (IsClient){
+                feetCollider.enabled = true;
+                bodyCollider.enabled = true;
+            }
+        }else if (flag == "DISABLE_COLLIDERS"){
+            if (IsClient){
+                feetCollider.enabled = false;
+                bodyCollider.enabled = false;
             }
         }
         else if (flag == "WINNER_CAM")
@@ -783,6 +794,11 @@ public class Player : Character {
                     
                     jumpingThroughTilemap = ((verticalVelocity > 0f) && (feetCollider.bounds.min.y < tileUpperY + TILEMAP_PLATFORM_OFFSET));
                 }
+
+                if (jumpingThroughTilemap){
+                    clientCollidersEnabled = false;
+                    SendUpdate("DISABLE_COLLIDERS", "GoodMorning");
+                }
                 
                 if (!hit.collider.isTrigger && (hit.normal == upNormal) && !jumpingThroughTilemap){
                     return true;
@@ -804,6 +820,11 @@ public class Player : Character {
                     jumpingThroughTilemap = ((verticalVelocity > 0f) && (feetCollider.bounds.min.y < tileUpperY + TILEMAP_PLATFORM_OFFSET));
                 }
 
+                if (jumpingThroughTilemap){
+                    clientCollidersEnabled = false;
+                    SendUpdate("DISABLE_COLLIDERS", "GoodMorning");
+                }
+
                 if (!hit.collider.isTrigger && (hit.normal == upNormal) && !jumpingThroughTilemap){
                     return true;
                 }
@@ -818,6 +839,11 @@ public class Player : Character {
                     float tileUpperY = GetTileUpperY(hit);
                     
                     jumpingThroughTilemap = ((verticalVelocity > 0f) && (feetCollider.bounds.min.y < tileUpperY + TILEMAP_PLATFORM_OFFSET));
+                }
+
+                if (jumpingThroughTilemap){
+                    clientCollidersEnabled = false;
+                    SendUpdate("DISABLE_COLLIDERS", "GoodMorning");
                 }
 
                 if (!hit.collider.isTrigger && (hit.normal == upNormal) && !jumpingThroughTilemap){
@@ -1691,6 +1717,8 @@ public class Player : Character {
             if (justLanded){
                 currentMovementState = movementState.GROUND;    
                 SendUpdate("IDLE_ANIM", "GoodMorning");
+                clientCollidersEnabled = true;
+                SendUpdate("ENABLE_COLLIDERS", "GoodMorning");
                 JumpVariableCleanup();
                 RopeVariableCleanup();
                 
