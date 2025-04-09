@@ -221,6 +221,7 @@ public class PatrickTestManager : NetworkComponent
                 // temp.GetComponent<PlayerController>().SendUpdate("START", n.PName + ";" + n.ColorSelected);
             }
             //!spawn your BS here
+            MyCore.NetCreateObject(11, Owner, new Vector3(14f, -9f, 0f), Quaternion.identity);
             /*
             MyCore.NetCreateObject(13, Owner, new Vector3(1f, 0f, 0f), Quaternion.identity);
             MyCore.NetCreateObject(13, Owner, new Vector3(2f, 0f, 0f), Quaternion.identity);
