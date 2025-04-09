@@ -88,7 +88,7 @@ public class EndDoor : NetworkComponent
                 playersFinished.Add(playerHit);
                 //send place a final time when player hits door before locking it                                 
                 playerHit.playerFrozen = true;
-                playerHit.SendUpdate("FROZEN", "true");
+                playerHit.SendUpdate("FROZEN", "");
                 playerHit.SendUpdate("PLACE", playersFinished.Count.ToString());
                 
                 playerHit.rigidbody.velocity = Vector2.zero;

@@ -172,48 +172,7 @@ public class GameManager : NetworkComponent
                 int wins = int.Parse(value.Split(";")[1]);
                 StartCoroutine(FlashWinPoint(roundWinOwner, wins, 5, 0.2f));
             }
-        }
-        /*else if (flag == "WINNER_CAM")
-        {
-            if (IsClient)
-            {
-                int winningOwner = int.Parse(value);
-                Player[] players = FindObjectsOfType<Player>();
-                foreach(Player player in players)
-                {
-                    if (player.Owner == winningOwner)
-                    {
-                        winningPlayer = player;
-                         
-                        //in IsLocalPlayer...
-                        if (winningPlayer != null)
-                        {
-                            Camera.main.transform.position = winningPlayer.transform.position;
-                            Camera.main.orthographicSize = 7f;
-                        }
-                    }
-                }
-            }
-        }
-        else if(flag == "SET_CHAR_IMAGE")
-        {
-            if (IsClient)
-            {
-                NPM[] playerNPMs = FindObjectsOfType<NPM>();
-                //iterate over npms instead of players so you have the owner and character chosen
-                foreach(NPM npm in playerNPMs)
-                {
-                    int owner = npm.Owner;
-                    int charChosen = npm.CharSelected;
-                    Debug.Log("owner: " + owner);
-                    Debug.Log("charChosen: " + charChosen);
-                    Debug.Log("heroSprites.Length: " + heroSprites.Length);
-                    Image charImage = scorePanel.transform.GetChild(owner).GetChild(0).GetComponent<Image>();                    
-                    charImage.sprite = heroSprites[charChosen];
-                    Debug.Log("image obj changed: " + charImage.name);
-                }                                                
-            }
-        }*/
+        }        
         //for objects in scene before clients connect, can't use SendCommand because
         //SendCommand only works if IsLocalPlayer and it's impossible to determine IsLocalPlayer
         //for an object already in the scene
@@ -733,7 +692,7 @@ public class GameManager : NetworkComponent
 
             Debug.Log("GAME OVER");
             //zooms in on player that won          
-            FindObjectOfType<Player>().SendUpdate("WINNER", winningPlayer.Owner.ToString());
+            FindObjectOfType<Player>().SendUpdate("WINNER_CAM", winningPlayer.Owner.ToString());
               
             yield return new WaitForSeconds(5f);
             

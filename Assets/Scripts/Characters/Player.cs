@@ -49,6 +49,8 @@ public class Player : Character {
 
     private bool movementAbilityPressed = false;
 
+    private Player winningPlayer;
+
     //I doubt we'll want run button in our game, but it's here just in case
     private bool holdingRun = false;
 
@@ -87,6 +89,7 @@ public class Player : Character {
     private GameObject scorePanel;
     public GameObject[] itemPrefabs;
     [System.NonSerialized] public int wins = 0;
+    public Sprite[] heroSprites;
 
     [System.NonSerialized] public const float MAX_WALK_SPEED = 12.5f;
     private const float GROUND_ACCELERATION = 5f, GROUND_DECELERATION = 20f;
@@ -233,7 +236,7 @@ public class Player : Character {
             }
         }
         else if (flag == "PLACE"){
-            if (IsLocalPlayer){
+            if (IsLocalPlayer && !playerFrozen){
                 if (value == "1"){
                     placeLbl.text = "1st";
                 }
@@ -289,8 +292,7 @@ public class Player : Character {
                 if (IsLocalPlayer){
                     int place = int.Parse(value);
                     Color32 placeColor = placeColors[place - 1];
-                    placeColor.a = 0;
-                    Debug.Log("place: " + place);
+                    placeColor.a = 0;                    
                     //make score panel color correct for player's place                
                     scorePanel.GetComponent<Image>().color = placeColor;
                 }
@@ -443,6 +445,38 @@ public class Player : Character {
             {
                 spriteRender.flipX = true;
                 //transform.Rotate(0f, -180f, 0f);
+            }
+        }
+        else if (flag == "WINNER_CAM")
+        {
+            if (IsClient)
+            {
+                int winningOwner = int.Parse(value);
+                Player[] players = FindObjectsOfType<Player>();
+                foreach (Player player in players)
+                {
+                    if (player.Owner == winningOwner)                    
+                        winningPlayer = player;                    
+                }
+            }
+        }
+        else if (flag == "SET_CHAR_IMAGE"){
+            if (IsClient){                
+                //need to assign ui here because Start doesn't always run before sending handle msg on a newly instantiated object
+                GameObject scorePanel = GameObject.FindGameObjectWithTag("SCORE");
+                NPM[] playerNPMs = FindObjectsOfType<NPM>();
+                //iterate over npms instead of players so you have the owner and character chosen
+                foreach (NPM npm in playerNPMs){
+                    int owner = npm.Owner;
+                    int charChosen = npm.CharSelected;                    
+                    Image charImage = scorePanel.transform.GetChild(owner).GetChild(0).GetComponent<Image>();                    
+                    charImage.sprite = heroSprites[charChosen];                    
+                }
+            }
+        }
+        else if(flag == "FROZEN"){
+            if (IsClient){
+                playerFrozen = true;
             }
         }
         else if (flag == "SELECTED_CHARACTER_CLASS")
@@ -604,8 +638,10 @@ public class Player : Character {
 
         arrowPivot = transform.GetChild(0).gameObject;
         aimArrow = arrowPivot.transform.GetChild(0).gameObject;
-        //placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
-        //itemUI = GameObject.FindGameObjectWithTag("ITEM_UI");
+        
+        placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
+        itemUI = GameObject.FindGameObjectWithTag("ITEM_UI");
+        scorePanel = GameObject.FindGameObjectWithTag("SCORE");        
 
         //add this back in when we start doing player spawn eggs
         /*
@@ -1347,7 +1383,12 @@ public class Player : Character {
         }
 
         if (IsLocalPlayer){
-            if (!camFrozen){
+            //in IsLocalPlayer...
+            if (winningPlayer != null){
+                Camera.main.transform.position = winningPlayer.transform.position;
+                Camera.main.orthographicSize = 7f;
+            }
+            else if (!camFrozen){
                 //Debug.Log("cam is moving!");
                 Vector3 newCamPos = new Vector3(0, 0, cam.transform.position.z);
                 newCamPos.x = GameManager.CENTER_PIECE_X;
@@ -1356,9 +1397,7 @@ public class Player : Character {
 
                 //use Vector3 lerp because Vector2.lerp puts camera z at 0 and messes up the view
                 cam.transform.position = Vector3.Lerp(cam.transform.position, newCamPos, camAccel);
-            }
-            /*else
-                Debug.Log("cam is frozen");*/
+            }            
         }
 
         if (IsServer){
