@@ -877,7 +877,6 @@ public class Player : Character {
 
             foreach (RaycastHit2D hit in hits){
                 if (!hit.collider.isTrigger && (hit.normal == downNormal) && (hit.collider.gameObject.name != "SuperPatrickTilemap")){
-                    //Debug.Log(hit.collider.gameObject.name);
                     return true;
                 }
             }
