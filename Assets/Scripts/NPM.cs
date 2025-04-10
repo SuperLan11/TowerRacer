@@ -88,7 +88,7 @@ public class NPM : NetworkComponent
         }*/
         string npmStr = "NPM" + (Owner + 1);
         npmPanel = GameObject.FindGameObjectWithTag(npmStr);
-        npmPanel.GetComponentInChildren<Button>().onClick.AddListener(UI_Ready));
+        //npmPanel.GetComponentInChildren<Button>().onClick.AddListener(UI_Ready));
     }
 
     public void UI_Ready(bool r)
