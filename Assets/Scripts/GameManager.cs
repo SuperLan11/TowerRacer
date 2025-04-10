@@ -85,6 +85,19 @@ public class GameManager : NetworkComponent
                 InitUI();
             }
         }
+        else if(flag == "HIDE_CHAR_IMAGES")
+        {
+            if(IsClient)
+            {
+                int maxOwner = int.Parse(value);                
+                
+                for(int i = maxOwner+1; i < 4; i++)
+                {                    
+                    Debug.Log("disabling " + scorePanel.transform.GetChild(i).name);
+                    scorePanel.transform.GetChild(i).gameObject.SetActive(false);
+                }
+            }
+        }
         else if (flag == "FADE_IN")
         {
             if (IsClient)
@@ -100,17 +113,7 @@ public class GameManager : NetworkComponent
                 float seconds = float.Parse(value);
                 StartCoroutine(FadeScorePanelOut(seconds));
             }
-        }
-        else if (flag == "SCORE")
-        {
-            Text roundScoreText = GameObject.FindGameObjectWithTag("SCORE").GetComponent<Text>();
-            roundScoreText.enabled = true;
-            Player[] players = FindObjectsOfType<Player>();
-            for (int i = 0; i < players.Length; i++)
-            {
-                roundScoreText.text += "Player " + (i + 1) + " score: " + Random.Range(0, 5) + '\n';
-            }
-        }
+        }        
         else if (flag == "SHOW_TIMER")
         {
             if (IsClient)
@@ -686,8 +689,12 @@ public class GameManager : NetworkComponent
                 Player player = temp.GetComponent<Player>();                       
 
                 player.SendUpdate("CAM_END", camEndY.ToString());
-                player.SendUpdate("SET_CHAR_IMAGE", "");
-            }            
+                player.SendUpdate("SET_CHAR_IMAGE", "");     
+            }
+            SendUpdate("INIT_UI", "");
+
+            int maxOwner = players[players.Length - 1].Owner;
+            SendUpdate("HIDE_CHAR_IMAGES", maxOwner.ToString());
             SendUpdate("INIT_UI", "");
 
             /*GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, new Vector3(-8, -3, 0), Quaternion.identity);

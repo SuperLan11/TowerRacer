@@ -69,18 +69,17 @@ public class ItemBox : NetworkComponent
 	{
 		itemUI = GameObject.FindGameObjectWithTag("ITEM_UI");
 	}	
-	
-	private bool LocalPlayerHasItem()
-    {		
-		if (itemUI.transform.childCount >= 1)
-			return true;
-		return false;
-    }
 
 	private void OnTriggerEnter2D(Collider2D collision)
     {		
 		if (IsServer)
 		{
+			if (itemUI == null)
+			{
+				Debug.Log("item box collided before setting item ui!");
+				return;
+			}
+
 			Player playerHit = collision.GetComponentInParent<Player>();
 			bool hasItem = itemUI.transform.childCount >= 1;
 			if (playerHit != null && !hasItem)

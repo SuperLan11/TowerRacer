@@ -19,7 +19,10 @@ public abstract class Enemy : Character
     private void Start()
     {
         myRig = GetComponent<Rigidbody2D>();
-        spriteRender = GetComponent<SpriteRenderer>();
+        
+        //serialize this in the prefab for each enemy to prevent null reference exceptions
+        //spriteRender = GetComponent<SpriteRenderer>();
+
         sprite = spriteRender.sprite;
         players = FindObjectsOfType<Player>();
         floorLayer = LayerMask.GetMask("Floor");

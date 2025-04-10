@@ -216,6 +216,8 @@ MonoBehaviour:
   MyCore: {fileID: 0}
   MyId: {fileID: 0}
   IsDirty: 0
+  health: 0
   speed: 5
+  spriteRender: {fileID: 6835639217321580612}
   state: 0
   ladderSpeed: 6

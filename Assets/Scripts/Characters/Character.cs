@@ -18,7 +18,8 @@ public abstract class Character : NetworkComponent
     [System.NonSerialized] public Rigidbody2D myRig;
 
     protected Sprite sprite;
-    protected SpriteRenderer spriteRender;
+    //this is serialized to prevent null reference exceptions if the enemy has to flip as soon as they spawn
+    [SerializeField] protected SpriteRenderer spriteRender;
 
     public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
 
