@@ -12,6 +12,7 @@ public abstract class Enemy : Character
 {    
     protected Player[] players;
     protected LayerMask floorLayer;
+    protected LayerMask jumpThruLayer;
     protected int dir = 1;
     protected bool raycastingPaused = false;    
 
@@ -25,7 +26,9 @@ public abstract class Enemy : Character
 
         sprite = spriteRender.sprite;
         players = FindObjectsOfType<Player>();
-        floorLayer = LayerMask.GetMask("Floor");
+        //combine both Floor and JumpThru so enemy can turn around on both types of platforms
+        floorLayer = LayerMask.GetMask("Floor", "JumpThru");        
+
         anim = GetComponent<Animator>();
 
         if (GetComponent<NetworkRB2D>() != null)
@@ -46,6 +49,11 @@ public abstract class Enemy : Character
 
         if (raycastingPaused)
             return;
+
+        if(floorBelow)
+        {
+            Debug.Log("floor raycasted!");
+        }
 
         if (!floorBelow && dir == 1)
         {
