@@ -358,8 +358,14 @@ public class GameManager : NetworkComponent
             return;
         }
 
-        int randPos = Random.Range(0, ladderPlaces.Count);
-        MyCore.NetCreateObject(Idx.LADDER, Owner, ladderPlaces[randPos], Quaternion.identity);
+        int randPos = Random.Range(0, ladderPlaces.Count);        
+        GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, ladderPlaces[randPos], Quaternion.identity);
+        Vector2 dismountPos = ladder.GetComponent<Collider2D>().bounds.max;
+        dismountPos.x = ladder.transform.position.x;        
+
+        GameObject dismount = MyCore.NetCreateObject(Idx.DISMOUNT, Owner, dismountPos, Quaternion.identity);
+        dismount.transform.position += new Vector3(0, dismount.GetComponent<Collider2D>().bounds.size.y, 0);
+
     }
 
     public Enemy[] GetAllEnemies(){
@@ -567,8 +573,8 @@ public class GameManager : NetworkComponent
                 }
             }
 
-            //5 seconds to look at results panel before fading out the panel
-            yield return Wait(5f);
+            //time to look at results panel before fading out the panel
+            yield return Wait(3.5f);
             
             //finding one player is enough to unfreeze all instances of the camera
             FindObjectOfType<Player>().SendUpdate("CAM_UNFREEZE", "");
@@ -592,7 +598,7 @@ public class GameManager : NetworkComponent
             SendUpdate("HIDE_PLACE", "");
 
             StartCoroutine(FadeScorePanelOut(1f));                                
-            yield return Wait(2f);
+            yield return Wait(1f);
             
             SendUpdate("COUNTDOWN", "3");
             yield return Wait(1f);

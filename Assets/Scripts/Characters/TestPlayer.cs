@@ -19,10 +19,18 @@ public class TestPlayer : MonoBehaviour
     private bool isGrounded = false;
     public float jumpStrength = 8f;
 
+    public GameObject singleObject;
+    public GameObject multiObject;
+
     // Start is called before the first frame update
     void Start()
     {
         rig = GetComponent<Rigidbody2D>();
+        GameObject singleObj = Instantiate(singleObject, Vector2.zero, Quaternion.identity);
+        singleObj.name = "SingleObj324324";
+
+        GameObject multiObj = Instantiate(multiObject, Vector2.zero, Quaternion.identity);
+        multiObject.name = "MultiObj234324";
     }
 
     private void OnCollisionEnter2D(Collision2D collision)

@@ -50,7 +50,7 @@ public class Rope : NetworkComponent
 
     public override void NetworkedStart()
     {
-        //
+        
     }
 
     

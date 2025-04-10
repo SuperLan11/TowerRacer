@@ -54,7 +54,7 @@ public class Skeleton : Enemy
     {
         if (IsServer)
         {
-            base.OnCollisionEnter2D(collision);
+            base.OnCollisionEnter2D(collision);            
 
             if(collision.gameObject.GetComponent<Enemy>() != null)
             {
