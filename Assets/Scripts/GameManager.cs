@@ -91,11 +91,8 @@ public class GameManager : NetworkComponent
             {
                 int maxOwner = int.Parse(value);                
                 
-                for(int i = maxOwner+1; i < 4; i++)
-                {                    
-                    Debug.Log("disabling " + scorePanel.transform.GetChild(i).name);
-                    scorePanel.transform.GetChild(i).gameObject.SetActive(false);
-                }
+                for(int i = maxOwner+1; i < 4; i++)                                    
+                    scorePanel.transform.GetChild(i).gameObject.SetActive(false);                
             }
         }
         else if (flag == "FADE_IN")

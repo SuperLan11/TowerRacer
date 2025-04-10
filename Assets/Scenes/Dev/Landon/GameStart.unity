@@ -595,7 +595,7 @@ MonoBehaviour:
   - {fileID: 259042173564907836, guid: 12a8d3a2b43d226409c45536a281c3ba, type: 3}
   - {fileID: 3325059836219692533, guid: d5afa480175d334459d0f9eaa00d3172, type: 3}
   - {fileID: 259042173564907836, guid: 02d21c9d9705ecb4ebf4fdfcfe5f22c9, type: 3}
-  - {fileID: 2640692001382439313, guid: b3f7e28d161723c4c81aa5fd1f23e392, type: 3}
+  - {fileID: 2809268384243377077, guid: 61317e69945061d458382ebcd5611446, type: 3}
   - {fileID: 1504742809329571919, guid: b8631090b02029b46931e364c57abd42, type: 3}
   - {fileID: 1504742809329571919, guid: 0d5df6a6a25719648a6b10cd60d96a92, type: 3}
   - {fileID: 1504742809329571919, guid: 0e38e47b03eeef244870a2fd991349cd, type: 3}
@@ -1413,6 +1413,10 @@ PrefabInstance:
     - target: {fileID: 2069822766281470445, guid: 268d597672d7d914f9dd8b1ab720d60a, type: 3}
       propertyPath: m_Name
       value: GameUI
+      objectReference: {fileID: 0}
+    - target: {fileID: 6302734041997171358, guid: 268d597672d7d914f9dd8b1ab720d60a, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 2.072937
       objectReference: {fileID: 0}
     - target: {fileID: 8823353148728249017, guid: 268d597672d7d914f9dd8b1ab720d60a, type: 3}
       propertyPath: m_AnchoredPosition.y

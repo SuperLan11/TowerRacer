@@ -1229,6 +1229,7 @@ public class Player : Character {
             {                
                 SendCommand("SHOOT_BOMB", "");
                 hasBomb = false;
+                Destroy(itemUI.transform.GetChild(0).gameObject);
 
                 lastAimDir = Vector2.zero;
                 aimArrow.GetComponent<SpriteRenderer>().enabled = false;
@@ -1258,6 +1259,7 @@ public class Player : Character {
                 aimArrow.GetComponent<SpriteRenderer>().enabled = false;
                 SendCommand("SHOOT_BOMB", "");
                 hasBomb = false;
+                Destroy(itemUI.transform.GetChild(0).gameObject);
             }
         }
     }
@@ -1294,7 +1296,9 @@ public class Player : Character {
         {
             if (context.started){                
                 SendCommand("USE_ITEM", "GoodMorning");
-            }else if (context.canceled){
+                Destroy(itemUI.transform.GetChild(0).gameObject);
+            }
+            else if (context.canceled){
                 if (hasChicken){
                     hasChicken = false;
                 }else if (hasSpeedBoost){

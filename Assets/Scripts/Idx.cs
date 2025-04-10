@@ -21,7 +21,8 @@ public class Idx : MonoBehaviour
     public static int ITEM_BOX = 13;
     public static int BOMB = 14;
     public static int END_DOOR = 15;
-    public static int EXPLOSION = 16;    
+    public static int EXPLOSION = 16;
+    public static int ROPE_ARROW = 17;
 
     public static int ARCHER = 18;
     public static int BANDIT = 19;
