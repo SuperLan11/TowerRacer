@@ -1,5 +1,5 @@
 /*
-@Authors - Patrick
+@Authors - Patrick and Landon
 @Description - Player Script
 */
 //Character controller datafields and methods are courtesy of of Sasquatch B Studios.
@@ -129,8 +129,11 @@ public class Player : Character {
     private bool onWallWithoutJumpPressed = false;
     private bool wallJumpPressed = false;
 
-    //!RENAME THIS LATER
     private bool canGrabRope = true;
+    private bool canRopeJump = false;
+    private bool onRopeWithoutJumpPressed = false;
+    private bool ropeJumpPressed = false;
+    
     [System.NonSerialized] public int swingPosHeight = 0;
     [System.NonSerialized] public Transform swingPos;
     [System.NonSerialized] public const float MAX_SWING_SPEED = 7.0f;
@@ -413,6 +416,10 @@ public class Player : Character {
             {
                 Vector2 dismountPos = Vector2FromString(value);
                 transform.position = dismountPos;
+            }
+        }else if (flag == "SWING_POS_TELEPORT"){    //not necessary, but here to smooth out client teleportation just in case
+            if (IsClient){
+                transform.position = Vector2FromString(value);
             }
         }
         else if (flag == "JUMP_ANIM")
@@ -1329,6 +1336,8 @@ public class Player : Character {
 
     private void RopeVariableCleanup(){
         ropeLaunchVec = Vector2.zero;
+        onRopeWithoutJumpPressed = false;
+        ropeJumpPressed = false;
     }
 
     #endregion
@@ -1382,6 +1391,12 @@ public class Player : Character {
 
         isStunned = false;
         health = 3;
+    }
+
+    private IEnumerator RopeJumpCooldown(float cooldown){
+        yield return new WaitForSecondsRealtime(cooldown);
+
+        canRopeJump = true;
     }
 
     public override void TakeDamage(int damage){
@@ -1564,6 +1579,9 @@ public class Player : Character {
                     canGrabRope = false;
                     currentRope.GrabRope(this);
                     currentMovementState = movementState.SWINGING;
+                    canRopeJump = false;
+                    //prevents player from immediately jumping if they're holding jump while collding with a rope
+                    StartCoroutine(RopeJumpCooldown(0.1f));
                     SendUpdate("JUMP_ANIM", "");
                 }
             }
@@ -1578,12 +1596,19 @@ public class Player : Character {
             }
 
             if (IsSwinging()){
-                if (jumpPressed){
+                if (jumpReleased){
+                    onRopeWithoutJumpPressed = true;
+                }else if (jumpPressed && onRopeWithoutJumpPressed){
+                    ropeJumpPressed = true;
+                }
+                
+                if (ropeJumpPressed && canRopeJump){
                     currentRope.BoostPlayer(this);
                     currentMovementState = movementState.LAUNCHING;
                     currentRope.playerPresent = false;
                     currentRope = null;
                     StartCoroutine(GrabCooldown(1f));
+
                 }else{
                     //don't worry about horizontal movement cause it's already taken care of in the rope script
                     rigidbody.velocity = (swingPos.position - transform.position) * currentRope.swingSnapMult;
