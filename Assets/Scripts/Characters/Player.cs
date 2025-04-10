@@ -133,7 +133,7 @@ public class Player : Character {
     private bool canRopeJump = false;
     private bool onRopeWithoutJumpPressed = false;
     private bool ropeJumpPressed = false;
-    
+
     [System.NonSerialized] public int swingPosHeight = 0;
     [System.NonSerialized] public Transform swingPos;
     [System.NonSerialized] public const float MAX_SWING_SPEED = 7.0f;
@@ -892,6 +892,7 @@ public class Player : Character {
             return tileWorldPos.y + tileHeight;   
         }else{
             return -5000000f;
+            Debug.LogError("Null tile map!");
         }
     }
 
@@ -1299,7 +1300,7 @@ public class Player : Character {
                 Destroy(itemUI.transform.GetChild(0).gameObject);
             }
             else if (context.canceled){
-                if (hasChicken){
+               if (hasChicken){
                     hasChicken = false;
                 }else if (hasSpeedBoost){
                     hasSpeedBoost = false;
@@ -1680,14 +1681,18 @@ public class Player : Character {
                     currentLadder = null;                    
                     verticalVelocity = 0f;
 
+                    
                     float yOffset = 0.2f;
+                    /*
                     float height = bodyCollider.bounds.size.y + feetCollider.bounds.size.y + yOffset;
 					//raycast to floor instead
 					Vector3 playerTop = transform.position + new Vector3(0, height / 2, 0);
 					//if we have issues with tilemap being floor layer, we can change it back and just use ~0 for the last parameter here
-                    RaycastHit2D floor = Physics2D.Raycast(playerTop, Vector2.down, height*2, floorLayer);
+                    RaycastHit2D floor = Physics2D.Raycast(playerTop, Vector2.down, height, floorLayer);
                     Vector2 dismountPos = new Vector2(this.transform.position.x, GetTileUpperY(floor));
 					dismountPos.y += (height / 2) + yOffset;
+                    */
+                    Vector2 dismountPos = new Vector2(this.transform.position.x, this.transform.position.y + yOffset);
                     transform.position = dismountPos;
 
                     SendUpdate("DISMOUNT", dismountPos.ToString());

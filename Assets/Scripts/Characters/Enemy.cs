@@ -50,10 +50,10 @@ public abstract class Enemy : Character
         if (raycastingPaused)
             return;
 
-        if(floorBelow)
-        {
-            Debug.Log("floor raycasted!");
-        }
+        // if(floorBelow)
+        // {
+        //     Debug.Log("floor raycasted!");
+        // }
 
         if (!floorBelow && dir == 1)
         {
