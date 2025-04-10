@@ -6,8 +6,11 @@ public class Idx : MonoBehaviour
 {    
     public static int GAME_MANAGER = 0;
     public static int NPM = 1;
+    
+    public static int START_LEVEL_PIECE = 23;
     public static int FIRST_LEVEL_PIECE_IDX = 2;
     public static int END_LEVEL_PIECE = 5;
+
     public static int SKELETON_ARROW = 6;
     public static int ROPE = 7;
     public static int LADDER = 8;

@@ -232,17 +232,29 @@ public class GameManager : NetworkComponent
     }
 
     //called by server
-    private void RandomizeLevel()
+    private void RandomizeLevel(int numPieces)
     {        
-        for (int i = 0; i < Idx.NUM_LEVEL_PIECES; i++)
+        for (int i = 0; i < numPieces; i++)
         {
-            int randIdx = Random.Range(0, Idx.NUM_LEVEL_PIECES);
-            if (i == Idx.NUM_LEVEL_PIECES - 1)
+            if(i == 0)
             {
-                /*GameObject endPiece = MyCore.NetCreateObject(Idx.END_LEVEL_PIECE, this.Owner,
-                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);*/
+                GameObject startPiece = MyCore.NetCreateObject(Idx.START_LEVEL_PIECE, this.Owner,
+                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y, 0), Quaternion.identity);
+
+                RandomlyPlaceLadders(startPiece);
+                RandomlyPlaceEnemies(startPiece);
+                RandomlyPlaceItemBoxes(startPiece);
+                RandomlyPlaceLadders(startPiece);
+                continue;
+            }
+
+            int randIdx = Random.Range(0, Idx.NUM_LEVEL_PIECES);
+            if (i == numPieces - 1)
+            {
                 GameObject endPiece = MyCore.NetCreateObject(Idx.END_LEVEL_PIECE, this.Owner,
-                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y - 10, 0), Quaternion.identity);
+                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);
+                /*GameObject endPiece = MyCore.NetCreateObject(Idx.END_LEVEL_PIECE, this.Owner,
+                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y - 10, 0), Quaternion.identity);*/
                 PlaceDoor(endPiece);
 
                 camEndY = endPiece.transform.position.y;                
@@ -253,7 +265,7 @@ public class GameManager : NetworkComponent
                 new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);
 
             RandomlyPlaceRope(piece);
-            //RandomlyPlaceEnemies(piece);
+            RandomlyPlaceEnemies(piece);
             RandomlyPlaceItemBoxes(piece);
             RandomlyPlaceLadders(piece);            
         }
@@ -541,7 +553,7 @@ public class GameManager : NetworkComponent
             {
                 MyCore.NetDestroyObject(piece.GetComponentInParent<NetworkID>().NetId);
             }
-            RandomizeLevel();
+            RandomizeLevel(5);
 
             Player[] players = FindObjectsOfType<Player>();
             foreach (Player player in players)
@@ -639,7 +651,7 @@ public class GameManager : NetworkComponent
                 yield return new WaitForSeconds(0.5f);
             }
 
-            RandomizeLevel();                              
+            RandomizeLevel(5);
 
             NPM[] players = GameObject.FindObjectsOfType<NPM>();
             foreach (NPM n in players)
@@ -672,9 +684,9 @@ public class GameManager : NetworkComponent
             }            
             SendUpdate("INIT_UI", "");
 
-            GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, new Vector3(-8, -3, 0), Quaternion.identity);
+            /*GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, new Vector3(-8, -3, 0), Quaternion.identity);
             GameObject itemBox1 = MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(8, -7, 0), Quaternion.identity);
-            GameObject itemBox2 = MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(5, -7, 0), Quaternion.identity);
+            GameObject itemBox2 = MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(5, -7, 0), Quaternion.identity);*/
 
             SendUpdate("GAMESTART", "1");
             //stops server from listening, so nobody new can join.

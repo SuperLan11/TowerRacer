@@ -524,7 +524,7 @@ Transform:
   m_GameObject: {fileID: 346729500}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.999999, y: -9, z: -1}
+  m_LocalPosition: {x: 2.999999, y: -7, z: -1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -601,6 +601,7 @@ MonoBehaviour:
   - {fileID: 1504742809329571919, guid: 0e38e47b03eeef244870a2fd991349cd, type: 3}
   - {fileID: 1504742809329571919, guid: 91e539099c5fe1f43a0563e16e5be71e, type: 3}
   - {fileID: 179332124807791140, guid: 268d597672d7d914f9dd8b1ab720d60a, type: 3}
+  - {fileID: 8294106288819697315, guid: 594441c2565d4a54cab1653c18718711, type: 3}
   NetworkPlayerManager: {fileID: 8924587938452622135, guid: 265dc7031218c084ab0c8041ea0b6aab, type: 3}
   DefaultReturnScene: 0
 --- !u!4 &408156394
@@ -801,7 +802,7 @@ Transform:
   m_GameObject: {fileID: 648093771}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -6.4000006, y: -9, z: -1}
+  m_LocalPosition: {x: -6.4000006, y: -7, z: -1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1016,7 +1017,7 @@ Transform:
   m_GameObject: {fileID: 1188256009}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 12.9, y: -9, z: -1}
+  m_LocalPosition: {x: 12.9, y: -7, z: -1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1172,7 +1173,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!23 &1236610983
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1524,7 +1525,7 @@ Transform:
   m_GameObject: {fileID: 1413792235}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -14.1, y: -9, z: -1}
+  m_LocalPosition: {x: -14.1, y: -7, z: -1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1670,7 +1671,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 19
+  orthographic size: 18
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
@@ -2341,7 +2342,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!212 &2000716223
 SpriteRenderer:
   m_ObjectHideFlags: 0

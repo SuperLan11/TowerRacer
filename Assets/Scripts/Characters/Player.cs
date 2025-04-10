@@ -1396,7 +1396,7 @@ public class Player : Character {
                 StartCoroutine(InvincibilityCooldown(TAKE_DAMAGE_INVINCIBILITY_TIME));
             }
         }
-    }
+    }   
 
     public override IEnumerator SlowUpdate(){
         while (IsConnected){
@@ -1426,8 +1426,7 @@ public class Player : Character {
             return;
         }
 
-        if (IsLocalPlayer){
-            //in IsLocalPlayer...
+        if (IsLocalPlayer){            
             if (winningPlayer != null){
                 Camera.main.transform.position = winningPlayer.transform.position;
                 Camera.main.orthographicSize = 7f;
@@ -1444,7 +1443,7 @@ public class Player : Character {
             }            
         }
 
-        if (IsServer){
+        if (IsServer){            
             if (playerFrozen)
                 return;
 
