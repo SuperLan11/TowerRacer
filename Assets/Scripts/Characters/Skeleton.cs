@@ -150,9 +150,10 @@ public class Skeleton : Enemy
         canShoot = false;
         StartCoroutine(ShootCooldown(shootTime));
         Vector2 arrowPos = transform.position;
-        arrowPos.x += dir * GetComponent<Collider2D>().bounds.size.x;         
+        arrowPos.x += dir * GetComponent<Collider2D>().bounds.size.x;    
+        Quaternion arrowDirection = (dir == 1 ? Quaternion.Euler(0f, 0f, 0f) : Quaternion.Euler(0f, 0f, 180f));     
 
-        GameObject arrow = MyCore.NetCreateObject(Idx.SKELETON_ARROW, Owner, arrowPos, Quaternion.identity);
+        GameObject arrow = MyCore.NetCreateObject(Idx.SKELETON_ARROW, Owner, arrowPos, arrowDirection);
         arrow.GetComponent<Arrow>().dir = dir;
         arrow.GetComponent<Arrow>().SendUpdate("SPAWN", "");
     }
