@@ -10,6 +10,7 @@ using NETWORK_ENGINE;
 using System.Numerics;
 
 using Vector2 = UnityEngine.Vector2;
+using Vector3 = UnityEngine.Vector3;
 
 public class Rope : NetworkComponent
 {
@@ -58,7 +59,9 @@ public class Rope : NetworkComponent
     {                
         //player.currentRope = this;
         this.player = player;
-        player.swingPos = ClosestSwingPos(player);        
+        player.swingPos = ClosestSwingPos(player);
+        Vector2 teleportPos = new Vector2(player.swingPos.position.x, player.swingPos.position.y);
+        player.SendUpdate("SWING_POS_TELEPORT", teleportPos.ToString());        
         playerPresent = true;
 
         //calculate initial torque using player speed variables. don't use player rigidbody velocity since that's used to connect to rope
