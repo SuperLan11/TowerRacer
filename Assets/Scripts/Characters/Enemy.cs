@@ -48,28 +48,21 @@ public abstract class Enemy : Character
         bool floorBelow = Physics2D.Raycast(transform.position, Vector2.down, playerHeight * 1.5f, floorLayer);
 
         if (raycastingPaused)
-            return;
-
-        if(floorBelow)
-        {
-            Debug.Log("floor raycasted!");
-        }
+            return;        
 
         if (!floorBelow && dir == 1)
         {
             dir = -1;
             spriteRender.flipX = !spriteRender.flipX;
             SendUpdate("FLIP", true.ToString());
-            StartCoroutine(PauseRaycasting(0.1f));
-            //transform.position -= new Vector3(speed / 5, 0, 0);
+            StartCoroutine(PauseRaycasting(0.1f));            
         }
         else if (!floorBelow && dir == -1)
         {
             dir = 1;
             spriteRender.flipX = !spriteRender.flipX;
             SendUpdate("FLIP", false.ToString());
-            StartCoroutine(PauseRaycasting(0.1f));
-            //transform.position += new Vector3(speed / 5, 0, 0);
+            StartCoroutine(PauseRaycasting(0.1f));            
         }        
     }
     protected IEnumerator PauseRaycasting(float seconds)

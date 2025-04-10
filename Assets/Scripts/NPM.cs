@@ -11,6 +11,8 @@ public class NPM : NetworkComponent
     [System.NonSerialized] public int ColorSelected;
     [System.NonSerialized] public int CharSelected;
 
+    private GameObject npmPanel;
+
     public override void HandleMessage(string flag, string value)
     {        
         if (flag == "READY")
@@ -80,10 +82,13 @@ public class NPM : NetworkComponent
 
     public override void NetworkedStart()
     {
-        if (!IsLocalPlayer)
+        /*if (!IsLocalPlayer)
         {
             this.transform.GetChild(0).gameObject.SetActive(false);
-        }
+        }*/
+        string npmStr = "NPM" + (Owner + 1);
+        npmPanel = GameObject.FindGameObjectWithTag(npmStr);
+        npmPanel.GetComponentInChildren<Button>().onClick.AddListener(UI_Ready));
     }
 
     public void UI_Ready(bool r)

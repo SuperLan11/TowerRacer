@@ -496,7 +496,7 @@ public class GameManager : NetworkComponent
 
         Image[] images = scorePanel.GetComponentsInChildren<Image>();
         Text[] labels = scorePanel.GetComponentsInChildren<Text>();
-
+        
         while (images[0].color.a > 0)
         {
             //using yield return with another coroutine pauses this coroutine until the other one finishes
@@ -519,6 +519,26 @@ public class GameManager : NetworkComponent
                 newColor.a -= alphaUpdateFreq / seconds;
                 text.color = newColor;
             }
+        }
+
+        //this sets the alpha of all the score panel elements to 0 once one is zero
+        //this prevents any element from being slightly visible once the fade "finishes"
+        Color finalPanelColor = scoreBackground.color;
+        finalPanelColor.a = 0;
+        scoreBackground.color = finalPanelColor;
+
+        foreach (Image image in images)
+        {
+            Color finalColor = image.color;
+            finalColor.a = 0;
+            image.color = finalColor;
+        }
+
+        foreach (Text text in labels)
+        {
+            Color finalColor = text.color;
+            finalColor.a = 0;
+            text.color = finalColor;
         }
     }
 

@@ -21,6 +21,10 @@ TagManager:
   - READY_LBL
   - END_DOOR_POS
   - COUNTDOWN
+  - NPM1
+  - NPM2
+  - NPM3
+  - NPM4
   layers:
   - Default
   - TransparentFX
