@@ -35,6 +35,7 @@ public class Slime : Enemy
     public override void NetworkedStart()
     {        
         spriteRender.flipX = true;
+        health = 1;
     }
 
     protected override void OnCollisionEnter2D(Collision2D collision)

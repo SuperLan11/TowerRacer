@@ -7,6 +7,7 @@ public class Explosion : NetworkComponent
 {
 	public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
 	private float explodeTime = 1f;
+	public Player currentPlayer;
 
 	public override void HandleMessage(string flag, string value)
 	{
@@ -50,7 +51,42 @@ public class Explosion : NetworkComponent
 
 	}
 
-	private IEnumerator WaitToDestroy(float seconds)
+	/*
+    public void OnCollisionEnter2D(Collision2D collision){
+        if (IsServer){
+			bool characterCollision = (collision.gameObject.GetComponentInParent<Character>() != null);
+			bool playerCollision = (collision.gameObject.GetComponentInParent<Player>() != null);
+			bool samePlayerCollision = (playerCollision && (collision.gameObject.GetComponentInParent<Player>() == currentPlayer));
+
+			if (characterCollision){
+				if (samePlayerCollision){
+					return;
+				}
+				
+				Debug.Log("bomb is colliding with character!");
+				collision.gameObject.GetComponentInParent<Character>().TakeDamage(1);
+			}
+		}
+    }*/
+	
+	public void OnTriggerEnter2D(Collider2D collision){
+        if (IsServer){
+			bool characterCollision = (collision.gameObject.GetComponentInParent<Character>() != null);
+			bool playerCollision = (collision.gameObject.GetComponentInParent<Player>() != null);
+			bool samePlayerCollision = (playerCollision && (collision.gameObject.GetComponentInParent<Player>() == currentPlayer));
+
+			if (characterCollision){
+				if (samePlayerCollision){
+					return;
+				}
+				
+				Debug.Log("bomb is colliding with character!");
+				collision.gameObject.GetComponentInParent<Character>().TakeDamage(1);
+			}
+		}
+    }
+
+    private IEnumerator WaitToDestroy(float seconds)
 	{
 		yield return new WaitForSeconds(seconds);
 		MyCore.NetDestroyObject(this.NetId);

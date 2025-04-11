@@ -53,6 +53,8 @@ public class Skeleton : Enemy
 
     public override void NetworkedStart()
     {
+        health = 2;
+        
         if(IsServer)
         {
             //MyCore.NetCreateObject(1, Owner, new Vector3(-5, 1, 0), Quaternion.identity);
