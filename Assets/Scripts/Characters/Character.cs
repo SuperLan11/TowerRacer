@@ -12,6 +12,7 @@ public abstract class Character : NetworkComponent
     //non-sync vars
     protected int attackCooldown;
     protected int maxAttackCooldown;
+    protected int MAX_HEALTH;
 
     protected Animator anim;
     
