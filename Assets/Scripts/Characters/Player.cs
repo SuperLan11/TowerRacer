@@ -199,7 +199,8 @@ public class Player : Character {
     private Vector3 rightNormal = new Vector2(1f, 0);
 
     private const int BOMB_SPAWN_PREFAB_INDEX = Idx.BOMB;
-    private const int SWORD_SPAWN_PREFAB_INDEX = 21;    //later change this to Idx.SWORD when we make that
+    private const int LEFT_SWORD_SPAWN_PREFAB_INDEX = Idx.LEFT_SWORD;
+    private const int RIGHT_SWORD_SPAWN_PREFAB_INDEX = Idx.RIGHT_SWORD;
     private const int ROPE_ARROW_SPAWN_PREFAB_INDEX = Idx.ROPE_ARROW;
 
     public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
@@ -1567,19 +1568,26 @@ public class Player : Character {
                     inMovementAbilityCooldown = true;
                     return;
                 }else if (selectedCharacterClass == characterClass.KNIGHT){
+                    Quaternion swordDirection;   
+                        
                     Vector2 swordPos = new Vector2(this.transform.position.x, this.transform.position.y);
                     float xOffset = 4f;
                     float swordSpeed;
+                    GameObject sword;
                     
                     if (isFacingRight){
                         swordPos.x += xOffset;
                         swordSpeed = 1f;
+                        swordDirection = Quaternion.Euler(0f, 0f, 270f);
+                        //doing two different prefabs cause it's the easiest way for one-way platform effector to work
+                        sword = MyCore.NetCreateObject(RIGHT_SWORD_SPAWN_PREFAB_INDEX, Owner, swordPos, swordDirection);
                     }else{
                         swordPos.x -= xOffset;
                         swordSpeed = -1f;
+                        swordDirection = Quaternion.Euler(0f, 0f, 90f);
+                        sword = MyCore.NetCreateObject(LEFT_SWORD_SPAWN_PREFAB_INDEX, Owner, swordPos, swordDirection);
                     }
 
-                    GameObject sword = MyCore.NetCreateObject(SWORD_SPAWN_PREFAB_INDEX, Owner, swordPos, Quaternion.identity);
                     sword.GetComponent<Rigidbody2D>().velocity = new Vector2(swordSpeed, 0f);
                     
                     inMovementAbilityCooldown = true;

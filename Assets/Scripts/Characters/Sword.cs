@@ -32,4 +32,10 @@ public class Sword : NetworkComponent
             GetComponent<Rigidbody2D>().velocity = Vector2.zero;
         }
     }
+
+    void OnTriggerEnter2D(Collider2D collider){
+        if (IsServer){
+            GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+        }
+    }
 }

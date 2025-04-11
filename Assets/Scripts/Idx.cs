@@ -32,6 +32,8 @@ public class Idx : MonoBehaviour
 
     public const int GAME_UI = 22;
 
+    public const int LEFT_SWORD = 24, RIGHT_SWORD = 25;
+
     public const int FIRST_ENEMY_IDX = 9;
     public const int NUM_LEVEL_PIECES = 3;
     public const int NUM_ENEMIES = 3;
