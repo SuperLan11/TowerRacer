@@ -19,12 +19,6 @@ using NETWORK_ENGINE;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
 
-/*
-!Bugs:
-!    1. You can climb the ladder upwards even when you're above the ladder
-!    2. if you disable the collider for the client, you can walk through walls and go off the screen
-*/
-
 
 /*
 TODO
@@ -95,7 +89,8 @@ public class Player : Character {
     [System.NonSerialized] public int wins = 0;
     public Sprite[] heroSprites;
 
-    [System.NonSerialized] public const float MAX_WALK_SPEED = 12.5f;
+    //not const anymore cause we want to change it for speed boost powerup
+    [System.NonSerialized] public float MAX_WALK_SPEED = 12.5f;
     private const float GROUND_ACCELERATION = 5f, GROUND_DECELERATION = 20f;
     private const float AIR_ACCELERATION = 5f, AIR_DECELERATION = 5f;
     private const float WALL_JUMP_ACCELERATION = AIR_ACCELERATION * 4f;     //totally fine if we want to make it independent
@@ -137,7 +132,7 @@ public class Player : Character {
     [System.NonSerialized] public int swingPosHeight = 0;
     [System.NonSerialized] public Transform swingPos;
     [System.NonSerialized] public const float MAX_SWING_SPEED = 7.0f;
-    private const float MAX_LAUNCH_SPEED = MAX_WALK_SPEED * 20f;
+    private float MAX_LAUNCH_SPEED;
 
     private const float TIME_FOR_UP_CANCEL = 0.027f;
     private const float APEX_THRESHOLD = 0.97f, APEX_HANG_TIME = 0.075f;
@@ -180,11 +175,12 @@ public class Player : Character {
     //private Item currentlyEquippedItem = null;
     //!Towle may not like this, but all these variables are exclusively client-side. They ARE NOT sync vars!
     [System.NonSerialized] public bool hasChicken = false;
-    [System.NonSerialized] public bool hasSpeedBoost = false;
+    [System.NonSerialized] public bool hasSpeedBoost = true;
     [System.NonSerialized] public bool hasBomb = false;
 
     [System.NonSerialized] public bool isInvincible = false;
     private const float CHICKEN_INVINCIBILITY_TIME = 5f, TAKE_DAMAGE_INVINCIBILITY_TIME = 0.5f;
+    private const float SPEED_BOOST_TIME = 2.5f;
     public bool isStunned = false;
     private bool clientCollidersEnabled = true;
 
@@ -403,10 +399,9 @@ public class Player : Character {
         }else if (flag == "USE_ITEM"){
             if (IsServer){
                 if (hasChicken){
-                    isInvincible = true;
-                    StartCoroutine(InvincibilityCooldown(CHICKEN_INVINCIBILITY_TIME));
+                    UseChickenItem();
                 }else if (hasSpeedBoost){
-                    //speed boost logic
+                    UseSpeedBoostItem();
                 }
             }
         }
@@ -692,6 +687,7 @@ public class Player : Character {
     {
         CalculateInitialConditions();
         dashSpeed = initialJumpVelocity * 2f;
+        MAX_LAUNCH_SPEED = MAX_WALK_SPEED * 20f;
 
         startPos = this.transform.position;
 
@@ -700,7 +696,7 @@ public class Player : Character {
         speed = -9000000;
         myRig = null;
 
-        health = 3;
+        health = MAX_HEALTH = 3;
 
         switch (selectedCharacterClass)
         {
@@ -1286,6 +1282,7 @@ public class Player : Character {
         }
     }
 
+    //not used for bombs, those are different!
     public void UseItemAction(InputAction.CallbackContext context)
     {
         bool hasExactlyOneItem = ((hasChicken && !hasSpeedBoost) || (!hasChicken && hasSpeedBoost));
@@ -1347,6 +1344,20 @@ public class Player : Character {
 
     #endregion
 
+    #region ITEM
+    private void UseChickenItem(){
+        health = MAX_HEALTH;
+        isInvincible = true;
+        StartCoroutine(InvincibilityCooldown(CHICKEN_INVINCIBILITY_TIME));
+    }
+
+    private void UseSpeedBoostItem(){
+        MAX_WALK_SPEED *= 2;
+        StartCoroutine(SpeedBoostCooldown(SPEED_BOOST_TIME));
+    }
+
+    #endregion
+    
     //only gets called on server
     private void InitiateJump(int jumps){        
         if (!IsJumping()){
@@ -1389,6 +1400,12 @@ public class Player : Character {
         yield return new WaitForSecondsRealtime(cooldown);
 
         isInvincible = false;
+    }
+
+    private IEnumerator SpeedBoostCooldown(float cooldown){
+        yield return new WaitForSecondsRealtime(cooldown);
+
+        MAX_WALK_SPEED /= 2;
     }
 
     private IEnumerator StunCooldown(float cooldown){
