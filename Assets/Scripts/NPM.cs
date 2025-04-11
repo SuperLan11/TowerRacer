@@ -4,6 +4,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using NETWORK_ENGINE;
 
+using TMPro;
+
 public class NPM : NetworkComponent
 {
     public string PName;
@@ -11,7 +13,10 @@ public class NPM : NetworkComponent
     [System.NonSerialized] public int ColorSelected;
     [System.NonSerialized] public int CharSelected;
 
-    private GameObject npmPanel;
+    public GameObject npmPanel;
+    private InputField nameField;
+    private Toggle readyToggle;
+    private TMP_Dropdown charDropdown;
 
     public override void HandleMessage(string flag, string value)
     {        
@@ -34,7 +39,7 @@ public class NPM : NetworkComponent
         }
         else if (flag == "NAME")
         {
-            PName = value;
+            PName = value;            
             if (IsServer)
             {
                 SendUpdate("NAME", value);
@@ -54,6 +59,32 @@ public class NPM : NetworkComponent
             if (IsServer)
             {
                 SendUpdate("CHAR", value);
+            }
+        }
+        else if(flag == "SHOW_NPM")
+        {
+            if(IsClient)
+            {
+                Debug.Log("the owner receiving the npm update is: " + this.Owner);
+                //this includes showing the current npm panel
+
+                NPM[] npms = FindObjectsOfType<NPM>();
+                for (int i = 0; i < npms.Length; i++)
+                {
+                    ShowNPM(npms[i].npmPanel);
+                }
+
+                if (!IsLocalPlayer)
+                {
+                    Debug.Log("disabling ui for owner " + this.Owner);
+                    DisableNpmUI(this.npmPanel);
+                }
+                else
+                {
+                    Debug.Log("owner " + this.Owner + " is not local player");
+                }
+
+                //one player can edit the last two of three players' settings
             }
         }
         else if (flag == "DEBUG")
@@ -77,24 +108,80 @@ public class NPM : NetworkComponent
     // Start is called before the first frame update
     void Start()
     {
-
+        //owner is set as soon as npm spawns, so you can access it before networked start
+        string npmStr = "NPM" + Owner;
+        npmPanel = GameObject.Find(npmStr);        
+        npmPanel.GetComponentInChildren<Toggle>().onValueChanged.AddListener(UI_Ready);
+        nameField = npmPanel.GetComponentInChildren<InputField>();
+        readyToggle = npmPanel.GetComponentInChildren<Toggle>();        
     }
 
     public override void NetworkedStart()
     {
-        /*if (!IsLocalPlayer)
+        if (IsServer)
         {
-            this.transform.GetChild(0).gameObject.SetActive(false);
-        }*/
-        string npmStr = "NPM" + (Owner + 1);
-        npmPanel = GameObject.FindGameObjectWithTag(npmStr);
-        //npmPanel.GetComponentInChildren<Button>().onClick.AddListener(UI_Ready));
+            foreach (NPM npm in FindObjectsOfType<NPM>())
+                npm.SendUpdate("SHOW_NPM", "");
+        }
     }
+
+    private void DisableNpmUI(GameObject panel)
+    {
+        TMP_Dropdown dropdown = panel.GetComponentInChildren<TMP_Dropdown>();
+        InputField nameField = panel.GetComponentInChildren<InputField>();
+        Toggle ready = panel.GetComponentInChildren<Toggle>();
+
+        dropdown.interactable = false;
+        nameField.interactable = false;
+        ready.interactable = false;
+    }
+
+    private void ShowNPM(GameObject panel)
+    {
+        Image[] images = panel.GetComponentsInChildren<Image>();
+        TextMeshProUGUI[] labels = panel.GetComponentsInChildren<TextMeshProUGUI>();
+        Text[] texts = panel.GetComponentsInChildren<Text>();
+
+        foreach (Image image in images)
+        {
+            Color newColor = image.color;
+            newColor.a = 1;
+            image.color = newColor;
+        }
+
+        foreach (TextMeshProUGUI lbl in labels)
+        {
+            lbl.enabled = true;
+            //these lines are for the placeholder labels as they are always enabled,
+            //so you need to change alpha instead of just enabling it
+            Color newColor = lbl.color;
+            newColor.a = 1;
+            lbl.color = newColor;
+        }
+
+        foreach (Text text in texts)
+        {
+            if (text.name.Contains("Placeholder"))
+            {
+                Color halfColor = text.color;
+                halfColor.a = 0.5f;
+                text.color = halfColor;
+            }
+            else
+            {
+                text.enabled = true;
+                Color fullColor = text.color;
+                fullColor.a = 1f;
+                text.color = fullColor;
+            }            
+        }
+    }    
 
     public void UI_Ready(bool r)
     {
         if (IsLocalPlayer)
         {
+            Debug.Log("local player changed ready!");
             SendCommand("READY", r.ToString());
         }
     }

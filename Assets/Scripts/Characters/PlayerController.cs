@@ -264,7 +264,7 @@ public class PlayerController : Character
             OTHER_FLAGS = GetComponentInChildren<NetworkTransform>().FLAGS;
 
         cam = Camera.main;
-        highestCamY = GameObject.FindGameObjectWithTag("END_PIECE").transform.position.y;        
+        highestCamY = GameObject.FindGameObjectWithTag("END_PIECE").transform.position.y;
         
         placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
 

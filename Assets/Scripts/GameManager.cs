@@ -35,6 +35,7 @@ public class GameManager : NetworkComponent
     private Text timerLbl;
     private GameObject scorePanel;
     private Text countdownLbl;
+    private GameObject npmPanel;
 
     private Player winningPlayer = null;
 
@@ -170,7 +171,14 @@ public class GameManager : NetworkComponent
                 int wins = int.Parse(value.Split(";")[1]);
                 StartCoroutine(FlashWinPoint(roundWinOwner, wins, 5, 0.2f));
             }
-        }        
+        }     
+        else if(flag == "HIDE_NPMS")
+        {
+            if(IsClient)
+            {
+                npmPanel.SetActive(false);
+            }
+        }
         //for objects in scene before clients connect, can't use SendCommand because
         //SendCommand only works if IsLocalPlayer and it's impossible to determine IsLocalPlayer
         //for an object already in the scene
@@ -648,6 +656,7 @@ public class GameManager : NetworkComponent
         placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
         timerLbl = GameObject.FindGameObjectWithTag("TIMER").GetComponent<Text>();
         countdownLbl = GameObject.FindGameObjectWithTag("COUNTDOWN").GetComponent<Text>();
+        npmPanel = GameObject.FindGameObjectWithTag("NPM_PANEL");
 
         /*Debug.Log("gameUI == null: " + (gameUI == null));
         Debug.Log("scorePanel == null: " + (scorePanel == null));
@@ -677,6 +686,7 @@ public class GameManager : NetworkComponent
                 yield return new WaitForSeconds(0.5f);
             }
 
+            SendUpdate("HIDE_NPMS", "");
             RandomizeLevel(5);
 
             NPM[] players = GameObject.FindObjectsOfType<NPM>();

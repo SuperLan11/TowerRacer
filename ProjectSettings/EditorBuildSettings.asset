@@ -20,7 +20,7 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/Dev/PatrickTesting.unity
     guid: f383b0d1f41e8164fb471950eedf9834
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/LANFull.unity
     guid: e93f2ee9b78135f43b21084775936d3f
   m_configObjects: {}

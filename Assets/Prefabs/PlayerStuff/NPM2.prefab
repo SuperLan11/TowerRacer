@@ -327,7 +327,7 @@ GameObject:
   - component: {fileID: 8924587938452622133}
   - component: {fileID: 8924587938452622134}
   m_Layer: 0
-  m_Name: OldishNPM
+  m_Name: NPM2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -737,10 +737,10 @@ RectTransform:
   - {fileID: 5950145431433780541}
   m_Father: {fileID: 8924587939452922373}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.018544164, y: 0.0426738}
-  m_AnchorMax: {x: 0.29172087, y: 0.96800005}
-  m_AnchoredPosition: {x: -1.7336426, y: 2}
-  m_SizeDelta: {x: -8.193695, y: -1.5935001}
+  m_AnchorMin: {x: 0.303, y: 0.056}
+  m_AnchorMax: {x: 0.5631024, y: 0.9760001}
+  m_AnchoredPosition: {x: 1.5, y: -2}
+  m_SizeDelta: {x: 0.80630493, y: 0.40649986}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8924587939104794544
 CanvasRenderer:
