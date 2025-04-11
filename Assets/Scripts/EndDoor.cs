@@ -14,7 +14,7 @@ public class EndDoor : NetworkComponent
     
     public float alphaUpdateFreq = 0.01f;
     //private int playersFinished = 0;
-    public static bool roundOver = false;
+    public static bool everyoneFinished = false;
     private List<Player> playersFinished = new List<Player>();
 
     public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
@@ -86,10 +86,9 @@ public class EndDoor : NetworkComponent
             if (playerHit != null && !playersFinished.Contains(playerHit) && !playerHit.playerFrozen)
             {                
                 playersFinished.Add(playerHit);
-                //send place a final time when player hits door before locking it                                 
+                
                 playerHit.playerFrozen = true;
-                playerHit.SendUpdate("FROZEN", "");
-                playerHit.SendUpdate("PLACE", playersFinished.Count.ToString());
+                playerHit.SendUpdate("FROZEN", "");                
                 
                 playerHit.rigidbody.velocity = Vector2.zero;
 
@@ -97,11 +96,7 @@ public class EndDoor : NetworkComponent
                 {
                     playerHit.wins++;
                     playerHit.isRoundWinner = true;                    
-                }
-
-                //show a winscreen of the player
-                //GameManager.gameOver = true;
-                //make sure to reset all stats on game over!!!
+                }                
 
                 playerHit.SendUpdate("CAM_FREEZE", "");
                 playerHit.transform.position = playerHit.startPos;                
@@ -111,7 +106,7 @@ public class EndDoor : NetworkComponent
                 if (playersFinished.Count == players.Length)
                 {                    
                     playersFinished.Clear();
-                    roundOver = true;
+                    everyoneFinished = true;
                     StartCoroutine(gm.ResetRound());                    
                 }
                 else if (!gm.timerStarted)

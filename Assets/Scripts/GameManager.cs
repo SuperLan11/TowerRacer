@@ -41,7 +41,7 @@ public class GameManager : NetworkComponent
 
     //the timer starts when the first player reaches the end door
     //the timer ends the round so players don't have to wait on the last player forever    
-    private int roundEndTime = 120;
+    private int roundEndTime = 30;
     private float curTimer;
     [System.NonSerialized] public bool timerStarted = false;
     [System.NonSerialized] public bool timerFinished = false;
@@ -429,8 +429,7 @@ public class GameManager : NetworkComponent
 
         timerLbl.enabled = true;
         SendUpdate("SHOW_TIMER", "");        
-        timerStarted = true;
-        //I tried doing this at the start of SlowUpdate but the clients did not run for some reason
+        timerStarted = true;        
         
         while (curTimer > 0)
         {            
@@ -439,16 +438,57 @@ public class GameManager : NetworkComponent
             curTimer -= 1;
             timerLbl.text = curTimer + "s";
 
-            if (EndDoor.roundOver)            
-                break;            
+            if (EndDoor.everyoneFinished)            
+                break;
         }
 
-        if (!EndDoor.roundOver)
+        if (!EndDoor.everyoneFinished)
         {
             timerFinished = true;
             timerLbl.enabled = false;
-            Debug.Log("do something when timer ends!!");
+            
+            foreach(Player player in FindObjectsOfType<Player>())
+            {
+                player.transform.position = player.startPos;
+                player.playerFrozen = true;
+                player.camFrozen = true;                
+                
+                int place = GetPlayerPlace(player);
+                player.SendUpdate("FROZEN", "");
+                player.SendUpdate("CAM_FREEZE", "");
+                player.SendUpdate("HIT_DOOR", place.ToString());
+            }            
         }
+    }
+
+    private int GetPlayerPlace(Player player)
+    {
+        Player[] sortedPlayers = FindObjectsOfType<Player>();        
+        for(int i = 0; i < sortedPlayers.Length; i++)
+        {
+            for(int j = i+1; j < sortedPlayers.Length; j++)
+            {
+                if(sortedPlayers[j].transform.position.y > sortedPlayers[i].transform.position.y)
+                { 
+                    Player temp = sortedPlayers[i];
+                    sortedPlayers[i] = sortedPlayers[j];
+                    sortedPlayers[j] = temp;
+                }
+            }
+        }
+
+        for (int i = 0; i < sortedPlayers.Length; i++)
+        {
+            if (sortedPlayers[i] == player)
+                return i + 1;
+        }
+
+        if (player == null)
+            Debug.LogWarning("Player was null!!");
+        else
+            Debug.LogWarning("Player place for " + player.name + " was not found");   
+        
+        return -1;
     }
 
     private IEnumerator Wait(float seconds)
@@ -753,6 +793,9 @@ public class GameManager : NetworkComponent
             yield return new WaitForSeconds(5f);
                         
             gameStarted = false;
+
+            //make sure to reset all stats on game over!!!
+
             MyId.NotifyDirty();
             MyCore.UI_Quit();
         }

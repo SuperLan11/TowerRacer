@@ -9,8 +9,8 @@ EditorBuildSettings:
     path: Assets/Scenes/Menu/MainMenu.unity
     guid: ad6a14d1e26d9e84dada8f34bfd8f5b8
   - enabled: 1
-    path: Assets/Scenes/Menu/WAN_Game.unity
-    guid: 1e12bcc1109765f42b5b91b02ac1e0b6
+    path: Assets/Scenes/Dev/Landon/WAN_Game.unity
+    guid: 51813430cce0539428c97c435ec47c73
   - enabled: 0
     path: Assets/Scenes/Dev/Patrick/PatrickGameStart.unity
     guid: bc17bb022a65bc146b31bd66228b8c13
