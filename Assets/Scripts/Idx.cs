@@ -4,35 +4,36 @@ using UnityEngine;
 
 public class Idx : MonoBehaviour
 {    
-    public static int GAME_MANAGER = 0;
-    public static int NPM = 1;
+    //const variables are also static!
+    public const int GAME_MANAGER = 0;
+    public const int NPM = 1;
     
-    public static int START_LEVEL_PIECE = 23;
-    public static int FIRST_LEVEL_PIECE_IDX = 2;
-    public static int END_LEVEL_PIECE = 5;
+    public const int START_LEVEL_PIECE = 23;
+    public const int FIRST_LEVEL_PIECE_IDX = 2;
+    public const int END_LEVEL_PIECE = 5;
 
-    public static int SKELETON_ARROW = 6;
-    public static int ROPE = 7;
-    public static int LADDER = 8;
-    public static int SKELETON = 9;
-    public static int SLIME = 10;    
-    public static int VAMPIRE = 11;
-    public static int DISMOUNT = 12;
-    public static int ITEM_BOX = 13;
-    public static int BOMB = 14;
-    public static int END_DOOR = 15;
-    public static int EXPLOSION = 16;
-    public static int ROPE_ARROW = 17;
+    public const int SKELETON_ARROW = 6;
+    public const int ROPE = 7;
+    public const int LADDER = 8;
+    public const int SKELETON = 9;
+    public const int SLIME = 10;    
+    public const int VAMPIRE = 11;
+    public const int DISMOUNT = 12;
+    public const int ITEM_BOX = 13;
+    public const int BOMB = 14;
+    public const int END_DOOR = 15;
+    public const int EXPLOSION = 16;
+    public const int ROPE_ARROW = 17;
 
-    public static int ARCHER = 18;
-    public static int BANDIT = 19;
-    public static int MAGE = 20;
-    public static int KNIGHT = 21;
+    public const int ARCHER = 18;
+    public const int BANDIT = 19;
+    public const int MAGE = 20;
+    public const int KNIGHT = 21;
 
-    public static int GAME_UI = 22;
+    public const int GAME_UI = 22;
 
-    public static int FIRST_ENEMY_IDX = 9;
-    public static int NUM_LEVEL_PIECES = 3;
-    public static int NUM_ENEMIES = 3;
-    public static int NUM_ITEMS = 3;
+    public const int FIRST_ENEMY_IDX = 9;
+    public const int NUM_LEVEL_PIECES = 3;
+    public const int NUM_ENEMIES = 3;
+    public const int NUM_ITEMS = 3;
 }
