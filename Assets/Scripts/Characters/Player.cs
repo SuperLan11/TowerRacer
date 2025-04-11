@@ -198,9 +198,9 @@ public class Player : Character {
     private Vector2 leftNormal = new Vector2(-1f, 0);
     private Vector3 rightNormal = new Vector2(1f, 0);
 
-    private const int BOMB_SPAWN_PREFAB_INDEX = 14;
-    private const int SWORD_SPAWN_PREFAB_INDEX = 21;
-    private const int ROPE_ARROW_SPAWN_PREFAB_INDEX = 22;
+    private const int BOMB_SPAWN_PREFAB_INDEX = Idx.BOMB;
+    private const int SWORD_SPAWN_PREFAB_INDEX = 21;    //later change this to Idx.SWORD when we make that
+    private const int ROPE_ARROW_SPAWN_PREFAB_INDEX = Idx.ROPE_ARROW;
 
     public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
 
@@ -1518,8 +1518,9 @@ public class Player : Character {
                     float yOffset = 4f;
                     Vector2 ropeArrowPos = new Vector2(this.transform.position.x, this.transform.position.y + yOffset);
                     float ropeArrowSpeed = 1f;
+                    Quaternion arrowDirection = Quaternion.Euler(0f, 0f, 90f);     
                     
-                    GameObject ropeArrow = MyCore.NetCreateObject(ROPE_ARROW_SPAWN_PREFAB_INDEX, Owner, ropeArrowPos, Quaternion.identity);
+                    GameObject ropeArrow = MyCore.NetCreateObject(ROPE_ARROW_SPAWN_PREFAB_INDEX, Owner, ropeArrowPos, arrowDirection);
                     ropeArrow.GetComponent<Rigidbody2D>().velocity = new Vector2(0f, ropeArrowSpeed);
                     
                     inMovementAbilityCooldown = true;

@@ -11,7 +11,7 @@ using NETWORK_ENGINE;
 
 public class RopeArrow : NetworkComponent
 {
-    private const int ROPE_SPAWN_PREFAB_INDEX = 7;
+    private const int ROPE_SPAWN_PREFAB_INDEX = Idx.ROPE; //7; 
     
     public override void HandleMessage(string flag, string value)
     {
@@ -29,7 +29,18 @@ public class RopeArrow : NetworkComponent
         }
     }
 
+    /*
     void OnCollisionEnter2D(Collision2D collision){
+        if (IsServer){
+            GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+
+            MyCore.NetCreateObject(ROPE_SPAWN_PREFAB_INDEX, Owner, this.transform.position, Quaternion.identity);
+            MyCore.NetDestroyObject(this.NetId);
+        }
+    }
+    */
+
+    void OnTriggerEnter2D (Collider2D collider){
         if (IsServer){
             GetComponent<Rigidbody2D>().velocity = Vector2.zero;
 
