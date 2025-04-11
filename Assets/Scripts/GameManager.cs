@@ -37,7 +37,7 @@ public class GameManager : NetworkComponent
     private Text countdownLbl;
     private GameObject npmPanel;
 
-    private Player winningPlayer = null;
+    private Player winningPlayer = null;        
 
     //the timer starts when the first player reaches the end door
     //the timer ends the round so players don't have to wait on the last player forever    
@@ -176,6 +176,7 @@ public class GameManager : NetworkComponent
         {
             if(IsClient)
             {
+                Debug.Log("disabling npm ui");
                 npmPanel.SetActive(false);
             }
         }
@@ -685,8 +686,7 @@ public class GameManager : NetworkComponent
             {
                 yield return new WaitForSeconds(0.5f);
             }
-
-            SendUpdate("HIDE_NPMS", "");
+            
             RandomizeLevel(5);
 
             NPM[] players = GameObject.FindObjectsOfType<NPM>();
@@ -718,8 +718,10 @@ public class GameManager : NetworkComponent
                 player.SendUpdate("CAM_END", camEndY.ToString());
                 player.SendUpdate("SET_CHAR_IMAGE", "");     
             }
+            //don't move this line. put any updates after this so clients have their ui
             SendUpdate("INIT_UI", "");
 
+            SendUpdate("HIDE_NPMS", "");            
             int maxOwner = players[players.Length - 1].Owner;
             SendUpdate("HIDE_CHAR_IMAGES", maxOwner.ToString());
             SendUpdate("INIT_UI", "");
