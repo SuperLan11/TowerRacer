@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
 
 public class MainMenu : MonoBehaviour
@@ -8,6 +9,7 @@ public class MainMenu : MonoBehaviour
     // Canvasses
     public GameObject mainMenuCanvas;
     public GameObject optionsMenuCanvas;
+    public AudioMixer mixer;
 
     // Start is called before the first frame update
     void Start()
@@ -46,5 +48,15 @@ public class MainMenu : MonoBehaviour
     {
         mainMenuCanvas.SetActive(true);
         optionsMenuCanvas.SetActive(false);
+    }
+
+    public void MusicVolume(float f)
+    {
+        mixer.SetFloat("Music", Mathf.Log10(f) * 20);
+    }
+
+    public void SFXVolume(float f)
+    {
+        mixer.SetFloat("SFX", Mathf.Log10(f) * 20);
     }
 }
