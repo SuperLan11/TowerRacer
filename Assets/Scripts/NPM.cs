@@ -21,6 +21,9 @@ public class NPM : NetworkComponent
 
     public Sprite[] heroSprites;
 
+    [SerializeField] private AudioSource readySfx;
+    [SerializeField] private AudioSource allReadySfx;
+
     /*
      * NOTE TO JACOB OR ANYONE ELSE DOING UI
      * The npm is not the panel you see in the scene. 
@@ -33,19 +36,39 @@ public class NPM : NetworkComponent
         if (flag == "READY")
         {
             IsReady = bool.Parse(value);            
-            readyToggle.isOn = IsReady;            
+            readyToggle.isOn = IsReady;                        
 
             if (IsServer)
             {
                 if (IsReady)
                 {
-                    GameManager.AdjustReady(1);
+                    GameManager.AdjustReady(1);                    
                 }
                 else
                 {
                     GameManager.AdjustReady(-1);
                 }
                 SendUpdate("READY", value);
+
+                //clients will hear the ready sfx of other players
+                if (GameManager.playersReady == FindObjectsOfType<NPM>().Length)
+                    SendUpdate("ALL_READY_SFX", "");
+                else
+                    SendUpdate("READY_SFX", "");
+            }
+        }
+        else if(flag == "READY_SFX")
+        {
+            if(IsClient)
+            {
+                readySfx.Play();
+            }
+        }
+        else if(flag == "ALL_READY_SFX")
+        {
+            if(IsClient)
+            {
+                allReadySfx.Play();
             }
         }
         else if (flag == "NAME")
@@ -181,6 +204,14 @@ public class NPM : NetworkComponent
         Image[] images = panel.GetComponentsInChildren<Image>();
         TextMeshProUGUI[] labels = panel.GetComponentsInChildren<TextMeshProUGUI>();
         Text[] texts = panel.GetComponentsInChildren<Text>();
+
+        Toggle toggle = panel.GetComponentInChildren<Toggle>();
+        TMP_Dropdown dropdown = panel.GetComponentInChildren<TMP_Dropdown>();
+        InputField name = panel.GetComponentInChildren<InputField>();
+
+        toggle.enabled = true;
+        dropdown.enabled = true;
+        name.enabled = true;
 
         foreach (Image image in images)
         {

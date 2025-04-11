@@ -578,7 +578,8 @@ public class GameManager : NetworkComponent
         if(IsServer)
         {
             timerLbl.enabled = false;
-            SendUpdate("HIDE_TIMER", "");            
+            SendUpdate("HIDE_TIMER", "");
+            SendUpdate("HIDE_PLACE", "");
 
             //yield return prevents the following lines from running until the coroutine is done
             yield return FadeScorePanelIn(1f);
@@ -611,10 +612,7 @@ public class GameManager : NetworkComponent
             {                                
                 if(player.wins >= 3)
                 {
-                    winningPlayer = player;
-                    
-                    placeLbl.enabled = false;
-                    SendUpdate("HIDE_PLACE", "");
+                    winningPlayer = player;                                        
                     StartCoroutine(FadeScorePanelOut(1f));
 
                     GameManager.gameOver = true;                    
@@ -623,22 +621,10 @@ public class GameManager : NetworkComponent
                 }
             }
 
-            placeLbl.enabled = false;
-            SendUpdate("HIDE_PLACE", "");
-
             StartCoroutine(FadeScorePanelOut(1f));                                
             yield return Wait(1f);
-            
-            SendUpdate("COUNTDOWN", "3");
-            yield return Wait(1f);
-                        
-            SendUpdate("COUNTDOWN", "2");
-            yield return Wait(1f);
-            
-            SendUpdate("COUNTDOWN", "1");            
-            yield return Wait(1f);
 
-            SendUpdate("HIDE_COUNTDOWN", "");
+            yield return Countdown();
 
             foreach (Player player in players)
             {
@@ -648,6 +634,20 @@ public class GameManager : NetworkComponent
             placeLbl.enabled = true;
             SendUpdate("SHOW_PLACE", "");
         }
+    }
+
+    private IEnumerator Countdown()
+    {
+        SendUpdate("COUNTDOWN", "3");
+        yield return Wait(1f);
+
+        SendUpdate("COUNTDOWN", "2");
+        yield return Wait(1f);
+
+        SendUpdate("COUNTDOWN", "1");
+        yield return Wait(1f);
+
+        SendUpdate("HIDE_COUNTDOWN", "");
     }
 
     private void InitUI()

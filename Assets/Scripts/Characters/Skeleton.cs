@@ -9,6 +9,8 @@ public class Skeleton : Enemy
     private bool canShoot = true;      
     private List<Player> playersInRange = new List<Player>();
 
+    [SerializeField] private AudioSource shootArrowSfx;
+
     enum STATE
     {
         MOVING,
@@ -22,6 +24,13 @@ public class Skeleton : Enemy
             if (IsClient)
             {
                 spriteRender.flipX = bool.Parse(value);
+            }
+        }
+        else if(flag == "SHOOT_SFX")
+        {
+            if(IsClient)
+            {
+                shootArrowSfx.Play();
             }
         }
         else if (flag == "DEBUG")
@@ -156,6 +165,7 @@ public class Skeleton : Enemy
         GameObject arrow = MyCore.NetCreateObject(Idx.SKELETON_ARROW, Owner, arrowPos, arrowDirection);
         arrow.GetComponent<Arrow>().dir = dir;
         arrow.GetComponent<Arrow>().SendUpdate("SPAWN", "");
+        SendUpdate("SHOOT_SFX", "");        
     }
 
     public override IEnumerator SlowUpdate()
