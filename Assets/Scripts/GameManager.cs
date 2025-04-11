@@ -718,7 +718,7 @@ public class GameManager : NetworkComponent
                 player.SendUpdate("CAM_END", camEndY.ToString());
                 player.SendUpdate("SET_CHAR_IMAGE", "");     
             }
-            //don't move this line. put any updates after this so clients have their ui
+            //don't move this line. put additional updates after this so clients have their ui
             SendUpdate("INIT_UI", "");
 
             SendUpdate("HIDE_NPMS", "");            
@@ -731,8 +731,6 @@ public class GameManager : NetworkComponent
             MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(3, 0f, 0f), Quaternion.identity);
             MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(5f, 0f, 0f), Quaternion.identity);
             MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(-5f, 0f, 0f), Quaternion.identity);
-
-
 
             /*GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, new Vector3(-8, -3, 0), Quaternion.identity);
             GameObject itemBox1 = MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(8, -7, 0), Quaternion.identity);
