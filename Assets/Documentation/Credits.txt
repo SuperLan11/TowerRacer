@@ -2,3 +2,23 @@ Assets Used:
 	Treasure Chest
 	by SpriteAttack
 	https://opengameart.org/content/treasure-chests
+
+	Ready Ding: https://pixabay.com/sound-effects/ding-sound-246413/
+
+	All Ready Ding: https://pixabay.com/sound-effects/ding-36029/
+
+	Get Item: https://pixabay.com/sound-effects/cute-level-up-2-189851/
+
+	Throw Sword: https://pixabay.com/sound-effects/sword-sound-260274/
+
+	Shoot Arrow: https://pixabay.com/sound-effects/arrow-cutting-through-the-air-39540/
+
+	Arrow Hit: https://pixabay.com/sound-effects/arrow-impact-87260/
+
+	Countdown Fanfare: https://pixabay.com/sound-effects/winharpsichord-39642/
+
+	1st Place: https://pixabay.com/sound-effects/brass-fanfare-with-timpani-and-winchimes-reverberated-146260/
+
+	Hit Door: https://pixabay.com/sound-effects/spin-complete-295086/
+
+	Enemy Death: https://pixabay.com/sound-effects/puffofsmoke-47176/
