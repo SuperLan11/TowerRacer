@@ -7,20 +7,26 @@ using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 public class EndDoor : NetworkComponent
-{
-    private GameObject scorePanel;    
+{     
     private GameManager gm;
     private float resultsTimer = 5f;
+
+    private AudioSource playerEnterSfx;
     
-    public float alphaUpdateFreq = 0.01f;
-    //private int playersFinished = 0;    
-    //private List<Player> playersFinished = new List<Player>();
+    public float alphaUpdateFreq = 0.01f;    
 
     public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
 
     public override void HandleMessage(string flag, string value)
     {
-        if (flag == "DEBUG")
+        if(flag == "ENTER_SFX")
+        {
+            if(IsClient)
+            {
+                playerEnterSfx.Play();
+            }
+        }
+        else if (flag == "DEBUG")
         {
             Debug.Log(value);
             if (IsClient)
@@ -48,9 +54,9 @@ public class EndDoor : NetworkComponent
             OTHER_FLAGS = GetComponent<NetworkTransform>().FLAGS;
         else if (GetComponentInChildren<NetworkTransform>() != null)
             OTHER_FLAGS = GetComponentInChildren<NetworkTransform>().FLAGS;
-
-        scorePanel = GameObject.FindGameObjectWithTag("SCORE");        
+            
         gm = FindObjectOfType<GameManager>();
+        playerEnterSfx = GetComponent<AudioSource>();
     }
 
     public override void NetworkedStart()
@@ -85,10 +91,11 @@ public class EndDoor : NetworkComponent
             if (playerHit != null && !GameManager.playersFinished.Contains(playerHit) && !playerHit.playerFrozen)
             {                
                 GameManager.playersFinished.Add(playerHit);
+
+                SendUpdate("ENTER_SFX", "");
                 
                 //need to finalize place since place labels aren't always accurate                
-                playerHit.SendUpdate("PLACE", GameManager.playersFinished.Count.ToString());
-                Debug.Log("DOOR HIT: " + playerHit.name + " place is " + GameManager.playersFinished.Count);
+                playerHit.SendUpdate("PLACE", GameManager.playersFinished.Count.ToString());                
                                 
                 playerHit.playerFrozen = true;  
                 playerHit.rigidbody.velocity = Vector2.zero;

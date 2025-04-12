@@ -9,9 +9,20 @@ public class Arrow : Projectile
 	public int dir = 0;
 	private float destroyTime = 5f;
 
+	[SerializeField] private AudioSource arrowHitSfx;
+
 	public override void HandleMessage(string flag, string value)
 	{		
-		if (flag == "DEBUG")
+		if(flag == "HIDE")
+        {
+			if(IsClient)
+            {
+				arrowHitSfx.Play();
+				spriteRender.enabled = false;
+				GetComponent<Collider2D>().enabled = false;
+			}
+        }
+		else if (flag == "DEBUG")
 		{
 			Debug.Log(value);
 			if (IsClient)
@@ -55,7 +66,10 @@ public class Arrow : Projectile
 			bool hitWall = other.gameObject.tag == "WALL";
 			if (hitPlayer || hitWall)
             {
-				MyCore.NetDestroyObject(this.NetId);
+				spriteRender.enabled = false;
+				GetComponent<Collider2D>().enabled = false;
+				SendUpdate("HIDE", "");
+				//MyCore.NetDestroyObject(this.NetId);
 			}
         }
     }

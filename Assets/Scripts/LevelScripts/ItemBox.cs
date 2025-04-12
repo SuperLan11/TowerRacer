@@ -14,9 +14,21 @@ public class ItemBox : NetworkComponent
 	[SerializeField] private const int NUM_ITEMS = 3;
 	[SerializeField] private GameObject[] itemPrefabs;
 
+	private AudioSource getItemSfx;
+
 	public override void HandleMessage(string flag, string value)
 	{
-		if (flag == "ITEM_UI")
+		if(flag == "GET_BOX")
+        {
+			if (IsClient)
+			{
+				Debug.Log("play get item sfx");
+				getItemSfx.Play();
+				GetComponent<Collider2D>().enabled = false;
+				spriteRender.enabled = false;
+			}
+		}
+		else if (flag == "ITEM_UI")
 		{
 			if (IsClient)
 			{
@@ -63,6 +75,8 @@ public class ItemBox : NetworkComponent
 			OTHER_FLAGS = GetComponent<NetworkTransform>().FLAGS;
 		else if (GetComponentInChildren<NetworkTransform>() != null)
 			OTHER_FLAGS = GetComponentInChildren<NetworkTransform>().FLAGS;
+
+		getItemSfx = GetComponent<AudioSource>();
 	}
 
 	public override void NetworkedStart()
@@ -88,7 +102,12 @@ public class ItemBox : NetworkComponent
 				int randIdx = Random.Range(0, NUM_ITEMS);
 				SendUpdate("ITEM_UI", this.transform.position.ToString());
 				playerHit.SendUpdate("ITEM", randIdx.ToString());
-				MyCore.NetDestroyObject(this.NetId);
+				//MyCore.NetDestroyObject(this.NetId);
+				
+				//disable instead of destroying item box so that sfx can play
+				GetComponent<Collider2D>().enabled = false;
+				spriteRender.enabled = false;
+				SendUpdate("GET_BOX", "");				
 			}
 		}
 	}

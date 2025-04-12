@@ -89,6 +89,10 @@ public class Player : Character {
     [System.NonSerialized] public int wins = 0;
     public Sprite[] heroSprites;
 
+    [SerializeField] private AudioSource winRoundSfx;
+    [SerializeField] private AudioSource useItemSfx;    
+    [SerializeField] private AudioSource dashSfx;
+
     //not const anymore cause we want to change it for speed boost powerup
     [System.NonSerialized] public float MAX_WALK_SPEED = 12.5f;
     private const float GROUND_ACCELERATION = 5f, GROUND_DECELERATION = 20f;
@@ -175,8 +179,8 @@ public class Player : Character {
     //private Item currentlyEquippedItem = null;
     //!Towle may not like this, but all these variables are exclusively client-side. They ARE NOT sync vars!
     [System.NonSerialized] public bool hasChicken = false;
-    [System.NonSerialized] public bool hasSpeedBoost = true;
-    [System.NonSerialized] public bool hasBomb = true;
+    [System.NonSerialized] public bool hasSpeedBoost = false;
+    [System.NonSerialized] public bool hasBomb = false;
 
     [System.NonSerialized] public bool isInvincible = false;
     private const float CHICKEN_INVINCIBILITY_TIME = 5f, TAKE_DAMAGE_INVINCIBILITY_TIME = 0.5f;
@@ -405,6 +409,7 @@ public class Player : Character {
             }
         }else if (flag == "USE_ITEM"){
             if (IsServer){
+                useItemSfx.Play();
                 if (hasChicken){
                     UseChickenItem();
                 }else if (hasSpeedBoost){
@@ -510,6 +515,17 @@ public class Player : Character {
         else if (flag == "DISABLE_JUMP_THRU_COLLISION"){
             if (IsClient){
                 this.gameObject.layer = noJumpThruLayer;
+            }
+        }
+        else if(flag == "WIN_ROUND_SFX"){
+            if(IsLocalPlayer)
+            {                
+                winRoundSfx.Play();
+            }
+        }   
+        else if(flag == "DASH_SFX"){
+            if(IsClient){
+                dashSfx.Play();
             }
         }
         else if (flag == "SELECTED_CHARACTER_CLASS")
@@ -1530,8 +1546,9 @@ public class Player : Character {
                     ropeArrow.GetComponent<Rigidbody2D>().velocity = new Vector2(0f, ropeArrowSpeed);
                     
                     inMovementAbilityCooldown = true;
-                }else if (selectedCharacterClass == characterClass.MAGE){ 
+                }else if (selectedCharacterClass == characterClass.MAGE){
                     //at least for right now, the only way to double jump is going to be to hit jump twice
+                    SendUpdate("DASH_SFX", "");
                     currentMovementState = movementState.DASHING;
                     dashTimer = MAX_DASH_TIME;
                     
@@ -1642,8 +1659,9 @@ public class Player : Character {
                     currentRope.BoostPlayer(this);
                     currentMovementState = movementState.LAUNCHING;
                     currentRope.playerPresent = false;
+                    currentRope.SendUpdate("ROPE_JUMP_SFX", "");
                     currentRope = null;
-                    StartCoroutine(GrabCooldown(1f));
+                    StartCoroutine(GrabCooldown(1f));                    
 
                 }else{
                     //don't worry about horizontal movement cause it's already taken care of in the rope script

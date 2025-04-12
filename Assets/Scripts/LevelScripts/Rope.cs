@@ -37,9 +37,18 @@ public class Rope : NetworkComponent
     [SerializeField] public float swingSnapMult = 1f;
     [SerializeField] public float dirChangeTorque = 2f;
 
+    private AudioSource ropeJumpSfx;
+
     public override void HandleMessage(string flag, string value)
     {
-        
+        //called by player script
+        if (flag == "ROPE_JUMP_SFX")
+        {
+            if (IsClient)
+            {
+                ropeJumpSfx.Play();
+            }
+        }
     }
 
     void Start()
@@ -47,6 +56,7 @@ public class Rope : NetworkComponent
         //player = FindObjectOfType<PlayerController>();
         pivot = transform.GetChild(0).gameObject;
         pivotRig = pivot.GetComponent<Rigidbody2D>();
+        ropeJumpSfx = GetComponent<AudioSource>();
     }
 
     public override void NetworkedStart()

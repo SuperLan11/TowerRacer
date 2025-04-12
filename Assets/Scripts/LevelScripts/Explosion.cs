@@ -7,7 +7,7 @@ public class Explosion : NetworkComponent
 {
 	public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
 	private float explodeTime = 1f;
-	public Player currentPlayer;
+	public Player currentPlayer;	
 
 	public override void HandleMessage(string flag, string value)
 	{

@@ -22,3 +22,7 @@ Assets Used:
 	Hit Door: https://pixabay.com/sound-effects/spin-complete-295086/
 
 	Enemy Death: https://pixabay.com/sound-effects/puffofsmoke-47176/
+
+	Point Flicker: https://pixabay.com/sound-effects/game-bonus-144751/
+
+	Rope Jump: https://pixabay.com/sound-effects/whoosh-motion-243505/

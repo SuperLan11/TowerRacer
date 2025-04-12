@@ -37,7 +37,8 @@ public class GameManager : NetworkComponent
     private Text countdownLbl;
     private GameObject npmPanel;
     //making these serializable cause it's multiple components on the same obj
-    [SerializeField] private AudioSource theme;
+    [SerializeField] private AudioSource theme;    
+    [SerializeField] private AudioSource winPointSfx;
 
     private Player winningPlayer = null;
     public static List<Player> playersFinished = new List<Player>();
@@ -169,9 +170,10 @@ public class GameManager : NetworkComponent
         {
             if (IsClient)
             {
+                winPointSfx.Play();
                 int roundWinOwner = int.Parse(value.Split(";")[0]);
                 int wins = int.Parse(value.Split(";")[1]);
-                StartCoroutine(FlashWinPoint(roundWinOwner, wins, 5, 0.2f));
+                StartCoroutine(FlashWinPoint(roundWinOwner, wins, 5, 0.2f)); 
             }
         }     
         else if(flag == "HIDE_NPMS")
@@ -293,12 +295,7 @@ public class GameManager : NetworkComponent
             RandomlyPlaceLadders(piece);            
         }
         //do jacob's translate thing here
-    }
-
-    private void DisableRooms()
-    {
-
-    }
+    }    
 
     private void PlaceDoor(GameObject endPiece)
     {
@@ -667,9 +664,10 @@ public class GameManager : NetworkComponent
                 {
                     int owner = player.Owner;
                     int wins = player.wins;
+                    player.SendUpdate("WIN_ROUND_SFX", "");
                     SendUpdate("FLASH_WIN", owner + ";" + wins);
                     player.isRoundWinner = false;
-                }
+                }                
             }
 
             //time to look at results panel before fading out the panel
@@ -685,6 +683,7 @@ public class GameManager : NetworkComponent
             {                                
                 if(player.wins >= 3)
                 {
+                    player.SendUpdate("WIN_ROUND_SFX", "");
                     winningPlayer = player;                                        
                     StartCoroutine(FadeScorePanelOut(1f));
 

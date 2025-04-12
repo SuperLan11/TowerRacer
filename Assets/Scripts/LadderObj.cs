@@ -10,6 +10,8 @@ public class LadderObj : NetworkComponent
 	public Player attachedPlayer = null;
 	public float ladderSpeed;
 
+	private AudioSource ladderSfx;
+
 	public override void HandleMessage(string flag, string value)
 	{
 		if (flag == "DEBUG")
@@ -40,6 +42,8 @@ public class LadderObj : NetworkComponent
 			OTHER_FLAGS = GetComponent<NetworkTransform>().FLAGS;
 		else if (GetComponentInChildren<NetworkTransform>() != null)
 			OTHER_FLAGS = GetComponentInChildren<NetworkTransform>().FLAGS;
+
+		ladderSfx = GetComponent<AudioSource>();
 	}
 
 
@@ -78,6 +82,25 @@ public class LadderObj : NetworkComponent
 	// Update is called once per frame
 	void Update()
     {
-		
+		if (!IsLocalPlayer)
+			return;
+
+		//cut sound when player not moving, only do on local player
+		if (attachedPlayer == null)
+		{
+			ladderSfx.Pause();
+			return;
+		}		
+
+		Vector2 playerInput = attachedPlayer.moveInput;
+		if (Mathf.Abs(playerInput.y) > 0.01f)
+		{
+			if (!ladderSfx.isPlaying)
+				ladderSfx.Play();
+		}
+		else
+        {
+			ladderSfx.Pause();
+        }        
     }
 }
