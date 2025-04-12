@@ -9,8 +9,7 @@ using TMPro;
 public class NPM : NetworkComponent
 {
     [System.NonSerialized] public string PName = "";
-    [System.NonSerialized] public bool IsReady = false;
-    [System.NonSerialized] public int ColorSelected = 0;
+    [System.NonSerialized] public bool IsReady = false;    
     [System.NonSerialized] public int CharSelected = 0;
 
     [System.NonSerialized] public GameObject npmPanel;
@@ -24,6 +23,10 @@ public class NPM : NetworkComponent
     [SerializeField] private AudioSource readySfx;
     [SerializeField] private AudioSource allReadySfx;
 
+    //client-side variable for overriding late localplayer assignments
+    private bool panelEnabled = true;
+    private bool ranStart = false;
+
     /*
      * NOTE TO JACOB OR ANYONE ELSE DOING UI
      * The npm is not the panel you see in the scene. 
@@ -35,6 +38,10 @@ public class NPM : NetworkComponent
     {        
         if (flag == "READY")
         {
+            //handle message is sometimes dumb and runs before Start()
+            //so need to run Start() manually to assign UI vars
+            Start();            
+
             IsReady = bool.Parse(value);            
             readyToggle.isOn = IsReady;                        
 
@@ -73,6 +80,8 @@ public class NPM : NetworkComponent
         }
         else if (flag == "NAME")
         {
+            Start();
+
             PName = value;            
             nameField.text = value;            
 
@@ -80,17 +89,11 @@ public class NPM : NetworkComponent
             {
                 SendUpdate("NAME", value);
             }
-        }
-        else if (flag == "COLOR")
-        {
-            ColorSelected = int.Parse(value);
-            if (IsServer)
-            {
-                SendUpdate("COLOR", value);
-            }
-        }
+        }        
         else if (flag == "CHAR")
         {
+            Start();
+
             CharSelected = int.Parse(value);            
             charDropdown.value = CharSelected;
             charImage.sprite = heroSprites[CharSelected];
@@ -102,21 +105,18 @@ public class NPM : NetworkComponent
         }
         else if(flag == "SHOW_NPM")
         {
-            if(IsClient)
+            if(IsServer)
             {
+                SendUpdate("SHOW_NPM", "");
+            }
+            else if(IsClient)
+            {
+                Start();
+
                 //this includes showing the current npm panel
                 NPM[] npms = FindObjectsOfType<NPM>();
-                for (int i = 0; i < npms.Length; i++)
-                {
-                    ShowNPM(npms[i].npmPanel);
-                }                
-
-                //sometimes doesn't work, so see coroutine lower in this same file
-                if(!IsLocalPlayer)
-                {
-                    SendCommand("DEBUG", this.npmPanel + " would have been disabled for owner " + this.Owner);
-                    //DisableNpmUI(this.npmPanel);
-                }
+                for (int i = 0; i < npms.Length; i++)                
+                    ShowNPM(npms[i].npmPanel);                
             }
         }        
         else if (flag == "DEBUG")
@@ -152,50 +152,24 @@ public class NPM : NetworkComponent
         //dynamically assign ui events so you can have anchored npm objects in the scene
         nameField.onValueChanged.AddListener(UI_NameChanged);
         readyToggle.onValueChanged.AddListener(UI_Ready);
-        charDropdown.onValueChanged.AddListener(UI_CharInput);
+        charDropdown.onValueChanged.AddListener(UI_CharInput);        
     }    
 
     public override void NetworkedStart()
     {
-        //StartCoroutine(WaitToUpdateUI(0.5f));        
-
-        if(IsServer)
+        if (IsServer)
             SendUpdate("SHOW_NPM", "");
-    }
-
-    //sometimes IsLocalPlayer on the npm isn't set when NetworkedStart runs (which is weird)
-    //so this makes sure the ui is updated after a delay in case it is set late
-    private IEnumerator WaitToUpdateUI(float seconds)
-    {
-        yield return new WaitForSeconds(seconds);
-
-        if (!this.npmPanel.activeInHierarchy)
-        {
-            StopAllCoroutines();
-            yield break;
-        }
-
-        if (!IsLocalPlayer)
-        {
-            //Debug.Log("disable ui");
-            DisableNpmUI(this.npmPanel);
-        }
-        else
-        {
-            //Debug.Log("enable local ui");
-            ShowNPM(this.npmPanel);
-        }          
-    }
+    }   
 
     private void DisableNpmUI(GameObject panel)
     {
         TMP_Dropdown dropdown = panel.GetComponentInChildren<TMP_Dropdown>();
         InputField nameField = panel.GetComponentInChildren<InputField>();
         Toggle ready = panel.GetComponentInChildren<Toggle>();
-
+        
         dropdown.interactable = false;
         nameField.interactable = false;
-        ready.interactable = false;
+        ready.interactable = false;        
     }
 
     private void ShowNPM(GameObject panel)
@@ -209,8 +183,8 @@ public class NPM : NetworkComponent
         InputField name = panel.GetComponentInChildren<InputField>();
 
         toggle.enabled = true;
-        dropdown.enabled = true;
-        name.enabled = true;
+        dropdown.enabled = true;        
+        name.enabled = true;        
 
         foreach (Image image in images)
         {
@@ -246,6 +220,18 @@ public class NPM : NetworkComponent
             }            
         }
     }    
+
+    //this just makes the npm stuff interactable
+    private void EnableNpmUI(GameObject panel)
+    {
+        Toggle toggle = panel.GetComponentInChildren<Toggle>();
+        TMP_Dropdown dropdown = panel.GetComponentInChildren<TMP_Dropdown>();
+        InputField name = panel.GetComponentInChildren<InputField>();
+
+        toggle.interactable = true;
+        dropdown.interactable = true;
+        name.interactable = true;
+    }
 
     public void UI_Ready(bool r)
     {
@@ -293,12 +279,10 @@ public class NPM : NetworkComponent
         while (IsConnected)
         {
             if (IsServer)
-            {
-
+            {                
                 if (IsDirty)
                 {                    
-                    SendUpdate("NAME", PName);
-                    SendUpdate("COLOR", ColorSelected.ToString());
+                    SendUpdate("NAME", PName);                    
                     SendUpdate("CHAR", CharSelected.ToString());
                     SendUpdate("READY", IsReady.ToString());                    
 
@@ -312,6 +296,23 @@ public class NPM : NetworkComponent
     // Update is called once per frame
     void Update()
     {
-                        
+        if (IsServer)
+            return;
+
+        //since IsLocalPlayer is kinda stupid and isn't set by NetworkStart you have to manually override
+        //the interactability
+        bool disabled = this.npmPanel != null && readyToggle != null && !readyToggle.interactable;
+        bool enabled = this.npmPanel != null && readyToggle != null && readyToggle.interactable;
+
+        //wrongfully disabled ui, so correct it
+        if (IsLocalPlayer && disabled)
+        {            
+            EnableNpmUI(this.npmPanel);            
+        }
+        //wrongfully enabled ui, so disable it
+        else if (!IsLocalPlayer && enabled)
+        {                    
+            DisableNpmUI(this.npmPanel);            
+        }
     }
 }

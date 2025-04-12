@@ -176,8 +176,7 @@ public class GameManager : NetworkComponent
         else if(flag == "HIDE_NPMS")
         {
             if(IsClient)
-            {
-                Debug.Log("disabling npm ui");
+            {                
                 npmPanel.SetActive(false);
             }
         }
