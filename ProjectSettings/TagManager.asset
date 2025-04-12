@@ -23,6 +23,7 @@ TagManager:
   - COUNTDOWN
   - NPM
   - NPM_PANEL
+  - SOUND_PLAYER
   layers:
   - Default
   - TransparentFX

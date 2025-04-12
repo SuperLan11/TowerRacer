@@ -36,6 +36,7 @@ public class GameManager : NetworkComponent
     private GameObject scorePanel;
     private Text countdownLbl;
     private GameObject npmPanel;
+    private SoundPlayer soundPlayer;
 
     private Player winningPlayer = null;
     public static List<Player> playersFinished = new List<Player>();
@@ -721,6 +722,7 @@ public class GameManager : NetworkComponent
         timerLbl = GameObject.FindGameObjectWithTag("TIMER").GetComponent<Text>();
         countdownLbl = GameObject.FindGameObjectWithTag("COUNTDOWN").GetComponent<Text>();
         npmPanel = GameObject.FindGameObjectWithTag("NPM_PANEL");
+        soundPlayer = GameObject.FindGameObjectWithTag("SOUND_PLAYER").GetComponent<SoundPlayer>();
 
         /*Debug.Log("gameUI == null: " + (gameUI == null));
         Debug.Log("scorePanel == null: " + (scorePanel == null));
@@ -814,6 +816,7 @@ public class GameManager : NetworkComponent
             SendUpdate("GAMESTART", "1");
             //stops server from listening, so nobody new can join.
             MyCore.NotifyGameStart();
+            soundPlayer.PlayTheme();
 
             //this is basically our regular Update()
             while (!gameOver)
