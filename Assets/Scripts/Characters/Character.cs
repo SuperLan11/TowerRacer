@@ -38,6 +38,7 @@ public abstract class Character : NetworkComponent
 
     public abstract void TakeDamage(int damage);
 
+    //because we're not using sync vars for the coroutine, these two methods will actually run on the client only since they're for a visual effect
     protected void StartHitEffect(Color color){
         //prevents multiple of the same coroutine from running
         if (hitCoroutine != null){
