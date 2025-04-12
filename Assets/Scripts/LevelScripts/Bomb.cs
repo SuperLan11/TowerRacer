@@ -7,7 +7,9 @@ using UnityEngine.Tilemaps;
 public class Bomb : Projectile
 {
 	public Vector2 launchVec = Vector2.zero;
-	public float launchSpeed = 15f;	
+	public float launchSpeed = 15f;
+
+	public Player currentPlayer;	
 
 	public override void HandleMessage(string flag, string value)
 	{
@@ -53,8 +55,7 @@ public class Bomb : Projectile
 				if (collidedOwner != this.Owner)
 				{
 					Debug.Log("destroying bomb because it hit " + collision.gameObject.name);
-					MyCore.NetCreateObject(Idx.EXPLOSION, Owner, transform.position, Quaternion.identity);
-					MyCore.NetDestroyObject(this.NetId);
+					InitializeExplosion();
 				}
 			}
 			//to allow bombs to go through jump throughs, only destroy them on floor when they are falling
@@ -62,8 +63,7 @@ public class Bomb : Projectile
             {
 				//hit an non-networked object, so the object was not the current player				
 				Debug.Log("destroying bomb because it hit " + collision.gameObject.name);
-				MyCore.NetCreateObject(Idx.EXPLOSION, Owner, transform.position, Quaternion.identity);
-				MyCore.NetDestroyObject(this.NetId);
+				InitializeExplosion();
             }
 		}
     }
@@ -71,6 +71,14 @@ public class Bomb : Projectile
 	private IEnumerator WaitToDestroyBomb(float seconds)
 	{
 		yield return new WaitForSeconds(seconds);
+		MyCore.NetDestroyObject(this.NetId);
+	}
+
+	private void InitializeExplosion(){
+		GameObject explosionObj = MyCore.NetCreateObject(Idx.EXPLOSION, Owner, transform.position, Quaternion.identity);
+		Explosion explosion = explosionObj.GetComponent<Explosion>();
+		explosion.currentPlayer = this.currentPlayer;
+
 		MyCore.NetDestroyObject(this.NetId);
 	}
 

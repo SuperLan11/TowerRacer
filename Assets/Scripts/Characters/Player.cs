@@ -176,7 +176,7 @@ public class Player : Character {
     //!Towle may not like this, but all these variables are exclusively client-side. They ARE NOT sync vars!
     [System.NonSerialized] public bool hasChicken = false;
     [System.NonSerialized] public bool hasSpeedBoost = true;
-    [System.NonSerialized] public bool hasBomb = false;
+    [System.NonSerialized] public bool hasBomb = true;
 
     [System.NonSerialized] public bool isInvincible = false;
     private const float CHICKEN_INVINCIBILITY_TIME = 5f, TAKE_DAMAGE_INVINCIBILITY_TIME = 0.5f;
@@ -401,6 +401,7 @@ public class Player : Character {
 
                 GameObject bombObj = MyCore.NetCreateObject(BOMB_SPAWN_PREFAB_INDEX, Owner, bombPos, Quaternion.identity);
                 Bomb bomb = bombObj.GetComponent<Bomb>();
+                bomb.currentPlayer = this;
                 bomb.launchVec = lastAimDir * bomb.launchSpeed;
             }
         }else if (flag == "USE_ITEM"){
