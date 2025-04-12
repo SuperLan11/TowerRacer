@@ -51,6 +51,11 @@ public class Player : Character {
 
     //I doubt we'll want run button in our game, but it's here just in case
     private bool holdingRun = false;
+    [System.NonSerialized] public bool hasChicken = false;
+
+    [System.NonSerialized] public bool hasSpeedBoost = false;
+
+    [System.NonSerialized] public bool hasBomb = false;
 
     [SerializeField] private characterClass selectedCharacterClass;
 
@@ -88,6 +93,12 @@ public class Player : Character {
     public GameObject[] itemPrefabs;
     [System.NonSerialized] public int wins = 0;
     public Sprite[] heroSprites;
+    
+    private Material regularMaterial;
+
+    [SerializeField] private Material dashMaterial;
+
+    [SerializeField] private Color dashColor;
 
     [SerializeField] private AudioSource winRoundSfx;
     [SerializeField] private AudioSource useItemSfx;    
@@ -120,7 +131,12 @@ public class Player : Character {
     [SerializeField] private bool inMovementAbilityCooldown = false;
     private float dashSpeed;
     private float dashTimer;
-    private const float MAX_DASH_TIME = 0.5f;    
+    
+    private const float DASH_EFFECT_DURATION = 0.5f;
+
+    private const float MAX_DASH_TIME = 0.5f;   
+
+    private Coroutine dashCoroutine;   
 
     private uint numWallJumpsUsed = 0;
     private bool onWall = false;
@@ -177,10 +193,6 @@ public class Player : Character {
 
     //can't do this cause references to items is funky
     //private Item currentlyEquippedItem = null;
-    //!Towle may not like this, but all these variables are exclusively client-side. They ARE NOT sync vars!
-    [System.NonSerialized] public bool hasChicken = false;
-    [System.NonSerialized] public bool hasSpeedBoost = false;
-    [System.NonSerialized] public bool hasBomb = false;
 
     [System.NonSerialized] public bool isInvincible = false;
     private const float CHICKEN_INVINCIBILITY_TIME = 5f, TAKE_DAMAGE_INVINCIBILITY_TIME = 0.5f;
@@ -261,8 +273,7 @@ public class Player : Character {
                 int place = (int)char.GetNumericValue(value[0]);                
                 placeLbl.color = placeColors[place - 1];
             }
-        }
-        else if (flag == "ITEM"){
+        }else if (flag == "ITEM"){
             if (IsLocalPlayer){
                 int itemIdx = int.Parse(value);
                 GameObject itemImage = Instantiate(itemPrefabs[itemIdx], itemUI.transform.position, Quaternion.identity);
@@ -270,13 +281,28 @@ public class Player : Character {
 
                 if (itemIdx == 0){
                     hasChicken = true;
+                    SendCommand("HAS_CHICKEN", hasChicken.ToString());
                 }else if (itemIdx == 1){
                     hasSpeedBoost = true;
+                    SendCommand("HAS_SPEED_BOOST", hasSpeedBoost.ToString());
                 }else if (itemIdx == 2){
-                    hasBomb = true;                    
+                    hasBomb = true;
+                    SendCommand("HAS_BOMB", hasBomb.ToString());
                 }
             }
-        }                
+        }else if (flag == "HAS_CHICKEN"){
+
+            hasChicken = bool.Parse(value);
+
+        }else if (flag == "HAS_SPEED_BOOST"){
+
+            hasSpeedBoost = bool.Parse(value);
+
+        }else if (flag == "HAS_BOMB"){
+
+            hasBomb = bool.Parse(value);
+
+        }                     
         else if (flag == "CAM_FREEZE"){
             if (IsClient){                
                 camFrozen = true;
@@ -468,6 +494,10 @@ public class Player : Character {
             {
                 spriteRender.flipX = true;
                 //transform.Rotate(0f, -180f, 0f);
+            }
+        }else if (flag == "START_DASH_EFFECT"){
+            if (IsClient){
+                StartDashEffect(dashColor);
             }
         }else if (flag == "ENABLE_COLLIDERS"){
             if (IsClient){
@@ -720,8 +750,11 @@ public class Player : Character {
 
         health = MAX_HEALTH = 3;
 
-        switch (selectedCharacterClass)
-        {
+        regularMaterial = spriteRender.material;
+        //unity youtube man says this is necessary for preventing side effects
+        dashMaterial = new Material(dashMaterial);
+
+        switch (selectedCharacterClass){
             case characterClass.ARCHER:
                 movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 20f;
                 break;
@@ -1248,6 +1281,7 @@ public class Player : Character {
             {                
                 SendCommand("SHOOT_BOMB", "");
                 hasBomb = false;
+                SendCommand("HAS_BOMB", hasBomb.ToString());
                 Destroy(itemUI.transform.GetChild(0).gameObject);
 
                 lastAimDir = Vector2.zero;
@@ -1278,6 +1312,7 @@ public class Player : Character {
                 aimArrow.GetComponent<SpriteRenderer>().enabled = false;
                 SendCommand("SHOOT_BOMB", "");
                 hasBomb = false;
+                SendCommand("HAS_BOMB", hasBomb.ToString());
                 Destroy(itemUI.transform.GetChild(0).gameObject);
             }
         }
@@ -1321,8 +1356,10 @@ public class Player : Character {
             else if (context.canceled){
                if (hasChicken){
                     hasChicken = false;
+                    SendCommand("HAS_CHICKEN", hasChicken.ToString());
                 }else if (hasSpeedBoost){
                     hasSpeedBoost = false;
+                    SendCommand("HAS_SPEED_BOOST", hasSpeedBoost.ToString());
                 }
             }
         }
@@ -1443,6 +1480,32 @@ public class Player : Character {
         canRopeJump = true;
     }
 
+    private void StartDashEffect(Color color){
+
+        //prevents multiple of the same coroutine from running
+
+        if (dashCoroutine != null){
+
+            StopCoroutine(dashCoroutine);
+
+        }
+
+
+
+        dashCoroutine = StartCoroutine(DashRoutine(color));
+
+    }
+
+    private IEnumerator DashRoutine(Color color){
+        spriteRender.material = dashMaterial;
+        dashMaterial.color = color;
+
+        yield return new WaitForSeconds(DASH_EFFECT_DURATION);
+
+        spriteRender.material = regularMaterial;
+        dashCoroutine = null;
+    }
+
     public override void TakeDamage(int damage){
         if (!isInvincible && !isStunned){
             health -= damage;
@@ -1466,6 +1529,9 @@ public class Player : Character {
                     SendUpdate("HOLDING_RUN", holdingRun.ToString());
                     SendUpdate("SELECTED_CHARACTER_CLASS", CharacterClassToString(selectedCharacterClass));
                     SendUpdate("MOVEMENT_ABILITY_PRESSED", movementAbilityPressed.ToString()); 
+                    SendUpdate("HAS_CHICKEN", hasChicken.ToString());
+                    SendUpdate("HAS_SPEED_BOOST", hasSpeedBoost.ToString());
+                    SendUpdate("HAS_BOMB", hasBomb.ToString()); 
                     //SendUpdate("CURRENT_MOVEMENT_STATE", MovementStateToString(currentMovementState));
                     //SendUpdate("NAME", Pname);
                     
@@ -1551,6 +1617,7 @@ public class Player : Character {
                     SendUpdate("DASH_SFX", "");
                     currentMovementState = movementState.DASHING;
                     dashTimer = MAX_DASH_TIME;
+                    SendUpdate("START_DASH_EFFECT", "GoodMorning");
                     
                     Vector2 dashVelocity;
                     float xDirection = 0f, yDirection = 0f;
