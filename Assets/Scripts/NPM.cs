@@ -103,7 +103,7 @@ public class NPM : NetworkComponent
         else if(flag == "SHOW_NPM")
         {
             if(IsClient)
-            {                
+            {
                 //this includes showing the current npm panel
                 NPM[] npms = FindObjectsOfType<NPM>();
                 for (int i = 0; i < npms.Length; i++)
@@ -114,7 +114,8 @@ public class NPM : NetworkComponent
                 //sometimes doesn't work, so see coroutine lower in this same file
                 if(!IsLocalPlayer)
                 {
-                    DisableNpmUI(this.npmPanel);
+                    SendCommand("DEBUG", this.npmPanel + " would have been disabled for owner " + this.Owner);
+                    //DisableNpmUI(this.npmPanel);
                 }
             }
         }        
@@ -156,36 +157,34 @@ public class NPM : NetworkComponent
 
     public override void NetworkedStart()
     {
-        StartCoroutine(UpdateLocalUI());
+        //StartCoroutine(WaitToUpdateUI(0.5f));        
 
         if(IsServer)
             SendUpdate("SHOW_NPM", "");
     }
 
     //sometimes IsLocalPlayer on the npm isn't set when NetworkedStart runs (which is weird)
-    //so this makes sure the ui is continusouly updated in case it is set late
-    private IEnumerator UpdateLocalUI()
+    //so this makes sure the ui is updated after a delay in case it is set late
+    private IEnumerator WaitToUpdateUI(float seconds)
     {
-        while (true)
-        {
-            if (!this.npmPanel.activeInHierarchy)
-            {
-                StopAllCoroutines();
-                yield break;
-            }
+        yield return new WaitForSeconds(seconds);
 
-            if (!IsLocalPlayer)
-            {
-                //Debug.Log("disable ui");
-                DisableNpmUI(this.npmPanel);
-            }
-            else
-            {
-                //Debug.Log("enable local ui");
-                ShowNPM(this.npmPanel);
-            }
-            yield return new WaitForSeconds(0.5f);
+        if (!this.npmPanel.activeInHierarchy)
+        {
+            StopAllCoroutines();
+            yield break;
         }
+
+        if (!IsLocalPlayer)
+        {
+            //Debug.Log("disable ui");
+            DisableNpmUI(this.npmPanel);
+        }
+        else
+        {
+            //Debug.Log("enable local ui");
+            ShowNPM(this.npmPanel);
+        }          
     }
 
     private void DisableNpmUI(GameObject panel)
@@ -251,8 +250,7 @@ public class NPM : NetworkComponent
     public void UI_Ready(bool r)
     {
         if (IsLocalPlayer)
-        {
-            Debug.Log("local player changed ready!");
+        {            
             SendCommand("READY", r.ToString());
         }
     }
@@ -298,11 +296,7 @@ public class NPM : NetworkComponent
             {
 
                 if (IsDirty)
-                {
-                    Debug.Log("isDirty name: " + PName);
-                    Debug.Log("isDirty char: " + CharSelected);
-                    Debug.Log("isDirty ready: " + IsReady);
-
+                {                    
                     SendUpdate("NAME", PName);
                     SendUpdate("COLOR", ColorSelected.ToString());
                     SendUpdate("CHAR", CharSelected.ToString());

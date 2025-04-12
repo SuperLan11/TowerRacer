@@ -241,7 +241,7 @@ public class Player : Character {
             }
         }
         else if (flag == "PLACE"){
-            if (IsLocalPlayer && !playerFrozen){                
+            if (IsLocalPlayer){
                 if (value == "1"){
                     placeLbl.text = "1st";
                 }
@@ -253,8 +253,9 @@ public class Player : Character {
                 }
                 else if (value == "4"){
                     placeLbl.text = "4th";
-                }
+                }                                
                 int place = (int)char.GetNumericValue(value[0]);
+                Debug.Log("PLACE flag: place for " + name + ", " + place);
                 placeLbl.color = placeColors[place - 1];
             }
         }
@@ -272,7 +273,7 @@ public class Player : Character {
                     hasBomb = true;                    
                 }
             }
-        }        
+        }                
         else if (flag == "CAM_FREEZE"){
             if (IsClient){                
                 camFrozen = true;
@@ -301,6 +302,11 @@ public class Player : Character {
                     //make score panel color correct for player's place                
                     scorePanel.GetComponent<Image>().color = placeColor;
                 }
+            }
+        }
+        else if(flag == "TIMED_OUT"){
+            if (IsClient){
+                this.transform.position = startPos;        
             }
         }
         else if (flag == "MOVE")
@@ -488,15 +494,20 @@ public class Player : Character {
                     int owner = npm.Owner;
                     int charChosen = npm.CharSelected;                    
                     Image charImage = scorePanel.transform.GetChild(owner).GetChild(0).GetComponent<Image>();                    
-                    charImage.sprite = heroSprites[charChosen];                    
+                    charImage.sprite = heroSprites[charChosen];  
                 }
             }
         }
-        else if(flag == "FROZEN"){
+        /*else if(flag == "FROZEN"){
             if (IsClient){
                 playerFrozen = true;
             }
         }
+        else if(flag == "UNFROZEN"){
+            if (IsClient){
+                playerFrozen = false;
+            }
+        }*/
         else if(flag == "ENABLE_JUMP_THRU_COLLISION"){
             if(IsClient){
                 this.gameObject.layer = normalLayer;

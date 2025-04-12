@@ -37,14 +37,15 @@ public class GameManager : NetworkComponent
     private Text countdownLbl;
     private GameObject npmPanel;
 
-    private Player winningPlayer = null;        
+    private Player winningPlayer = null;
+    public static List<Player> playersFinished = new List<Player>();
+    public static bool everyoneFinished = false;
 
     //the timer starts when the first player reaches the end door
     //the timer ends the round so players don't have to wait on the last player forever    
     private int roundEndTime = 30;
     private float curTimer;
-    [System.NonSerialized] public bool timerStarted = false;
-    [System.NonSerialized] public bool timerFinished = false;
+    [System.NonSerialized] public bool timerStarted = false;    
     private float camEndY;
 
     private float resultsTimer = 5f;
@@ -116,8 +117,7 @@ public class GameManager : NetworkComponent
         {
             if (IsClient)
             {
-                timerLbl.enabled = true;
-                timerStarted = true;
+                timerLbl.enabled = true;                
             }
         }
         else if (flag == "HIDE_TIMER")
@@ -388,11 +388,19 @@ public class GameManager : NetworkComponent
     }
 
     private void UpdatePlaces()
-    {
+    {        
         Player[] players = FindObjectsOfType<Player>();
-        int[] playerIdxsByHeight = new int[players.Length];
+        List<Player> unfinishedPlayers = new List<Player>();
 
-        for(int i = 0; i < players.Length; i++)
+        //only update places for unfinished players
+        foreach(Player player in players)
+        {
+            if (!playersFinished.Contains(player))
+                unfinishedPlayers.Add(player);
+        }
+        int[] playerIdxsByHeight = new int[unfinishedPlayers.Count];
+
+        for(int i = 0; i < unfinishedPlayers.Count; i++)
         {
             playerIdxsByHeight[i] = i;
         }        
@@ -400,10 +408,10 @@ public class GameManager : NetworkComponent
         //selection sort to rank players by height descending
         for(int i = 0; i < playerIdxsByHeight.Length; i++)
         {
-            float playerY1 = players[i].transform.position.y;
-            for (int j = i + 1; j < players.Length; j++)
+            float playerY1 = unfinishedPlayers[i].transform.position.y;
+            for (int j = i + 1; j < unfinishedPlayers.Count; j++)
             {
-                float playerY2 = players[j].transform.position.y;
+                float playerY2 = unfinishedPlayers[j].transform.position.y;
                 if(playerY2 > playerY1)
                 {
                     int tempIdx = playerIdxsByHeight[i];
@@ -415,50 +423,53 @@ public class GameManager : NetworkComponent
 
         for(int i = 0; i < playerIdxsByHeight.Length; i++)
         {
-            int playerIdx = playerIdxsByHeight[i];            
+            int playerIdx = playerIdxsByHeight[i];
             //now that players are ranked, send each an update with their placement (i+1)
-            players[playerIdx].SendUpdate("PLACE", (i+1).ToString());
-        }        
+            //account for finished players when determining the place            
+            int place = playersFinished.Count + (i + 1);
+            //Debug.Log("unfinished players: " + unfinishedPlayers.Count + ", place for " + unfinishedPlayers[playerIdx].name + ", " + place);
+            unfinishedPlayers[playerIdx].SendUpdate("PLACE", place.ToString());
+        }
     }
 
     //called by EndDoor script
     public IEnumerator StartTimer()
     {
-        InitUI();
-        SendUpdate("INIT_UI", "");
-
         timerLbl.enabled = true;
         SendUpdate("SHOW_TIMER", "");        
         timerStarted = true;        
         
-        while (curTimer > 0)
+        while (curTimer > 0 && !everyoneFinished)
         {            
             SendUpdate("TIMER", curTimer.ToString());
-            yield return new WaitForSeconds(1);
+            //be careful of this 1 second timer. will not check if everyoneFinished for 1 second intervals
+            yield return new WaitForSeconds(1f);
             curTimer -= 1;
-            timerLbl.text = curTimer + "s";
-
-            if (EndDoor.everyoneFinished)            
-                break;
+            timerLbl.text = curTimer + "s";                                                        
         }
 
-        if (!EndDoor.everyoneFinished)
+        //reset timer for next round        
+        timerStarted = false;
+        curTimer = roundEndTime;        
+
+        if (everyoneFinished)
+            yield break;
+
+        //means timer ended and will claim some victims
+        foreach(Player player in FindObjectsOfType<Player>())
         {
-            timerFinished = true;
-            timerLbl.enabled = false;
-            
-            foreach(Player player in FindObjectsOfType<Player>())
-            {
-                player.transform.position = player.startPos;
-                player.playerFrozen = true;
-                player.camFrozen = true;                
-                
-                int place = GetPlayerPlace(player);
-                player.SendUpdate("FROZEN", "");
-                player.SendUpdate("CAM_FREEZE", "");
-                player.SendUpdate("HIT_DOOR", place.ToString());
-            }            
+            if (playersFinished.Contains(player))
+                continue;
+
+            //only need to run this code for unfinished players
+            player.transform.position = player.startPos;
+            player.playerFrozen = true;
+            player.camFrozen = true;                
+                                
+            player.SendUpdate("TIMED_OUT", "");
+            player.SendUpdate("CAM_FREEZE", "");
         }
+        StartCoroutine(ResetRound());        
     }
 
     private int GetPlayerPlace(Player player)
@@ -616,8 +627,10 @@ public class GameManager : NetworkComponent
     public IEnumerator ResetRound()
     {
         if(IsServer)
-        {
+        {            
             timerLbl.enabled = false;
+            timerStarted = false;
+            curTimer = roundEndTime;            
             SendUpdate("HIDE_TIMER", "");
             SendUpdate("HIDE_PLACE", "");
 
@@ -645,9 +658,13 @@ public class GameManager : NetworkComponent
 
             //time to look at results panel before fading out the panel
             yield return Wait(3.5f);
-            
-            //finding one player is enough to unfreeze all instances of the camera
-            FindObjectOfType<Player>().SendUpdate("CAM_UNFREEZE", "");
+                        
+            foreach(Player player in players)
+            {
+                player.SendUpdate("CAM_UNFREEZE", "");
+            }
+
+            //FindObjectOfType<Player>().SendUpdate("CAM_UNFREEZE", "");
             foreach (Player player in players)
             {                                
                 if(player.wins >= 3)
@@ -669,10 +686,16 @@ public class GameManager : NetworkComponent
             foreach (Player player in players)
             {
                 player.playerFrozen = false;
+                //player.SendUpdate("UNFROZEN", "");
             }
 
             placeLbl.enabled = true;
             SendUpdate("SHOW_PLACE", "");
+
+            //wait to do this so that players forced to finish by the timer have the correct background color
+            //and so that the timer resets correctly            
+            playersFinished.Clear();
+            everyoneFinished = false;
         }
     }
 
@@ -706,9 +729,22 @@ public class GameManager : NetworkComponent
         Debug.Log("countdownLbl == null: " + (countdownLbl == null));*/
     }
 
-    public IEnumerator GameUpdate(){  
-        UpdatePlaces();
+    private int GetMaxOwner()
+    {
+        NPM[] npms = FindObjectsOfType<NPM>();
+        int maxOwner = -1;
+        for(int i = 0; i < npms.Length; i++)
+        {
+            if(npms[i].Owner > maxOwner)
+            {
+                maxOwner = npms[i].Owner;
+            }    
+        }
+        return maxOwner;
+    }
 
+    public IEnumerator GameUpdate(){  
+        UpdatePlaces();        
         //don't make this timer too fast as UpdatePlaces is somewhat high on performance
         yield return new WaitForSeconds(0.5f);
     }
@@ -756,15 +792,14 @@ public class GameManager : NetworkComponent
                 Player player = temp.GetComponent<Player>();                       
 
                 player.SendUpdate("CAM_END", camEndY.ToString());
-                player.SendUpdate("SET_CHAR_IMAGE", "");     
+                player.SendUpdate("SET_CHAR_IMAGE", "");
             }
             //don't move this line. put additional updates after this so clients have their ui
             SendUpdate("INIT_UI", "");
 
-            SendUpdate("HIDE_NPMS", "");            
-            int maxOwner = players[players.Length - 1].Owner;
-            SendUpdate("HIDE_CHAR_IMAGES", maxOwner.ToString());
-            SendUpdate("INIT_UI", "");
+            SendUpdate("HIDE_NPMS", "");
+            int maxOwner = GetMaxOwner();
+            SendUpdate("HIDE_CHAR_IMAGES", maxOwner.ToString());    
 
             MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(0f, 0f, 0f), Quaternion.identity);
             MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(-3f, 0f, 0f), Quaternion.identity);
@@ -782,13 +817,16 @@ public class GameManager : NetworkComponent
 
             //this is basically our regular Update()
             while (!gameOver)
-            {                       
+            {                
                 //yield return is blocking, so the lines after it won't run until GameUpdate finishes
                 yield return GameUpdate();
             }
-            
-            //zooms in on player that won          
-            FindObjectOfType<Player>().SendUpdate("WINNER_CAM", winningPlayer.Owner.ToString());
+
+            //zooms in on player that won
+            foreach(Player player in FindObjectsOfType<Player>())
+            {
+                player.SendUpdate("WINNER_CAM", winningPlayer.Owner.ToString());
+            }
               
             yield return new WaitForSeconds(5f);
                         

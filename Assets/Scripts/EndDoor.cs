@@ -13,9 +13,8 @@ public class EndDoor : NetworkComponent
     private float resultsTimer = 5f;
     
     public float alphaUpdateFreq = 0.01f;
-    //private int playersFinished = 0;
-    public static bool everyoneFinished = false;
-    private List<Player> playersFinished = new List<Player>();
+    //private int playersFinished = 0;    
+    //private List<Player> playersFinished = new List<Player>();
 
     public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
 
@@ -80,19 +79,21 @@ public class EndDoor : NetworkComponent
     {
         if (IsServer)
         {
-            Player playerHit = other.gameObject.GetComponentInParent<Player>();
-            
+            Player playerHit = other.gameObject.GetComponentInParent<Player>();            
+
             //make sure player hit is not frozen in case of weird double collisions when teleporting
-            if (playerHit != null && !playersFinished.Contains(playerHit) && !playerHit.playerFrozen)
+            if (playerHit != null && !GameManager.playersFinished.Contains(playerHit) && !playerHit.playerFrozen)
             {                
-                playersFinished.Add(playerHit);
+                GameManager.playersFinished.Add(playerHit);
                 
-                playerHit.playerFrozen = true;
-                playerHit.SendUpdate("FROZEN", "");                
-                
+                //need to finalize place since place labels aren't always accurate                
+                playerHit.SendUpdate("PLACE", GameManager.playersFinished.Count.ToString());
+                Debug.Log("DOOR HIT: " + playerHit.name + " place is " + GameManager.playersFinished.Count);
+                                
+                playerHit.playerFrozen = true;  
                 playerHit.rigidbody.velocity = Vector2.zero;
 
-                if (playersFinished.Count == 1)
+                if (GameManager.playersFinished.Count == 1)
                 {
                     playerHit.wins++;
                     playerHit.isRoundWinner = true;                    
@@ -100,17 +101,19 @@ public class EndDoor : NetworkComponent
 
                 playerHit.SendUpdate("CAM_FREEZE", "");
                 playerHit.transform.position = playerHit.startPos;                
-                playerHit.SendUpdate("HIT_DOOR", playersFinished.Count.ToString());
+                playerHit.SendUpdate("HIT_DOOR", GameManager.playersFinished.Count.ToString());
 
                 Player[] players = FindObjectsOfType<Player>();
-                if (playersFinished.Count == players.Length)
+                if (GameManager.playersFinished.Count == players.Length)
                 {                    
-                    playersFinished.Clear();
-                    everyoneFinished = true;
-                    StartCoroutine(gm.ResetRound());                    
+                    //this affects the start timer coroutine in GameManager                    
+                    GameManager.everyoneFinished = true;
+                    StartCoroutine(gm.ResetRound());
                 }
                 else if (!gm.timerStarted)
                 {
+                    gm.timerStarted = true;
+                    Debug.Log("START TIMER");
                     StartCoroutine(gm.StartTimer());
                 }                
             }
