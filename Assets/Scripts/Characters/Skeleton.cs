@@ -41,6 +41,13 @@ public class Skeleton : Enemy
                 SendCommand(flag, value);
             }
         }
+        else if (flag == "START_HIT_EFFECT")
+        {
+            if (IsClient)
+            {
+                StartHitEffect(hitColor);
+            }
+        }
         else if (!OTHER_FLAGS.ContainsKey(flag))
         {
             Debug.LogWarning(flag + " is not a valid flag in " + this.GetType().Name + ".cs");

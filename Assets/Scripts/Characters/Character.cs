@@ -21,6 +21,13 @@ public abstract class Character : NetworkComponent
     protected Sprite sprite;
     //this is serialized to prevent null reference exceptions if an enemy has to flip as soon as they spawn
     [SerializeField] protected SpriteRenderer spriteRender;
+    protected Material regularMaterial;
+    [SerializeField] protected Material hitMaterial;
+    protected Color hitColor = Color.red;
+
+    protected Coroutine hitCoroutine;  
+    protected const float HIT_EFFECT_DURATION = 0.25f; 
+
 
     public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
 
@@ -30,4 +37,23 @@ public abstract class Character : NetworkComponent
     }
 
     public abstract void TakeDamage(int damage);
+
+    protected void StartHitEffect(Color color){
+        //prevents multiple of the same coroutine from running
+        if (hitCoroutine != null){
+            StopCoroutine(hitCoroutine);
+        }
+
+        hitCoroutine = StartCoroutine(HitRoutine(color));
+    }
+
+    protected IEnumerator HitRoutine(Color color){
+        spriteRender.material = hitMaterial;
+        hitMaterial.color = color;
+
+        yield return new WaitForSeconds(HIT_EFFECT_DURATION);
+
+        spriteRender.material = regularMaterial;
+        hitCoroutine = null;
+    }
 }

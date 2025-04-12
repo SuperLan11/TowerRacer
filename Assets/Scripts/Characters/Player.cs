@@ -93,8 +93,6 @@ public class Player : Character {
     public GameObject[] itemPrefabs;
     [System.NonSerialized] public int wins = 0;
     public Sprite[] heroSprites;
-    
-    private Material regularMaterial;
 
     [SerializeField] private Material dashMaterial;
 
@@ -499,6 +497,10 @@ public class Player : Character {
             if (IsClient){
                 StartDashEffect(dashColor);
             }
+        }else if (flag == "START_HIT_EFFECT"){
+            if (IsClient){
+                StartHitEffect(hitColor);
+            }
         }else if (flag == "ENABLE_COLLIDERS"){
             if (IsClient){
                 feetCollider.enabled = true;
@@ -697,6 +699,7 @@ public class Player : Character {
 
         spriteRender = GetComponent<SpriteRenderer>();
         sprite = spriteRender.sprite;
+        regularMaterial = spriteRender.material;
         anim = GetComponent<Animator>();
         cam = Camera.main;
 
@@ -752,9 +755,9 @@ public class Player : Character {
         inAttackCooldown = false;
         ATTACK_COOLDOWN_DURATION = 1f;
 
-        regularMaterial = spriteRender.material;
         //unity youtube man says this is necessary for preventing side effects
         dashMaterial = new Material(dashMaterial);
+        hitMaterial = new Material(hitMaterial);
 
         switch (selectedCharacterClass){
             case characterClass.ARCHER:
@@ -1528,6 +1531,8 @@ public class Player : Character {
             }else{      //give player a moment of brief invincibility after taking a hit of damage
                 isInvincible = true;
                 StartCoroutine(InvincibilityCooldown(TAKE_DAMAGE_INVINCIBILITY_TIME));
+                SendUpdate("START_HIT_EFFECT", "GoodMorning");
+                //StartHitEffect(hitColor);
             }
         }
     }   
