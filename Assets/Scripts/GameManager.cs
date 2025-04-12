@@ -36,7 +36,8 @@ public class GameManager : NetworkComponent
     private GameObject scorePanel;
     private Text countdownLbl;
     private GameObject npmPanel;
-    private SoundPlayer soundPlayer;
+    //making these serializable cause it's multiple components on the same obj
+    [SerializeField] private AudioSource theme;
 
     private Player winningPlayer = null;
     public static List<Player> playersFinished = new List<Player>();
@@ -179,6 +180,19 @@ public class GameManager : NetworkComponent
             {
                 Debug.Log("disabling npm ui");
                 npmPanel.SetActive(false);
+            }
+        }
+        else if (flag == "PLAY_THEME")
+        {
+            if (IsClient){
+                theme.Play();
+            }
+        }
+        else if (flag == "STOP_THEME")
+        {
+            if (IsClient)
+            {
+                theme.Stop();
             }
         }
         //for objects in scene before clients connect, can't use SendCommand because
@@ -635,6 +649,8 @@ public class GameManager : NetworkComponent
             SendUpdate("HIDE_TIMER", "");
             SendUpdate("HIDE_PLACE", "");
 
+            SendUpdate("STOP_THEME", "GoodMorning");
+
             //yield return prevents the following lines from running until the coroutine is done
             yield return FadeScorePanelIn(1f);
 
@@ -690,6 +706,8 @@ public class GameManager : NetworkComponent
                 //player.SendUpdate("UNFROZEN", "");
             }
 
+            SendUpdate("PLAY_THEME", "GoodMorning");
+
             placeLbl.enabled = true;
             SendUpdate("SHOW_PLACE", "");
 
@@ -722,7 +740,6 @@ public class GameManager : NetworkComponent
         timerLbl = GameObject.FindGameObjectWithTag("TIMER").GetComponent<Text>();
         countdownLbl = GameObject.FindGameObjectWithTag("COUNTDOWN").GetComponent<Text>();
         npmPanel = GameObject.FindGameObjectWithTag("NPM_PANEL");
-        soundPlayer = GameObject.FindGameObjectWithTag("SOUND_PLAYER").GetComponent<SoundPlayer>();
 
         /*Debug.Log("gameUI == null: " + (gameUI == null));
         Debug.Log("scorePanel == null: " + (scorePanel == null));
@@ -816,7 +833,7 @@ public class GameManager : NetworkComponent
             SendUpdate("GAMESTART", "1");
             //stops server from listening, so nobody new can join.
             MyCore.NotifyGameStart();
-            soundPlayer.PlayTheme();
+            SendUpdate("PLAY_THEME", "GoodMorning");
 
             //this is basically our regular Update()
             while (!gameOver)
