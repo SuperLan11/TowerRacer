@@ -51,6 +51,10 @@ public class Player : Character {
 
     //I doubt we'll want run button in our game, but it's here just in case
     private bool holdingRun = false;
+    
+    [System.NonSerialized] public bool hasChicken = false;
+    [System.NonSerialized] public bool hasSpeedBoost = false;
+    [System.NonSerialized] public bool hasBomb = false;
 
     [SerializeField] private characterClass selectedCharacterClass;
 
@@ -173,10 +177,6 @@ public class Player : Character {
 
     //can't do this cause references to items is funky
     //private Item currentlyEquippedItem = null;
-    //!Towle may not like this, but all these variables are exclusively client-side. They ARE NOT sync vars!
-    [System.NonSerialized] public bool hasChicken = false;
-    [System.NonSerialized] public bool hasSpeedBoost = true;
-    [System.NonSerialized] public bool hasBomb = true;
 
     [System.NonSerialized] public bool isInvincible = false;
     private const float CHICKEN_INVINCIBILITY_TIME = 5f, TAKE_DAMAGE_INVINCIBILITY_TIME = 0.5f;
@@ -254,7 +254,8 @@ public class Player : Character {
                 else if (value == "4"){
                     placeLbl.text = "4th";
                 }                                
-                int place = (int)char.GetNumericValue(value[0]);                
+                int place = (int)char.GetNumericValue(value[0]);
+                Debug.Log("PLACE flag: place for " + name + ", " + place);
                 placeLbl.color = placeColors[place - 1];
             }
         }
@@ -266,13 +267,23 @@ public class Player : Character {
 
                 if (itemIdx == 0){
                     hasChicken = true;
+                    SendCommand("HAS_CHICKEN", hasChicken.ToString());
                 }else if (itemIdx == 1){
                     hasSpeedBoost = true;
+                    SendCommand("HAS_SPEED_BOOST", hasSpeedBoost.ToString());
                 }else if (itemIdx == 2){
-                    hasBomb = true;                    
+                    hasBomb = true;
+                    SendCommand("HAS_BOMB", hasBomb.ToString());
                 }
             }
-        }                
+        }  
+        else if (flag == "HAS_CHICKEN"){
+            hasChicken = bool.Parse(value);
+        }else if (flag == "HAS_SPEED_BOOST"){
+            hasSpeedBoost = bool.Parse(value);
+        }else if (flag == "HAS_BOMB"){
+            hasBomb = bool.Parse(value);
+        }        
         else if (flag == "CAM_FREEZE"){
             if (IsClient){                
                 camFrozen = true;
@@ -292,7 +303,7 @@ public class Player : Character {
         else if(flag == "HIT_DOOR"){
             if (IsClient) {               
                 this.transform.position = startPos;
-                SendCommand("IDLE_ANIM", "");
+                
                 //only change the color of the local player's score background
                 if (IsLocalPlayer){
                     int place = int.Parse(value);
@@ -434,11 +445,7 @@ public class Player : Character {
         }
         else if (flag == "IDLE_ANIM")
         {
-            if(IsServer)
-            {
-                SendUpdate("IDLE_ANIM", "");
-            }
-            else if (IsClient)
+            if (IsClient)
             {
                 if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Idle"))
                     anim.Play("Idle", -1, 0f);
@@ -501,7 +508,17 @@ public class Player : Character {
                     charImage.sprite = heroSprites[charChosen];  
                 }
             }
-        }   
+        }
+        /*else if(flag == "FROZEN"){
+            if (IsClient){
+                playerFrozen = true;
+            }
+        }
+        else if(flag == "UNFROZEN"){
+            if (IsClient){
+                playerFrozen = false;
+            }
+        }*/
         else if(flag == "ENABLE_JUMP_THRU_COLLISION"){
             if(IsClient){
                 this.gameObject.layer = normalLayer;
@@ -1212,7 +1229,7 @@ public class Player : Character {
     public void AimStick(InputAction.CallbackContext aim)
     {
         if (IsLocalPlayer){
-            if (!hasBomb || playerFrozen){
+            if (!hasBomb){
                 return;
             }
 
@@ -1232,6 +1249,7 @@ public class Player : Character {
             {                
                 SendCommand("SHOOT_BOMB", "");
                 hasBomb = false;
+                SendCommand("HAS_BOMB", hasBomb.ToString());
                 Destroy(itemUI.transform.GetChild(0).gameObject);
 
                 lastAimDir = Vector2.zero;
@@ -1246,7 +1264,7 @@ public class Player : Character {
     {
         if (IsLocalPlayer)
         {
-            if (!hasBomb || playerFrozen){
+            if (!hasBomb){
                 return;
             }
 
@@ -1262,6 +1280,7 @@ public class Player : Character {
                 aimArrow.GetComponent<SpriteRenderer>().enabled = false;
                 SendCommand("SHOOT_BOMB", "");
                 hasBomb = false;
+                SendCommand("HAS_BOMB", hasBomb.ToString());
                 Destroy(itemUI.transform.GetChild(0).gameObject);
             }
         }
@@ -1305,8 +1324,10 @@ public class Player : Character {
             else if (context.canceled){
                if (hasChicken){
                     hasChicken = false;
+                    SendCommand("HAS_CHICKEN", hasChicken.ToString());
                 }else if (hasSpeedBoost){
                     hasSpeedBoost = false;
+                    SendCommand("HAS_SPEED_BOOST", hasSpeedBoost.ToString());
                 }
             }
         }
@@ -1449,7 +1470,10 @@ public class Player : Character {
                     SendUpdate("IS_FACING_RIGHT", isFacingRight.ToString());
                     SendUpdate("HOLDING_RUN", holdingRun.ToString());
                     SendUpdate("SELECTED_CHARACTER_CLASS", CharacterClassToString(selectedCharacterClass));
-                    SendUpdate("MOVEMENT_ABILITY_PRESSED", movementAbilityPressed.ToString()); 
+                    SendUpdate("MOVEMENT_ABILITY_PRESSED", movementAbilityPressed.ToString());
+                    SendUpdate("HAS_CHICKEN", hasChicken.ToString());
+                    SendUpdate("HAS_SPEED_BOOST", hasSpeedBoost.ToString());
+                    SendUpdate("HAS_BOMB", hasBomb.ToString()); 
                     //SendUpdate("CURRENT_MOVEMENT_STATE", MovementStateToString(currentMovementState));
                     //SendUpdate("NAME", Pname);
                     
