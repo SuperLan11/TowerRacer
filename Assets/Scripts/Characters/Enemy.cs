@@ -55,14 +55,14 @@ public abstract class Enemy : Character
             dir = -1;
             spriteRender.flipX = !spriteRender.flipX;
             SendUpdate("FLIP", true.ToString());
-            StartCoroutine(PauseRaycasting(0.1f));            
+            StartCoroutine(PauseRaycasting(0.2f));            
         }
         else if (!floorBelow && dir == -1)
         {
             dir = 1;
             spriteRender.flipX = !spriteRender.flipX;
             SendUpdate("FLIP", false.ToString());
-            StartCoroutine(PauseRaycasting(0.1f));            
+            StartCoroutine(PauseRaycasting(0.2f));      
         }        
     }
     protected IEnumerator PauseRaycasting(float seconds)

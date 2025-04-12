@@ -738,7 +738,7 @@ public class GameManager : NetworkComponent
         placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
         timerLbl = GameObject.FindGameObjectWithTag("TIMER").GetComponent<Text>();
         countdownLbl = GameObject.FindGameObjectWithTag("COUNTDOWN").GetComponent<Text>();
-        npmPanel = GameObject.FindGameObjectWithTag("NPM_PANEL");
+        npmPanel = GameObject.FindGameObjectWithTag("NPM_PANEL");        
 
         /*Debug.Log("gameUI == null: " + (gameUI == null));
         Debug.Log("scorePanel == null: " + (scorePanel == null));

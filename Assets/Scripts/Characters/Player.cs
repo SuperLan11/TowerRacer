@@ -254,8 +254,7 @@ public class Player : Character {
                 else if (value == "4"){
                     placeLbl.text = "4th";
                 }                                
-                int place = (int)char.GetNumericValue(value[0]);
-                Debug.Log("PLACE flag: place for " + name + ", " + place);
+                int place = (int)char.GetNumericValue(value[0]);                
                 placeLbl.color = placeColors[place - 1];
             }
         }
@@ -293,7 +292,7 @@ public class Player : Character {
         else if(flag == "HIT_DOOR"){
             if (IsClient) {               
                 this.transform.position = startPos;
-                
+                SendCommand("IDLE_ANIM", "");
                 //only change the color of the local player's score background
                 if (IsLocalPlayer){
                     int place = int.Parse(value);
@@ -435,7 +434,11 @@ public class Player : Character {
         }
         else if (flag == "IDLE_ANIM")
         {
-            if (IsClient)
+            if(IsServer)
+            {
+                SendUpdate("IDLE_ANIM", "");
+            }
+            else if (IsClient)
             {
                 if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Idle"))
                     anim.Play("Idle", -1, 0f);
@@ -498,17 +501,7 @@ public class Player : Character {
                     charImage.sprite = heroSprites[charChosen];  
                 }
             }
-        }
-        /*else if(flag == "FROZEN"){
-            if (IsClient){
-                playerFrozen = true;
-            }
-        }
-        else if(flag == "UNFROZEN"){
-            if (IsClient){
-                playerFrozen = false;
-            }
-        }*/
+        }   
         else if(flag == "ENABLE_JUMP_THRU_COLLISION"){
             if(IsClient){
                 this.gameObject.layer = normalLayer;
@@ -1219,7 +1212,7 @@ public class Player : Character {
     public void AimStick(InputAction.CallbackContext aim)
     {
         if (IsLocalPlayer){
-            if (!hasBomb){
+            if (!hasBomb || playerFrozen){
                 return;
             }
 
@@ -1253,7 +1246,7 @@ public class Player : Character {
     {
         if (IsLocalPlayer)
         {
-            if (!hasBomb){
+            if (!hasBomb || playerFrozen){
                 return;
             }
 
