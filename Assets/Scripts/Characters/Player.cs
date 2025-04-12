@@ -749,6 +749,8 @@ public class Player : Character {
         myRig = null;
 
         health = MAX_HEALTH = 3;
+        inAttackCooldown = false;
+        ATTACK_COOLDOWN_DURATION = 1f;
 
         regularMaterial = spriteRender.material;
         //unity youtube man says this is necessary for preventing side effects
@@ -1480,20 +1482,19 @@ public class Player : Character {
         canRopeJump = true;
     }
 
+    private IEnumerator AttackCooldown(){
+        yield return new WaitForSecondsRealtime(ATTACK_COOLDOWN_DURATION);
+
+        inAttackCooldown = false;
+    }
+
     private void StartDashEffect(Color color){
-
         //prevents multiple of the same coroutine from running
-
         if (dashCoroutine != null){
-
             StopCoroutine(dashCoroutine);
-
         }
 
-
-
         dashCoroutine = StartCoroutine(DashRoutine(color));
-
     }
 
     private IEnumerator DashRoutine(Color color){
@@ -1504,6 +1505,17 @@ public class Player : Character {
 
         spriteRender.material = regularMaterial;
         dashCoroutine = null;
+    }
+
+    protected override void Attack(){
+        if (inAttackCooldown){
+            return;
+        }
+
+        //either spawn collider that moves in a specific arc, or shoot a raycast
+        //if it hits an enemy
+        //enemy.TakeDamage(1);
+        StartCoroutine(AttackCooldown());
     }
 
     public override void TakeDamage(int damage){

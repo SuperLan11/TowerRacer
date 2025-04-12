@@ -10,8 +10,8 @@ public abstract class Character : NetworkComponent
     [SerializeField] protected float speed;    
 
     //non-sync vars
-    protected int attackCooldown;
-    protected int maxAttackCooldown;
+    protected bool inAttackCooldown;
+    protected float ATTACK_COOLDOWN_DURATION;
     protected int MAX_HEALTH;
 
     protected Animator anim;
@@ -24,7 +24,7 @@ public abstract class Character : NetworkComponent
 
     public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
 
-    protected void Attack()
+    protected virtual void Attack()
     {
         //do something
     }
