@@ -69,6 +69,10 @@ public class Arrow : Projectile
 				spriteRender.enabled = false;
 				GetComponent<Collider2D>().enabled = false;
 				SendUpdate("HIDE", "");
+
+				if (hitPlayer){
+					other.GetComponentInParent<Player>().TakeDamage(1);
+				}
 				//MyCore.NetDestroyObject(this.NetId);
 			}
         }

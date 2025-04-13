@@ -196,6 +196,7 @@ public class Player : Character {
     private const float CHICKEN_INVINCIBILITY_TIME = 5f, TAKE_DAMAGE_INVINCIBILITY_TIME = 0.5f;
     private const float SPEED_BOOST_TIME = 2.5f;
     public bool isStunned = false;
+    private const float STUN_TIME = 1f;
     private bool clientCollidersEnabled = true;
 
     private Vector2 lastAimDir;
@@ -1472,8 +1473,8 @@ public class Player : Character {
         MAX_WALK_SPEED /= 2;
     }
 
-    private IEnumerator StunCooldown(float cooldown){
-        yield return new WaitForSecondsRealtime(cooldown);
+    private IEnumerator StunCooldown(){
+        yield return new WaitForSecondsRealtime(STUN_TIME);
 
         isStunned = false;
         health = 3;
@@ -1522,9 +1523,13 @@ public class Player : Character {
     }
 
     public override void TakeDamage(int damage){
-        /*if (isInvincible){
-            DrawDebugNormal.
-        }*/
+        if (isInvincible){
+            Debug.Log("player is currently invincible");
+        }
+
+        if (isStunned){
+            Debug.Log("player is currently stunned");
+        }
         
         if (!isInvincible && !isStunned){
             Debug.Log("taking damage");
@@ -1532,7 +1537,7 @@ public class Player : Character {
 
             if (health <= 0){
                 isStunned = true;
-                StartCoroutine(StunCooldown(0.5f));
+                StartCoroutine(StunCooldown());
             }else{      //give player a moment of brief invincibility after taking a hit of damage
                 isInvincible = true;
                 StartCoroutine(InvincibilityCooldown(TAKE_DAMAGE_INVINCIBILITY_TIME));
