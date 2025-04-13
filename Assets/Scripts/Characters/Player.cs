@@ -1522,7 +1522,12 @@ public class Player : Character {
     }
 
     public override void TakeDamage(int damage){
+        /*if (isInvincible){
+            DrawDebugNormal.
+        }*/
+        
         if (!isInvincible && !isStunned){
+            Debug.Log("taking damage");
             health -= damage;
 
             if (health <= 0){
