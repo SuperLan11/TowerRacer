@@ -533,7 +533,7 @@ public class Player : Character {
                 bodyCollider.enabled = false;
             }
         }        
-        else if (flag == "SET_CHAR_IMAGE") {
+        else if (flag == "INIT_SCORE_PANEL") {
             if (IsClient) {
                 //need to assign ui here because Start doesn't always run before sending handle msg on a newly instantiated object
                 GameObject scorePanel = GameObject.FindGameObjectWithTag("SCORE");
@@ -542,7 +542,11 @@ public class Player : Character {
                 foreach (NPM npm in playerNPMs) {
                     int owner = npm.Owner;
                     int charChosen = npm.CharSelected;
+
                     Image charImage = scorePanel.transform.GetChild(owner).GetChild(0).GetComponent<Image>();
+                    Text nameLbl = scorePanel.transform.GetChild(owner).GetComponentInChildren<Text>();
+
+                    nameLbl.text = npm.PName;
                     charImage.sprite = heroSprites[charChosen];
                 }
             }
@@ -1597,7 +1601,12 @@ public class Player : Character {
         if (IsLocalPlayer){            
             if (GameManager.winningPlayer != null){
                 //win game sfx played in game manager
-                Camera.main.transform.position = GameManager.winningPlayer.transform.position;
+                //preserve z position of camera
+                Vector3 newCamPos = Camera.main.transform.position;
+                newCamPos.x = GameManager.winningPlayer.transform.position.x;
+                newCamPos.y = GameManager.winningPlayer.transform.position.y;
+                
+                Camera.main.transform.position = newCamPos;
                 Camera.main.orthographicSize = 7f;
             }
             else if (!camFrozen){

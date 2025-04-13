@@ -83,7 +83,10 @@ public class NPM : NetworkComponent
             Start();
 
             PName = value;
-            nameField.text = value;
+            
+            //to prevent assigning text to the same text box
+            if(!IsLocalPlayer)
+                nameField.text = value;
 
             if (IsServer)
             {

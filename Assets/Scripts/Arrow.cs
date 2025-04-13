@@ -72,15 +72,18 @@ public class Arrow : Projectile
         {			
 			Player playerHit = other.GetComponentInParent<Player>();
 			bool hitWall = other.gameObject.tag == "WALL";
-			if (playerHit != null || hitWall)
-            {				
-				if(playerHit != null)                
-					playerHit.TakeDamage(1);
-
-				SendUpdate("HIT", "");
-				//this plays on server to make destroying the arrow after the sfx easier
-				arrowHitSfx.Play();
-				StartCoroutine(DestroyAfterSfx());
+			if(playerHit != null)
+            {
+				playerHit.TakeDamage(1);
+				spriteRender.enabled = false;
+				GetComponent<Collider2D>().enabled = false;
+				SendUpdate("HIDE", "");
+			}
+			else if (hitWall)
+            {
+				spriteRender.enabled = false;
+				GetComponent<Collider2D>().enabled = false;
+				SendUpdate("HIDE", "");
 			}
         }
     }

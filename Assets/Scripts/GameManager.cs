@@ -37,8 +37,7 @@ public class GameManager : NetworkComponent
     private Text countdownLbl;
     private GameObject npmPanel;
     //making these serializable cause it's multiple components on the same obj
-    [SerializeField] private AudioSource theme;
-    [SerializeField] private AudioSource winPointSfx;
+    [SerializeField] private AudioSource theme;    
     [SerializeField] private AudioSource winGameSfx;
 
     public static Player winningPlayer = null;
@@ -170,13 +169,10 @@ public class GameManager : NetworkComponent
         else if (flag == "FLASH_WIN")
         {
             if (IsClient)
-            {
-                if(winPointSfx != null)
-                    winPointSfx.Play();
-
+            {                
                 int roundWinOwner = int.Parse(value.Split(";")[0]);
                 int wins = int.Parse(value.Split(";")[1]);
-                StartCoroutine(FlashWinPoint(roundWinOwner, wins, 5, 0.2f)); 
+                StartCoroutine(FlashWinPoint(roundWinOwner, wins, 7, 0.2f)); 
             }
         }
         else if (flag == "WIN_GAME_SFX")
@@ -818,7 +814,7 @@ public class GameManager : NetworkComponent
 
                 player.SendUpdate("INIT_NAME", n.PName);
                 player.SendUpdate("CAM_END", camEndY.ToString());
-                player.SendUpdate("SET_CHAR_IMAGE", "");
+                player.SendUpdate("INIT_SCORE_PANEL", "");
             }
             //don't move this line. put additional updates after this so clients have their ui
             SendUpdate("INIT_UI", "");
