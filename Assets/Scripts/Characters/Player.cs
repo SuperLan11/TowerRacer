@@ -41,8 +41,8 @@ public class Player : Character {
     private bool jumpPressed = false;
     private bool jumpReleased = false;
 
-    private bool movementAbilityPressed = false;    
-
+    private bool movementAbilityPressed = false;   
+    private bool attackPressed = false; 
     //int represents the index of the layer
     private int noJumpThruLayer;
     private int normalLayer;
@@ -119,6 +119,8 @@ public class Player : Character {
 
     private const float COLLISION_RAYCAST_LENGTH = 0.02f;
     private const float WALL_COLLISION_RAYCAST_LENGTH = COLLISION_RAYCAST_LENGTH + 0.01f;
+    private const float ATTACK_RAYCAST_LENGTH = 2f;
+
 
     private const float JUMP_HEIGHT = 6.5f;
     private const float JUMP_HEIGHT_COMPENSATION_FACTOR = 1.054f;
@@ -433,6 +435,13 @@ public class Player : Character {
             if (IsServer)
             {
                 SendUpdate("MOVEMENT_ABILITY_PRESSED", value);
+            }
+        }else if (flag == "ATTACK_PRESSED"){
+            attackPressed = bool.Parse(value);
+
+            if (IsServer){
+                Debug.Log("attack has been presssed");
+                SendUpdate("ATTACK_PRESSED", value);
             }
         }
         else if (flag == "IS_FACING_RIGHT")
@@ -1406,6 +1415,16 @@ public class Player : Character {
         }
     }
 
+    public void AttackAction(InputAction.CallbackContext context){
+        if (IsLocalPlayer){
+            if (context.started || context.performed){
+                SendCommand("ATTACK_PRESSED", true.ToString());
+            }else if (context.canceled){
+                SendCommand("ATTACK_PRESSED", false.ToString());
+            }
+        }
+    }
+
     #endregion
 
 
@@ -1564,9 +1583,26 @@ public class Player : Character {
             return;
         }
 
-        //either spawn collider that moves in a specific arc, or shoot a raycast
-        //if it hits an enemy
-        //enemy.TakeDamage(1);
+        //this may be screwing me over
+        //TurnCheck();
+        
+        //!don't forget to actually put this in handle message!
+        //SendUpdate("ATTACK_ANIM", "GoodMorning");
+
+
+        Vector2 direction = (isFacingRight ? Vector2.right : Vector2.left);
+        float xPos = (isFacingRight ? (bodyCollider.bounds.max.x + COLLISION_RAYCAST_LENGTH) : (bodyCollider.bounds.min.x - COLLISION_RAYCAST_LENGTH));
+        Vector2 position = new Vector2(xPos, bodyCollider.bounds.center.y);
+
+        RaycastHit2D[] hits = Physics2D.RaycastAll(position, direction, ATTACK_RAYCAST_LENGTH, ~0);
+
+        foreach (RaycastHit2D hit in hits){
+            if (hit.collider.GetComponentInParent<Enemy>() != null){
+                hit.collider.GetComponentInParent<Enemy>().TakeDamage(1);
+            }
+        }
+        
+        inAttackCooldown = true;
         StartCoroutine(AttackCooldown());
     }
 
@@ -1596,10 +1632,11 @@ public class Player : Character {
                     SendUpdate("IS_FACING_RIGHT", isFacingRight.ToString());
                     SendUpdate("HOLDING_RUN", holdingRun.ToString());
                     SendUpdate("SELECTED_CHARACTER_CLASS", CharacterClassToString(selectedCharacterClass));
-                    SendUpdate("MOVEMENT_ABILITY_PRESSED", movementAbilityPressed.ToString()); 
+                    SendUpdate("MOVEMENT_ABILITY_PRESSED", movementAbilityPressed.ToString());
+                    SendUpdate("ATTACK_PRESSED", attackPressed.ToString());
                     SendUpdate("HAS_CHICKEN", hasChicken.ToString());
                     SendUpdate("HAS_SPEED_BOOST", hasSpeedBoost.ToString());
-                    SendUpdate("HAS_BOMB", hasBomb.ToString()); 
+                    SendUpdate("HAS_BOMB", hasBomb.ToString());
                     //SendUpdate("CURRENT_MOVEMENT_STATE", MovementStateToString(currentMovementState));
                     //SendUpdate("NAME", Pname);
                     
@@ -1759,6 +1796,10 @@ public class Player : Character {
                 //inMovementAbilityCooldown = true;
             }
 
+            if (attackPressed){
+                Attack();
+            }
+
             if (!onGround){
                 coyoteTimer -= Time.deltaTime;
             }else{
@@ -1844,6 +1885,10 @@ public class Player : Character {
                     }
                 }
                 
+                if (currentLadder == null){
+                    Debug.LogError("Thou art trying to climbeth a ladder that existeth not?");
+                    return;
+                }
 
                 if (moveInput.y > 0f){
                     rigidbody.velocity = new Vector2(0, currentLadder.ladderSpeed);                    
