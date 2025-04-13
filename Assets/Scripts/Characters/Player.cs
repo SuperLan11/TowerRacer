@@ -49,6 +49,11 @@ public class Player : Character {
 
     //I doubt we'll want run button in our game, but it's here just in case
     private bool holdingRun = false;
+    [System.NonSerialized] public bool hasChicken = false;
+
+    [System.NonSerialized] public bool hasSpeedBoost = false;
+
+    [System.NonSerialized] public bool hasBomb = false;
 
     [SerializeField] private characterClass selectedCharacterClass;
 
@@ -88,8 +93,17 @@ public class Player : Character {
     public Sprite[] heroSprites;
     public string playerName;
 
+<<<<<<< HEAD
     [SerializeField] private AudioSource winRoundSfx;    
     [SerializeField] private AudioSource useItemSfx;
+=======
+    [SerializeField] private Material dashMaterial;
+
+    [SerializeField] private Color dashColor;
+
+    [SerializeField] private AudioSource winRoundSfx;
+    [SerializeField] private AudioSource useItemSfx;    
+>>>>>>> 99f43c049b19f0c318552543a9b0c1a37acb7bfe
     [SerializeField] private AudioSource dashSfx;
     [SerializeField] private AudioSource jumpSfx;
     [SerializeField] private AudioSource doubleJumpSfx;
@@ -122,7 +136,16 @@ public class Player : Character {
     [SerializeField] private bool inMovementAbilityCooldown = false;
     private float dashSpeed;
     private float dashTimer;
+<<<<<<< HEAD
     private const float MAX_DASH_TIME = 0.5f;
+=======
+    
+    private const float DASH_EFFECT_DURATION = 0.5f;
+
+    private const float MAX_DASH_TIME = 0.5f;   
+
+    private Coroutine dashCoroutine;   
+>>>>>>> 99f43c049b19f0c318552543a9b0c1a37acb7bfe
 
     private uint numWallJumpsUsed = 0;
     private bool onWall = false;
@@ -179,15 +202,12 @@ public class Player : Character {
 
     //can't do this cause references to items is funky
     //private Item currentlyEquippedItem = null;
-    //!Towle may not like this, but all these variables are exclusively client-side. They ARE NOT sync vars!
-    [System.NonSerialized] public bool hasChicken = false;
-    [System.NonSerialized] public bool hasSpeedBoost = false;
-    [System.NonSerialized] public bool hasBomb = false;
 
     [System.NonSerialized] public bool isInvincible = false;
     private const float CHICKEN_INVINCIBILITY_TIME = 5f, TAKE_DAMAGE_INVINCIBILITY_TIME = 0.5f;
     private const float SPEED_BOOST_TIME = 2.5f;
     public bool isStunned = false;
+    private const float STUN_TIME = 1f;
     private bool clientCollidersEnabled = true;
 
     private Vector2 lastAimDir;
@@ -267,15 +287,21 @@ public class Player : Character {
                 int place = (int)char.GetNumericValue(value[0]);
                 placeLbl.color = placeColors[place - 1];
             }
+<<<<<<< HEAD
         }
         else if (flag == "ITEM") {
             if (IsLocalPlayer) {
+=======
+        }else if (flag == "ITEM"){
+            if (IsLocalPlayer){
+>>>>>>> 99f43c049b19f0c318552543a9b0c1a37acb7bfe
                 int itemIdx = int.Parse(value);
                 GameObject itemImage = Instantiate(itemPrefabs[itemIdx], itemUI.transform.position, Quaternion.identity);
                 itemImage.transform.SetParent(itemUI.transform);
 
                 if (itemIdx == 0) {
                     hasChicken = true;
+<<<<<<< HEAD
                 } else if (itemIdx == 1) {
                     hasSpeedBoost = true;
                 } else if (itemIdx == 2) {
@@ -285,6 +311,32 @@ public class Player : Character {
         }
         else if (flag == "CAM_FREEZE") {
             if (IsClient) {
+=======
+                    SendCommand("HAS_CHICKEN", hasChicken.ToString());
+                }else if (itemIdx == 1){
+                    hasSpeedBoost = true;
+                    SendCommand("HAS_SPEED_BOOST", hasSpeedBoost.ToString());
+                }else if (itemIdx == 2){
+                    hasBomb = true;
+                    SendCommand("HAS_BOMB", hasBomb.ToString());
+                }
+            }
+        }else if (flag == "HAS_CHICKEN"){
+
+            hasChicken = bool.Parse(value);
+
+        }else if (flag == "HAS_SPEED_BOOST"){
+
+            hasSpeedBoost = bool.Parse(value);
+
+        }else if (flag == "HAS_BOMB"){
+
+            hasBomb = bool.Parse(value);
+
+        }                     
+        else if (flag == "CAM_FREEZE"){
+            if (IsClient){                
+>>>>>>> 99f43c049b19f0c318552543a9b0c1a37acb7bfe
                 camFrozen = true;
             }
         }
@@ -489,8 +541,21 @@ public class Player : Character {
                 spriteRender.flipX = true;
                 //transform.Rotate(0f, -180f, 0f);
             }
+<<<<<<< HEAD
         } else if (flag == "ENABLE_COLLIDERS") {
             if (IsClient) {
+=======
+        }else if (flag == "START_DASH_EFFECT"){
+            if (IsClient){
+                StartDashEffect(dashColor);
+            }
+        }else if (flag == "START_HIT_EFFECT"){
+            if (IsClient){
+                StartHitEffect(hitColor);
+            }
+        }else if (flag == "ENABLE_COLLIDERS"){
+            if (IsClient){
+>>>>>>> 99f43c049b19f0c318552543a9b0c1a37acb7bfe
                 feetCollider.enabled = true;
                 bodyCollider.enabled = true;
             }
@@ -679,6 +744,7 @@ public class Player : Character {
 
         spriteRender = GetComponent<SpriteRenderer>();
         sprite = spriteRender.sprite;
+        regularMaterial = spriteRender.material;
         anim = GetComponent<Animator>();
         cam = Camera.main;
 
@@ -731,9 +797,14 @@ public class Player : Character {
         myRig = null;
 
         health = MAX_HEALTH = 3;
+        inAttackCooldown = false;
+        ATTACK_COOLDOWN_DURATION = 1f;
 
-        switch (selectedCharacterClass)
-        {
+        //unity youtube man says this is necessary for preventing side effects
+        dashMaterial = new Material(dashMaterial);
+        hitMaterial = new Material(hitMaterial);
+
+        switch (selectedCharacterClass){
             case characterClass.ARCHER:
                 movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 20f;
                 break;
@@ -1260,6 +1331,7 @@ public class Player : Character {
             {                
                 SendCommand("SHOOT_BOMB", "");
                 hasBomb = false;
+                SendCommand("HAS_BOMB", hasBomb.ToString());
                 Destroy(itemUI.transform.GetChild(0).gameObject);
 
                 lastAimDir = Vector2.zero;
@@ -1290,6 +1362,7 @@ public class Player : Character {
                 aimArrow.GetComponent<SpriteRenderer>().enabled = false;
                 SendCommand("SHOOT_BOMB", "");
                 hasBomb = false;
+                SendCommand("HAS_BOMB", hasBomb.ToString());
                 Destroy(itemUI.transform.GetChild(0).gameObject);
             }
         }
@@ -1333,8 +1406,10 @@ public class Player : Character {
             else if (context.canceled){
                if (hasChicken){
                     hasChicken = false;
+                    SendCommand("HAS_CHICKEN", hasChicken.ToString());
                 }else if (hasSpeedBoost){
                     hasSpeedBoost = false;
+                    SendCommand("HAS_SPEED_BOOST", hasSpeedBoost.ToString());
                 }
             }
         }
@@ -1390,6 +1465,10 @@ public class Player : Character {
         StartCoroutine(SpeedBoostCooldown(SPEED_BOOST_TIME));
     }
 
+    public bool HasItem(){
+        return (hasChicken || hasSpeedBoost || hasBomb);
+    }
+
     #endregion
     
     //only gets called on server
@@ -1442,8 +1521,8 @@ public class Player : Character {
         MAX_WALK_SPEED /= 2;
     }
 
-    private IEnumerator StunCooldown(float cooldown){
-        yield return new WaitForSecondsRealtime(cooldown);
+    private IEnumerator StunCooldown(){
+        yield return new WaitForSecondsRealtime(STUN_TIME);
 
         isStunned = false;
         health = 3;
@@ -1455,18 +1534,69 @@ public class Player : Character {
         canRopeJump = true;
     }
 
+    private IEnumerator AttackCooldown(){
+        yield return new WaitForSecondsRealtime(ATTACK_COOLDOWN_DURATION);
+
+        inAttackCooldown = false;
+    }
+
+    private void StartDashEffect(Color color){
+        //prevents multiple of the same coroutine from running
+        if (dashCoroutine != null){
+            StopCoroutine(dashCoroutine);
+        }
+
+        dashCoroutine = StartCoroutine(DashRoutine(color));
+    }
+
+    private IEnumerator DashRoutine(Color color){
+        spriteRender.material = dashMaterial;
+        dashMaterial.color = color;
+
+        yield return new WaitForSeconds(DASH_EFFECT_DURATION);
+
+        spriteRender.material = regularMaterial;
+        dashCoroutine = null;
+    }
+
+    protected override void Attack(){
+        if (inAttackCooldown){
+            return;
+        }
+
+        //either spawn collider that moves in a specific arc, or shoot a raycast
+        //if it hits an enemy
+        //enemy.TakeDamage(1);
+        StartCoroutine(AttackCooldown());
+    }
+
     public override void TakeDamage(int damage){
+        if (isInvincible){
+            Debug.Log("player is currently invincible");
+        }
+
+        if (isStunned){
+            Debug.Log("player is currently stunned");
+        }
+        
         if (!isInvincible && !isStunned){
+            Debug.Log("taking damage");
             health -= damage;
 
             if (health <= 0){
                 isStunned = true;
+<<<<<<< HEAD
                 Debug.Log("player got stunned!");
                 SendUpdate("STUN_SFX", "");
                 StartCoroutine(StunCooldown(0.5f));
+=======
+                StartCoroutine(StunCooldown());
+>>>>>>> 99f43c049b19f0c318552543a9b0c1a37acb7bfe
             }else{      //give player a moment of brief invincibility after taking a hit of damage
                 isInvincible = true;
                 StartCoroutine(InvincibilityCooldown(TAKE_DAMAGE_INVINCIBILITY_TIME));
+                SendUpdate("START_HIT_EFFECT", "GoodMorning");
+                //StartHitEffect(hitColor);
             }
         }
     }   
@@ -1480,6 +1610,9 @@ public class Player : Character {
                     SendUpdate("HOLDING_RUN", holdingRun.ToString());
                     SendUpdate("SELECTED_CHARACTER_CLASS", CharacterClassToString(selectedCharacterClass));
                     SendUpdate("MOVEMENT_ABILITY_PRESSED", movementAbilityPressed.ToString()); 
+                    SendUpdate("HAS_CHICKEN", hasChicken.ToString());
+                    SendUpdate("HAS_SPEED_BOOST", hasSpeedBoost.ToString());
+                    SendUpdate("HAS_BOMB", hasBomb.ToString()); 
                     //SendUpdate("CURRENT_MOVEMENT_STATE", MovementStateToString(currentMovementState));
                     //SendUpdate("NAME", Pname);
                     
@@ -1566,6 +1699,7 @@ public class Player : Character {
                     SendUpdate("DASH_SFX", "");
                     currentMovementState = movementState.DASHING;
                     dashTimer = MAX_DASH_TIME;
+                    SendUpdate("START_DASH_EFFECT", "GoodMorning");
                     
                     Vector2 dashVelocity;
                     float xDirection = 0f, yDirection = 0f;
@@ -1689,6 +1823,9 @@ public class Player : Character {
             if (IsDashing()){
                 if (dashTimer > 0f){
                     dashTimer -= Time.deltaTime;
+                    
+                    //returning instead of giving the player midair control makes it feel more like a Celeste-style dash
+                    return;
                 }else{
                     dashTimer = MAX_DASH_TIME;
                     currentMovementState = movementState.FALLING;

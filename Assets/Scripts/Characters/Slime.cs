@@ -14,6 +14,13 @@ public class Slime : Enemy
                 spriteRender.flipX = bool.Parse(value);
             }
         }
+        else if (flag == "START_HIT_EFFECT")
+        {
+            if (IsClient)
+            {
+                StartHitEffect(hitColor);
+            }
+        }
         else if (flag == "DEBUG")
         {
             Debug.Log(value);

@@ -80,7 +80,7 @@ public class Explosion : NetworkComponent
 					return;
 				}
 				
-				Debug.Log("bomb is colliding with character!");
+				//Debug.Log("bomb is colliding with character!");
 				collision.gameObject.GetComponentInParent<Character>().TakeDamage(1);
 			}
 		}

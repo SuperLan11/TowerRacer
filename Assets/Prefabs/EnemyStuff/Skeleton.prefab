@@ -221,6 +221,7 @@ MonoBehaviour:
   health: 0
   speed: 6
   spriteRender: {fileID: 6835639217321580612}
+  hitMaterial: {fileID: 2100000, guid: 87da1e757bf4de545ab0564d971ed988, type: 2}
   shootTime: 1
   shootArrowSfx: {fileID: 6542329960686303154}
 --- !u!61 &966792554250064909

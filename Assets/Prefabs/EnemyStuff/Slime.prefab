@@ -56,6 +56,7 @@ MonoBehaviour:
   health: 0
   speed: 5
   spriteRender: {fileID: 6835639217321580612}
+  hitMaterial: {fileID: 2100000, guid: 87da1e757bf4de545ab0564d971ed988, type: 2}
 --- !u!50 &8638788527936025186
 Rigidbody2D:
   serializedVersion: 4

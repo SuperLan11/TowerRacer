@@ -106,7 +106,7 @@
                 {
                     "name": "up",
                     "id": "8dd509f8-d4ca-408c-b0f9-77bd267958f3",
-                    "path": "<Joystick>/stick/up",
+                    "path": "<Gamepad>/leftStick/up",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -161,7 +161,7 @@
                 {
                     "name": "down",
                     "id": "30977e75-1d9c-44ac-9083-d1814bebfa31",
-                    "path": "<Gamepad>/dpad/down",
+                    "path": "<Gamepad>/leftStick/down",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -194,7 +194,7 @@
                 {
                     "name": "left",
                     "id": "b52ea9ba-da85-4317-ac2c-785acefedfa7",
-                    "path": "<Joystick>/stick/left",
+                    "path": "<Gamepad>/leftStick/left",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -238,7 +238,7 @@
                 {
                     "name": "right",
                     "id": "b0e9455a-597e-49e1-9e5d-45d8f83a7253",
-                    "path": "<Joystick>/stick/right",
+                    "path": "<Gamepad>/leftStick/right",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -283,6 +283,17 @@
                     "name": "",
                     "id": "0ca9d7bc-4188-4b4e-921c-8908c087a795",
                     "path": "<Gamepad>/buttonSouth",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Jump",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "3bd05e5a-41c8-4b4a-90ea-d5653ca6bf9a",
+                    "path": "<HID::mayflash limited MAYFLASH GameCube Controller Adapter>/button2",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -347,6 +358,17 @@
                 },
                 {
                     "name": "",
+                    "id": "6f51130e-c4fc-48f1-be86-b31127cf210f",
+                    "path": "<HID::mayflash limited MAYFLASH GameCube Controller Adapter>/button6",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "MoveAbility",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "773b4c00-4d62-448a-a70f-5c45667186d3",
                     "path": "<Keyboard>/e",
                     "interactions": "",
@@ -360,6 +382,17 @@
                     "name": "",
                     "id": "7e97d315-19b3-4a0d-a076-a9c5441f1202",
                     "path": "<Gamepad>/buttonWest",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "UseItem",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "4a20dc34-b091-42fb-8f98-394b2303ecd0",
+                    "path": "<HID::mayflash limited MAYFLASH GameCube Controller Adapter>/button4",
                     "interactions": "",
                     "processors": "",
                     "groups": "",

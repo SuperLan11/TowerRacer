@@ -26,6 +26,9 @@ public abstract class Enemy : Character
         //spriteRender = GetComponent<SpriteRenderer>();
 
         sprite = spriteRender.sprite;
+        regularMaterial = spriteRender.material;
+        //unity youtube man says this is necessary for preventing side effects
+        hitMaterial = new Material(hitMaterial);
         players = FindObjectsOfType<Player>();
         //combine both Floor and JumpThru so enemy can turn around on both types of platforms
         floorLayer = LayerMask.GetMask("Floor", "JumpThru");        
@@ -77,7 +80,11 @@ public abstract class Enemy : Character
         health -= damage;
         
         if (health <= 0){
+            Debug.Log("enemy is dead");
             MyCore.NetDestroyObject(this.NetId);
+        }else{
+            SendUpdate("START_HIT_EFFECT", "GoodMorning");
+            //StartHitEffect(hitColor);
         }
     }
 
