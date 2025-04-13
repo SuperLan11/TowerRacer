@@ -95,8 +95,10 @@ public class ItemBox : NetworkComponent
 			}
 
 			Player playerHit = collision.GetComponentInParent<Player>();
+			
 			//not accurate for hasItem since on server			
-			bool hasItem = itemUI.transform.childCount >= 1;
+			//bool hasItem = itemUI.transform.childCount >= 1;
+			bool hasItem = playerHit.HasItem();
 			if (playerHit != null && !hasItem)
 			{
 				int randIdx = Random.Range(0, NUM_ITEMS);

@@ -1421,6 +1421,10 @@ public class Player : Character {
         StartCoroutine(SpeedBoostCooldown(SPEED_BOOST_TIME));
     }
 
+    public bool HasItem(){
+        return (hasChicken || hasSpeedBoost || hasBomb);
+    }
+
     #endregion
     
     //only gets called on server
