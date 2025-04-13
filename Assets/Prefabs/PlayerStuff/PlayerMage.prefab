@@ -480,7 +480,7 @@ MonoBehaviour:
   bodyCollider: {fileID: 4394980080252175982}
   inDismountTrigger: 0
   camFrozen: 0
-  playerFrozen: 1
+  playerFrozen: 0
   isRoundWinner: 0
   itemPrefabs:
   - {fileID: 6531251911950882678, guid: ceaf47fdf1a1b9a4487c0b1710e68104, type: 3}

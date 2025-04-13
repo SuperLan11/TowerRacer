@@ -1806,6 +1806,7 @@ public class Player : Character {
                 if (ladderJump){
                     InitiateJump(1);
                     SendUpdate("JUMP_ANIM", "");
+                    currentLadder = null;
 
                     if (jumpReleasedDuringBuffer){
                         currentMovementState = movementState.FAST_FALLING;
@@ -1822,6 +1823,7 @@ public class Player : Character {
                         //need this cause we only want to SendUpdate() when the game state has changed
                         if (!IsGrounded()){
                             currentMovementState = movementState.GROUND;
+                            currentLadder = null;
                             SendUpdate("IDLE_ANIM", "GoodMorning");
                         }
                     }else{
@@ -1857,6 +1859,8 @@ public class Player : Character {
                     */
                     Vector2 dismountPos = new Vector2(this.transform.position.x, this.transform.position.y + yOffset);
                     transform.position = dismountPos;
+
+                    currentLadder = null;
 
                     SendUpdate("DISMOUNT", dismountPos.ToString());
                 }
