@@ -553,7 +553,8 @@ public class Player : Character {
 
                     Image charImage = scorePanel.transform.GetChild(owner).GetChild(0).GetComponent<Image>();
                     Text nameLbl = scorePanel.transform.GetChild(owner).GetComponentInChildren<Text>();
-
+                    
+                    Debug.Log("setting " + nameLbl.name + " to " + npm.PName);
                     nameLbl.text = npm.PName;
                     charImage.sprite = heroSprites[charChosen];
                 }
@@ -1619,7 +1620,8 @@ public class Player : Character {
             return;
         }
 
-        if (IsLocalPlayer){            
+        if (IsLocalPlayer){      
+            //synchronized variable
             if (GameManager.winningPlayer != null){
                 //win game sfx played in game manager
                 //preserve z position of camera

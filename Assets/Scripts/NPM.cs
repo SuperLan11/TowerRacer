@@ -84,7 +84,7 @@ public class NPM : NetworkComponent
 
             PName = value;
             
-            //to prevent assigning text to the same text box
+            //to prevent assigning text to the same text box, which causes intereference when typing
             if(!IsLocalPlayer)
                 nameField.text = value;
 
@@ -94,8 +94,8 @@ public class NPM : NetworkComponent
             }
         }        
         else if (flag == "CHAR")
-        {
-            Start();
+        {            
+            Start();            
 
             CharSelected = int.Parse(value);            
             charDropdown.value = CharSelected;
@@ -302,7 +302,7 @@ public class NPM : NetworkComponent
         if (IsServer)
             return;
 
-        //since IsLocalPlayer is kinda stupid and isn't set by NetworkStart you have to manually override
+        //since IsLocalPlayer is kinda stupid and isn't always set by NetworkStart you have to manually override
         //the interactability
         bool disabled = this.npmPanel != null && readyToggle != null && !readyToggle.interactable;
         bool enabled = this.npmPanel != null && readyToggle != null && readyToggle.interactable;

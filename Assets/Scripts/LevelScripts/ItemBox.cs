@@ -26,23 +26,7 @@ public class ItemBox : NetworkComponent
 				GetComponent<Collider2D>().enabled = false;
 				spriteRender.enabled = false;
 			}
-		}
-		else if (flag == "ITEM_UI")
-		{
-			if (IsClient)
-			{
-				string[] args = value.Split(";");
-				Vector2 itemBoxPos = Player.Vector2FromString(args[0]);
-				int itemIdx = int.Parse(args[1]);
-
-				Player playerHit = Player.ClosestPlayerToPos(itemBoxPos);
-				if (playerHit.IsLocalPlayer)
-				{
-					GameObject itemImage = Instantiate(itemPrefabs[itemIdx], itemUI.transform.position, Quaternion.identity);
-					itemImage.transform.SetParent(itemUI.transform);
-				}
-			}
-		}			
+		}				
 		else if (flag == "DEBUG")
 		{
 			Debug.Log(value);
@@ -103,7 +87,8 @@ public class ItemBox : NetworkComponent
 				int randIdx = Random.Range(0, itemPrefabs.Length);
 				playerHit.SendUpdate("ITEM", randIdx.ToString());
 
-				//wait to destroy item box so that sfx can play
+				//wait to destroy item box so that sfx can play, so need to play sfx on server
+				getItemSfx.Play();
 				GetComponent<Collider2D>().enabled = false;
 				spriteRender.enabled = false;
 				SendUpdate("GET_BOX", "");

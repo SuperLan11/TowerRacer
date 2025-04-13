@@ -499,9 +499,9 @@ MonoBehaviour:
   winRoundSfx: {fileID: 4332348190425518370}
   useItemSfx: {fileID: 7417652645165263525}
   dashSfx: {fileID: 0}
-  jumpSfx: {fileID: 0}
+  jumpSfx: {fileID: 7739312954016352942}
   doubleJumpSfx: {fileID: 0}
-  stunSfx: {fileID: 0}
+  stunSfx: {fileID: 958471198380452924}
   MAX_JUMPS: 1
   inMovementAbilityCooldown: 0
   launchCorrectionSpeed: 8
