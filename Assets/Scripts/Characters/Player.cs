@@ -94,8 +94,11 @@ public class Player : Character {
     public string playerName;
 
     [SerializeField] private Material dashMaterial;
+    [SerializeField] private Material stunMaterial;
 
     [SerializeField] private Color dashColor;
+    protected Color stunColor = Color.yellow;
+
 
     [SerializeField] private AudioSource winRoundSfx;
     [SerializeField] private AudioSource useItemSfx;    
@@ -136,7 +139,8 @@ public class Player : Character {
 
     private const float MAX_DASH_TIME = 0.5f;   
 
-    private Coroutine dashCoroutine;   
+    private Coroutine dashCoroutine;
+    private Coroutine stunCoroutine;   
 
     private uint numWallJumpsUsed = 0;
     private bool onWall = false;
@@ -522,6 +526,10 @@ public class Player : Character {
             if (IsClient){
                 StartHitEffect(hitColor);
             }
+        }else if (flag == "START_STUN_EFFECT"){
+            if (IsClient){
+                StartStunEffect(stunColor);
+            }  
         }else if (flag == "ENABLE_COLLIDERS"){
             if (IsClient){
                 feetCollider.enabled = true;
@@ -775,6 +783,7 @@ public class Player : Character {
         //unity youtube man says this is necessary for preventing side effects
         dashMaterial = new Material(dashMaterial);
         hitMaterial = new Material(hitMaterial);
+        stunMaterial = new Material(stunMaterial);
 
         switch (selectedCharacterClass){
             case characterClass.ARCHER:
@@ -1531,6 +1540,25 @@ public class Player : Character {
         dashCoroutine = null;
     }
 
+    protected void StartStunEffect(Color color){
+        //prevents multiple of the same coroutine from running
+        if (stunCoroutine != null){
+            StopCoroutine(stunCoroutine);
+        }
+
+        stunCoroutine = StartCoroutine(StunRoutine(color));
+    }
+
+    protected IEnumerator StunRoutine(Color color){
+        spriteRender.material = stunMaterial;
+        stunMaterial.color = color;
+
+        yield return new WaitForSeconds(STUN_TIME);
+
+        spriteRender.material = regularMaterial;
+        stunCoroutine = null;
+    }
+
     protected override void Attack(){
         if (inAttackCooldown){
             return;
@@ -1543,14 +1571,6 @@ public class Player : Character {
     }
 
     public override void TakeDamage(int damage){
-        if (isInvincible){
-            Debug.Log("player is currently invincible");
-        }
-
-        if (isStunned){
-            Debug.Log("player is currently stunned");
-        }
-        
         if (!isInvincible && !isStunned){
             Debug.Log("taking damage");
             health -= damage;
@@ -1558,6 +1578,7 @@ public class Player : Character {
             if (health <= 0){
                 isStunned = true;
                 StartCoroutine(StunCooldown());
+                SendUpdate("START_STUN_EFFECT", "GoodMorning");
             }else{      //give player a moment of brief invincibility after taking a hit of damage
                 isInvincible = true;
                 StartCoroutine(InvincibilityCooldown(TAKE_DAMAGE_INVINCIBILITY_TIME));
@@ -1815,6 +1836,7 @@ public class Player : Character {
                 if (ladderJump){
                     InitiateJump(1);
                     SendUpdate("JUMP_ANIM", "");
+                    currentLadder = null;
 
                     if (jumpReleasedDuringBuffer){
                         currentMovementState = movementState.FAST_FALLING;
@@ -1831,6 +1853,7 @@ public class Player : Character {
                         //need this cause we only want to SendUpdate() when the game state has changed
                         if (!IsGrounded()){
                             currentMovementState = movementState.GROUND;
+                            currentLadder = null;
                             SendUpdate("IDLE_ANIM", "GoodMorning");
                         }
                     }else{
@@ -1866,6 +1889,8 @@ public class Player : Character {
                     */
                     Vector2 dismountPos = new Vector2(this.transform.position.x, this.transform.position.y + yOffset);
                     transform.position = dismountPos;
+
+                    currentLadder = null;
 
                     SendUpdate("DISMOUNT", dismountPos.ToString());
                 }
