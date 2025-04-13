@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Tilemaps;
 
 public abstract class Enemy : Character
 {    
@@ -82,8 +83,12 @@ public abstract class Enemy : Character
 
     protected virtual void OnCollisionEnter2D(Collision2D collider){
         if (IsServer){
-            if (collider.gameObject.GetComponentInParent<Player>() != null){
+            if (collider.gameObject.GetComponentInParent<Player>() != null){                
                 collider.gameObject.GetComponentInParent<Player>().TakeDamage(1);
+            }
+            //for hitting walls
+            else if(collider.gameObject.GetComponent<TilemapCollider2D>() != null){
+                dir *= -1;
             }
         }
     }

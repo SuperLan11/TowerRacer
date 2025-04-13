@@ -37,12 +37,13 @@ public class GameManager : NetworkComponent
     private Text countdownLbl;
     private GameObject npmPanel;
     //making these serializable cause it's multiple components on the same obj
-    [SerializeField] private AudioSource theme;    
+    [SerializeField] private AudioSource theme;
     [SerializeField] private AudioSource winPointSfx;
+    [SerializeField] private AudioSource winGameSfx;
 
-    private Player winningPlayer = null;
+    public static Player winningPlayer = null;
     public static List<Player> playersFinished = new List<Player>();
-    public static bool everyoneFinished = false;
+    public static bool everyoneFinished = false;    
 
     //the timer starts when the first player reaches the end door
     //the timer ends the round so players don't have to wait on the last player forever    
@@ -170,12 +171,21 @@ public class GameManager : NetworkComponent
         {
             if (IsClient)
             {
-                winPointSfx.Play();
+                if(winPointSfx != null)
+                    winPointSfx.Play();
+
                 int roundWinOwner = int.Parse(value.Split(";")[0]);
                 int wins = int.Parse(value.Split(";")[1]);
                 StartCoroutine(FlashWinPoint(roundWinOwner, wins, 5, 0.2f)); 
             }
-        }     
+        }
+        else if (flag == "WIN_GAME_SFX")
+        {
+            if (IsClient)
+            {
+                winGameSfx.Play();
+            }
+        }
         else if(flag == "HIDE_NPMS")
         {
             if(IsClient)
@@ -614,8 +624,11 @@ public class GameManager : NetworkComponent
     }
 
     private IEnumerator FlashWinPoint(int roundWinOwner, int wins, int numFlashes, float flashTime)
-    {        
-        Image dotToFlash = scorePanel.transform.GetChild(roundWinOwner).GetChild(1).GetChild(wins-1).GetComponent<Image>();        
+    {                
+        Image dotToFlash = scorePanel.transform.GetChild(roundWinOwner).GetChild(1).GetChild(wins-1).GetComponent<Image>();
+        Debug.Log("dot to flash: " + dotToFlash.name);
+        Debug.Log("owner for flash: " + roundWinOwner);
+        Debug.Log("wins for flash: " + wins);
 
         Color32 normalColor = dotToFlash.color;
         Color32 flashColor = new Color32(255, 220, 0, 255);
@@ -664,7 +677,7 @@ public class GameManager : NetworkComponent
                 {
                     int owner = player.Owner;
                     int wins = player.wins;
-                    player.SendUpdate("WIN_ROUND_SFX", "");
+                    player.SendUpdate("WIN_ROUND_SFX", "");                    
                     SendUpdate("FLASH_WIN", owner + ";" + wins);
                     player.isRoundWinner = false;
                 }                
@@ -677,34 +690,31 @@ public class GameManager : NetworkComponent
             {
                 player.SendUpdate("CAM_UNFREEZE", "");
             }
-
-            //FindObjectOfType<Player>().SendUpdate("CAM_UNFREEZE", "");
+            
             foreach (Player player in players)
             {                                
                 if(player.wins >= 3)
                 {
-                    player.SendUpdate("WIN_ROUND_SFX", "");
+                    SendUpdate("WIN_GAME_SFX", "");
                     winningPlayer = player;                                        
                     StartCoroutine(FadeScorePanelOut(1f));
 
                     GameManager.gameOver = true;                    
                     //cool way to exit early from a ienumerator I just learned
+                    //this breaks out of the entire coroutine, not just the for loop
                     yield break;
                 }
             }
 
-            StartCoroutine(FadeScorePanelOut(1f));                                
+            StartCoroutine(FadeScorePanelOut(1f));
             yield return Wait(1f);
 
             yield return Countdown();
 
-            foreach (Player player in players)
-            {
-                player.playerFrozen = false;
-                //player.SendUpdate("UNFROZEN", "");
-            }
+            foreach (Player player in players)            
+                player.playerFrozen = false;            
 
-            SendUpdate("PLAY_THEME", "GoodMorning");
+            SendUpdate("PLAY_THEME", "GoodMorning");            
 
             placeLbl.enabled = true;
             SendUpdate("SHOW_PLACE", "");
@@ -784,10 +794,7 @@ public class GameManager : NetworkComponent
 
             NPM[] players = GameObject.FindObjectsOfType<NPM>();
             foreach (NPM n in players)
-            {
-                //create object and set proper networked variables                
-                //Go to each NPM and look at their options
-                //Create the appropriate character for their options                
+            {                           
                 Vector3 spawnPos = Vector3.zero;
                 switch (n.Owner)
                 {
@@ -806,8 +813,10 @@ public class GameManager : NetworkComponent
                 }
 
                 GameObject temp = MyCore.NetCreateObject(Idx.ARCHER + n.CharSelected, n.Owner, spawnPos, Quaternion.identity);                
-                Player player = temp.GetComponent<Player>();                       
+                Player player = temp.GetComponent<Player>();
+                player.playerName = n.PName;
 
+                player.SendUpdate("INIT_NAME", n.PName);
                 player.SendUpdate("CAM_END", camEndY.ToString());
                 player.SendUpdate("SET_CHAR_IMAGE", "");
             }

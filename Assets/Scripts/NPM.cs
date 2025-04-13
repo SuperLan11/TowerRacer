@@ -82,8 +82,8 @@ public class NPM : NetworkComponent
         {
             Start();
 
-            PName = value;            
-            nameField.text = value;            
+            PName = value;
+            nameField.text = value;
 
             if (IsServer)
             {

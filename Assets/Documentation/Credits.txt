@@ -26,3 +26,9 @@ Assets Used:
 	Point Flicker: https://pixabay.com/sound-effects/game-bonus-144751/
 
 	Rope Jump: https://pixabay.com/sound-effects/whoosh-motion-243505/
+
+	Stun Dizzy Sfx: https://pixabay.com/sound-effects/birds-chirping-75495/
+
+	Jump and Dash: https://assetstore.unity.com/packages/audio/sound-fx/free-casual-game-sfx-pack-54116?srsltid=AfmBOor0BkOI4SF66JrcgVQ2CmHH1BArcgDR469VRdGdZpgcZGIp-S19
+
+	Win Game: https://pixabay.com/sound-effects/search/victory/

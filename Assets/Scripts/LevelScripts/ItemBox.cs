@@ -21,8 +21,7 @@ public class ItemBox : NetworkComponent
 		if(flag == "GET_BOX")
         {
 			if (IsClient)
-			{
-				Debug.Log("play get item sfx");
+			{				
 				getItemSfx.Play();
 				GetComponent<Collider2D>().enabled = false;
 				spriteRender.enabled = false;
@@ -95,22 +94,35 @@ public class ItemBox : NetworkComponent
 			}
 
 			Player playerHit = collision.GetComponentInParent<Player>();
-			//not accurate for hasItem since on server			
-			bool hasItem = itemUI.transform.childCount >= 1;
+			if (playerHit == null)
+				return;
+
+			bool hasItem = playerHit.hasBomb || playerHit.hasChicken || playerHit.hasSpeedBoost;
+
 			if (playerHit != null && !hasItem)
 			{
 				int randIdx = Random.Range(0, NUM_ITEMS);
 				SendUpdate("ITEM_UI", this.transform.position.ToString());
-				playerHit.SendUpdate("ITEM", randIdx.ToString());
-				//MyCore.NetDestroyObject(this.NetId);
-				
-				//disable instead of destroying item box so that sfx can play
+				playerHit.SendUpdate("ITEM", randIdx.ToString());			
+
+				//wait to destroy item box so that sfx can play
 				GetComponent<Collider2D>().enabled = false;
-				spriteRender.enabled = false;
-				SendUpdate("GET_BOX", "");				
+				spriteRender.enabled = false;				
+				SendUpdate("GET_BOX", "");
+				StartCoroutine(DestroyAfterSfx());
 			}
 		}
 	}
+
+	private IEnumerator DestroyAfterSfx()
+    {
+		while (getItemSfx.isPlaying)
+		{
+			yield return new WaitForSeconds(0.1f);
+		}
+
+		MyCore.NetDestroyObject(this.NetId);
+    }
 
 	public static Bomb ClosestBombToPos(Vector2 pos)
     {

@@ -37,13 +37,11 @@ public class Player : Character {
     // [System.NonSerialized] public string PName = "<Default>";
 
     private bool isFacingRight;
-    
+
     private bool jumpPressed = false;
     private bool jumpReleased = false;
 
-    private bool movementAbilityPressed = false;
-
-    private Player winningPlayer;
+    private bool movementAbilityPressed = false;    
 
     //int represents the index of the layer
     private int noJumpThruLayer;
@@ -82,16 +80,20 @@ public class Player : Character {
     private Color32[] placeColors;
     [System.NonSerialized] public Vector2 startPos;
     public bool isRoundWinner = false;
-    
+
     private GameObject itemUI;
     private GameObject scorePanel;
     public GameObject[] itemPrefabs;
     [System.NonSerialized] public int wins = 0;
     public Sprite[] heroSprites;
+    public string playerName;
 
-    [SerializeField] private AudioSource winRoundSfx;
-    [SerializeField] private AudioSource useItemSfx;    
+    [SerializeField] private AudioSource winRoundSfx;    
+    [SerializeField] private AudioSource useItemSfx;
     [SerializeField] private AudioSource dashSfx;
+    [SerializeField] private AudioSource jumpSfx;
+    [SerializeField] private AudioSource doubleJumpSfx;
+    [SerializeField] private AudioSource stunSfx;
 
     //not const anymore cause we want to change it for speed boost powerup
     [System.NonSerialized] public float MAX_WALK_SPEED = 12.5f;
@@ -100,9 +102,9 @@ public class Player : Character {
     private const float WALL_JUMP_ACCELERATION = AIR_ACCELERATION * 4f;     //totally fine if we want to make it independent
 
     private const float MAX_RUN_SPEED = 20f;
-    
+
     //these values will probably need to change based on the size of the Player
-    
+
     private const float COLLISION_RAYCAST_LENGTH = 0.02f;
     private const float WALL_COLLISION_RAYCAST_LENGTH = COLLISION_RAYCAST_LENGTH + 0.01f;
 
@@ -120,7 +122,7 @@ public class Player : Character {
     [SerializeField] private bool inMovementAbilityCooldown = false;
     private float dashSpeed;
     private float dashTimer;
-    private const float MAX_DASH_TIME = 0.5f;    
+    private const float MAX_DASH_TIME = 0.5f;
 
     private uint numWallJumpsUsed = 0;
     private bool onWall = false;
@@ -156,7 +158,7 @@ public class Player : Character {
     private Vector2 moveVelocity;
     [System.NonSerialized] public Vector2 moveInput;
     [System.NonSerialized] public Vector2 ropeLaunchVec = Vector2.zero;
-    
+
     //how fast you can change directions midair
     [SerializeField] private float launchCorrectionSpeed = 32f;      //previously 8f
     [SerializeField] private float airSlowdownMult = 1f;
@@ -197,8 +199,8 @@ public class Player : Character {
     [SerializeField] private float MAX_MOVEMENT_ABILITY_COOLDOWN;
 
 
-    private Vector2 upNormal = new Vector2(0, 1f);    
-    private Vector2 downNormal = new Vector2(0, -1f); 
+    private Vector2 upNormal = new Vector2(0, 1f);
+    private Vector2 downNormal = new Vector2(0, -1f);
     private Vector2 leftNormal = new Vector2(-1f, 0);
     private Vector3 rightNormal = new Vector2(1f, 0);
 
@@ -211,105 +213,109 @@ public class Player : Character {
 
     private enum movementState
     {
-            GROUND,
-            JUMPING,    //!jumping means you are in the air with the jump button pressed
-            FALLING,
-            FAST_FALLING,  
-            SWINGING,   //trigger
-            LAUNCHING,  //trigger
-            CLIMBING,   //trigger
-            DASHING,    //abiliy
+        GROUND,
+        JUMPING,    //!jumping means you are in the air with the jump button pressed
+        FALLING,
+        FAST_FALLING,
+        SWINGING,   //trigger
+        LAUNCHING,  //trigger
+        CLIMBING,   //trigger
+        DASHING,    //abiliy
     };
 
     [SerializeField] private movementState currentMovementState;
 
     private enum characterClass
     {
-            ARCHER,
-            MAGE,
-            BANDIT,
-            KNIGHT
+        ARCHER,
+        MAGE,
+        BANDIT,
+        KNIGHT
     }
 
     #endregion
-    
+
 
 
 
     //!For the else {} debug to work, you NEED to check IsServer or IsClient INSIDE of the flag if statement!
     public override void HandleMessage(string flag, string value)
     {
-        if (flag == "START"){
-            if (IsClient){
-                //here in case we need to initialize stuff later
+        if (flag == "INIT_NAME") {
+            if (IsClient) {
+                playerName = value;
+                //set name above opposing players' heads
+                if(!IsLocalPlayer)
+                    transform.GetChild(2).GetComponentInChildren<Text>().text = playerName;
+                //put name in results later
             }
         }
-        else if (flag == "PLACE"){
-            if (IsLocalPlayer){
-                if (value == "1"){
+        else if (flag == "PLACE") {
+            if (IsLocalPlayer) {
+                if (value == "1") {
                     placeLbl.text = "1st";
                 }
-                else if (value == "2"){
+                else if (value == "2") {
                     placeLbl.text = "2nd";
                 }
-                else if (value == "3"){
+                else if (value == "3") {
                     placeLbl.text = "3rd";
                 }
-                else if (value == "4"){
+                else if (value == "4") {
                     placeLbl.text = "4th";
-                }                                
-                int place = (int)char.GetNumericValue(value[0]);                
+                }
+                int place = (int)char.GetNumericValue(value[0]);
                 placeLbl.color = placeColors[place - 1];
             }
         }
-        else if (flag == "ITEM"){
-            if (IsLocalPlayer){
+        else if (flag == "ITEM") {
+            if (IsLocalPlayer) {
                 int itemIdx = int.Parse(value);
                 GameObject itemImage = Instantiate(itemPrefabs[itemIdx], itemUI.transform.position, Quaternion.identity);
                 itemImage.transform.SetParent(itemUI.transform);
 
-                if (itemIdx == 0){
+                if (itemIdx == 0) {
                     hasChicken = true;
-                }else if (itemIdx == 1){
+                } else if (itemIdx == 1) {
                     hasSpeedBoost = true;
-                }else if (itemIdx == 2){
-                    hasBomb = true;                    
+                } else if (itemIdx == 2) {
+                    hasBomb = true;
                 }
             }
-        }                
-        else if (flag == "CAM_FREEZE"){
-            if (IsClient){                
+        }
+        else if (flag == "CAM_FREEZE") {
+            if (IsClient) {
                 camFrozen = true;
             }
-        }       
-        else if (flag == "CAM_UNFREEZE"){
-            if (IsClient){                
+        }
+        else if (flag == "CAM_UNFREEZE") {
+            if (IsClient) {
                 camFrozen = false;
             }
         }
-        else if (flag == "CAM_END"){
-            if (IsClient){
+        else if (flag == "CAM_END") {
+            if (IsClient) {
                 //Debug.Log("set highest cam y to " + float.Parse(value));
                 Player.highestCamY = float.Parse(value);
             }
         }
-        else if(flag == "HIT_DOOR"){
-            if (IsClient) {               
+        else if (flag == "HIT_DOOR") {
+            if (IsClient) {
                 this.transform.position = startPos;
                 SendCommand("IDLE_ANIM", "");
                 //only change the color of the local player's score background
-                if (IsLocalPlayer){
+                if (IsLocalPlayer) {
                     int place = int.Parse(value);
                     Color32 placeColor = placeColors[place - 1];
-                    placeColor.a = 0;                    
+                    placeColor.a = 0;
                     //make score panel color correct for player's place                
                     scorePanel.GetComponent<Image>().color = placeColor;
                 }
             }
         }
-        else if(flag == "TIMED_OUT"){
-            if (IsClient){
-                this.transform.position = startPos;        
+        else if (flag == "TIMED_OUT") {
+            if (IsClient) {
+                this.transform.position = startPos;
             }
         }
         else if (flag == "MOVE")
@@ -328,6 +334,11 @@ public class Player : Character {
             if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Jump"))
             {
                 anim.Play("Jump", -1, 0f);
+                //doesn't accout for double jumps
+                if (IsClient)
+                {
+                    //jumpSfx.Play();
+                }
                 //anim.Play("Takeoff", -1, 0f);
             }
 
@@ -344,6 +355,15 @@ public class Player : Character {
             if (IsServer)
             {
                 SendUpdate("JUMP_RELEASED", "GoodMorning");
+            }
+        }
+        else if (flag == "JUMP_SFX") {
+            if (IsClient)
+                jumpSfx.Play();
+        }
+        else if (flag == "DOUBLE_JUMP_SFX") {
+            if (IsClient) {
+                doubleJumpSfx.Play();
             }
         }
         else if (flag == "AIM_STICK")
@@ -407,12 +427,12 @@ public class Player : Character {
                 bomb.currentPlayer = this;
                 bomb.launchVec = lastAimDir * bomb.launchSpeed;
             }
-        }else if (flag == "USE_ITEM"){
-            if (IsServer){
+        } else if (flag == "USE_ITEM") {
+            if (IsServer) {
                 useItemSfx.Play();
-                if (hasChicken){
+                if (hasChicken) {
                     UseChickenItem();
-                }else if (hasSpeedBoost){
+                } else if (hasSpeedBoost) {
                     UseSpeedBoostItem();
                 }
             }
@@ -424,8 +444,8 @@ public class Player : Character {
                 Vector2 dismountPos = Vector2FromString(value);
                 transform.position = dismountPos;
             }
-        }else if (flag == "SWING_POS_TELEPORT"){    //not necessary, but here to smooth out client teleportation just in case
-            if (IsClient){
+        } else if (flag == "SWING_POS_TELEPORT") {    //not necessary, but here to smooth out client teleportation just in case
+            if (IsClient) {
                 transform.position = Vector2FromString(value);
             }
         }
@@ -439,7 +459,7 @@ public class Player : Character {
         }
         else if (flag == "IDLE_ANIM")
         {
-            if(IsServer)
+            if (IsServer)
             {
                 SendUpdate("IDLE_ANIM", "");
             }
@@ -469,63 +489,55 @@ public class Player : Character {
                 spriteRender.flipX = true;
                 //transform.Rotate(0f, -180f, 0f);
             }
-        }else if (flag == "ENABLE_COLLIDERS"){
-            if (IsClient){
+        } else if (flag == "ENABLE_COLLIDERS") {
+            if (IsClient) {
                 feetCollider.enabled = true;
                 bodyCollider.enabled = true;
             }
-        }else if (flag == "DISABLE_COLLIDERS"){
-            if (IsClient){
+        } else if (flag == "DISABLE_COLLIDERS") {
+            if (IsClient) {
                 feetCollider.enabled = false;
                 bodyCollider.enabled = false;
             }
-        }
-        else if (flag == "WINNER_CAM")
-        {
-            if (IsClient)
-            {
-                int winningOwner = int.Parse(value);
-                Player[] players = FindObjectsOfType<Player>();
-                foreach (Player player in players)
-                {
-                    if (player.Owner == winningOwner)                    
-                        winningPlayer = player;                    
-                }
-            }
-        }
-        else if (flag == "SET_CHAR_IMAGE"){
-            if (IsClient){                
+        }        
+        else if (flag == "SET_CHAR_IMAGE") {
+            if (IsClient) {
                 //need to assign ui here because Start doesn't always run before sending handle msg on a newly instantiated object
                 GameObject scorePanel = GameObject.FindGameObjectWithTag("SCORE");
                 NPM[] playerNPMs = FindObjectsOfType<NPM>();
                 //iterate over npms instead of players so you have the owner and character chosen
-                foreach (NPM npm in playerNPMs){
+                foreach (NPM npm in playerNPMs) {
                     int owner = npm.Owner;
-                    int charChosen = npm.CharSelected;                    
-                    Image charImage = scorePanel.transform.GetChild(owner).GetChild(0).GetComponent<Image>();                    
-                    charImage.sprite = heroSprites[charChosen];  
+                    int charChosen = npm.CharSelected;
+                    Image charImage = scorePanel.transform.GetChild(owner).GetChild(0).GetComponent<Image>();
+                    charImage.sprite = heroSprites[charChosen];
                 }
             }
-        }   
-        else if(flag == "ENABLE_JUMP_THRU_COLLISION"){
-            if(IsClient){
+        }
+        else if (flag == "ENABLE_JUMP_THRU_COLLISION") {
+            if (IsClient) {
                 this.gameObject.layer = normalLayer;
             }
         }
-        else if (flag == "DISABLE_JUMP_THRU_COLLISION"){
-            if (IsClient){
+        else if (flag == "DISABLE_JUMP_THRU_COLLISION") {
+            if (IsClient) {
                 this.gameObject.layer = noJumpThruLayer;
             }
         }
-        else if(flag == "WIN_ROUND_SFX"){
-            if(IsLocalPlayer)
-            {                
+        else if (flag == "WIN_ROUND_SFX") {
+            if (IsLocalPlayer)
+            {
                 winRoundSfx.Play();
             }
-        }   
+        }        
         else if(flag == "DASH_SFX"){
             if(IsClient){
                 dashSfx.Play();
+            }
+        }
+        else if(flag == "STUN_SFX"){
+            if(IsClient){
+                stunSfx.Play();
             }
         }
         else if (flag == "SELECTED_CHARACTER_CLASS")
@@ -1449,6 +1461,8 @@ public class Player : Character {
 
             if (health <= 0){
                 isStunned = true;
+                Debug.Log("player got stunned!");
+                SendUpdate("STUN_SFX", "");
                 StartCoroutine(StunCooldown(0.5f));
             }else{      //give player a moment of brief invincibility after taking a hit of damage
                 isInvincible = true;
@@ -1486,8 +1500,9 @@ public class Player : Character {
         }
 
         if (IsLocalPlayer){            
-            if (winningPlayer != null){
-                Camera.main.transform.position = winningPlayer.transform.position;
+            if (GameManager.winningPlayer != null){
+                //win game sfx played in game manager
+                Camera.main.transform.position = GameManager.winningPlayer.transform.position;
                 Camera.main.orthographicSize = 7f;
             }
             else if (!camFrozen){
@@ -1808,6 +1823,7 @@ public class Player : Character {
             if (normalJump){
                 InitiateJump(1);
                 SendUpdate("JUMP_ANIM", "");
+                SendUpdate("JUMP_SFX", "");
                 
                 if (jumpReleasedDuringBuffer){
                     currentMovementState = movementState.FAST_FALLING;
@@ -1817,9 +1833,11 @@ public class Player : Character {
                 InitiateWallJump();
                 SendUpdate("JUMP_ANIM", "");
             }else if (extraJump){
+                SendUpdate("DOUBLE_JUMP_SFX", "");
                 InitiateJump(1);
                 SendUpdate("JUMP_ANIM", "");
             }else if (airJump){
+                SendUpdate("DOUBLE_JUMP_SFX", "");
                 //forces player to only get one jump when they're falling, so they can't fall off a ledge and then jump twice.
                 InitiateJump(2);
                 SendUpdate("JUMP_ANIM", "");

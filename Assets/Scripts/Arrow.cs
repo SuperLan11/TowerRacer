@@ -13,7 +13,7 @@ public class Arrow : Projectile
 
 	public override void HandleMessage(string flag, string value)
 	{		
-		if(flag == "HIDE")
+		if(flag == "HIT")
         {
 			if(IsClient)
             {
@@ -58,18 +58,29 @@ public class Arrow : Projectile
 		MyCore.NetDestroyObject(this.NetId);
     }
 
+	private IEnumerator DestroyAfterSfx()
+    {
+		while (arrowHitSfx.isPlaying)
+			yield return new WaitForSeconds(0.1f);
+
+		MyCore.NetDestroyObject(this.NetId);
+    }
+
     private void OnTriggerEnter2D(Collider2D other)
     {
         if(IsServer)
         {			
-			bool hitPlayer = other.GetComponentInParent<Player>() != null;
+			Player playerHit = other.GetComponentInParent<Player>();
 			bool hitWall = other.gameObject.tag == "WALL";
-			if (hitPlayer || hitWall)
-            {
-				spriteRender.enabled = false;
-				GetComponent<Collider2D>().enabled = false;
-				SendUpdate("HIDE", "");
-				//MyCore.NetDestroyObject(this.NetId);
+			if (playerHit != null || hitWall)
+            {				
+				if(playerHit != null)                
+					playerHit.TakeDamage(1);
+
+				SendUpdate("HIT", "");
+				//this plays on server to make destroying the arrow after the sfx easier
+				arrowHitSfx.Play();
+				StartCoroutine(DestroyAfterSfx());
 			}
         }
     }
