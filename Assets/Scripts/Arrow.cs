@@ -13,7 +13,7 @@ public class Arrow : Projectile
 
 	public override void HandleMessage(string flag, string value)
 	{		
-		if(flag == "HIT")
+		if(flag == "HIDE")
         {
 			if(IsClient)
             {

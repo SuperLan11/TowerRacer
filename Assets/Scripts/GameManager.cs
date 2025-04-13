@@ -19,8 +19,7 @@ public class GameManager : NetworkComponent
     //sync vars
     public static bool gameOver;
     private static bool gameStarted = false;
-    public static int playersReady = 0;
-    public static gameState currentGameState;
+    public static int playersReady = 0;    
 
     //non-sync vars
     private Vector3[] starts = new Vector3[4];
@@ -36,6 +35,7 @@ public class GameManager : NetworkComponent
     private GameObject scorePanel;
     private Text countdownLbl;
     private GameObject npmPanel;
+    private GameObject itemSquare;
     //making these serializable cause it's multiple components on the same obj
     [SerializeField] private AudioSource theme;    
     [SerializeField] private AudioSource winGameSfx;
@@ -56,13 +56,6 @@ public class GameManager : NetworkComponent
 
     public static double levelTime;
     public static bool debugMode = true;
-
-    public enum gameState {
-        LOBBY,
-        GAME,
-        BETWEEN_ROUNDS,
-        GAME_OVER,
-    }
 
     public override void HandleMessage(string flag, string value)
     {
@@ -90,21 +83,21 @@ public class GameManager : NetworkComponent
                 InitUI();
             }
         }
-        else if(flag == "HIDE_CHAR_IMAGES")
+        else if (flag == "HIDE_CHAR_IMAGES")
         {
-            if(IsClient)
+            if (IsClient)
             {
-                int maxOwner = int.Parse(value);                
-                
-                for(int i = maxOwner+1; i < 4; i++)                                    
-                    scorePanel.transform.GetChild(i).gameObject.SetActive(false);                
+                int maxOwner = int.Parse(value);
+
+                for (int i = maxOwner + 1; i < 4; i++)
+                    scorePanel.transform.GetChild(i).gameObject.SetActive(false);
             }
         }
         else if (flag == "FADE_IN")
         {
             if (IsClient)
             {
-                float seconds = float.Parse(value);                
+                float seconds = float.Parse(value);
                 StartCoroutine(FadeScorePanelIn(seconds));
             }
         }
@@ -115,12 +108,12 @@ public class GameManager : NetworkComponent
                 float seconds = float.Parse(value);
                 StartCoroutine(FadeScorePanelOut(seconds));
             }
-        }        
+        }
         else if (flag == "SHOW_TIMER")
         {
             if (IsClient)
             {
-                timerLbl.enabled = true;                
+                timerLbl.enabled = true;
             }
         }
         else if (flag == "HIDE_TIMER")
@@ -156,7 +149,7 @@ public class GameManager : NetworkComponent
             if (IsClient)
             {
                 countdownLbl.enabled = true;
-                countdownLbl.text = value;                
+                countdownLbl.text = value;
             }
         }
         else if (flag == "HIDE_COUNTDOWN")
@@ -169,10 +162,10 @@ public class GameManager : NetworkComponent
         else if (flag == "FLASH_WIN")
         {
             if (IsClient)
-            {                
+            {
                 int roundWinOwner = int.Parse(value.Split(";")[0]);
                 int wins = int.Parse(value.Split(";")[1]);
-                StartCoroutine(FlashWinPoint(roundWinOwner, wins, 7, 0.2f)); 
+                StartCoroutine(FlashWinPoint(roundWinOwner, wins, 7, 0.2f));
             }
         }
         else if (flag == "WIN_GAME_SFX")
@@ -182,11 +175,41 @@ public class GameManager : NetworkComponent
                 winGameSfx.Play();
             }
         }
-        else if(flag == "HIDE_NPMS")
+        else if (flag == "WINNING_PLAYER")
+        {
+            if (IsClient)
+            {
+                int winningOwner = int.Parse(value);
+                foreach (Player player in FindObjectsOfType<Player>())
+                {
+                    if (player.Owner == winningOwner)
+                        winningPlayer = player;
+                }
+            }
+        }
+        else if (flag == "HIDE_NPMS")
+        {
+            if (IsClient)
+            {
+                npmPanel.SetActive(false);
+            }
+        }
+        else if(flag == "HIDE_ITEM")
         {
             if(IsClient)
-            {                
-                npmPanel.SetActive(false);
+            {
+                Color hiddenColor = itemSquare.GetComponent<Image>().color;
+                hiddenColor.a = 0;
+                itemSquare.GetComponent<Image>().color = hiddenColor;
+            }
+        }
+        else if (flag == "SHOW_ITEM")
+        {
+            if (IsClient)
+            {
+                Color visibleColor = itemSquare.GetComponent<Image>().color;
+                visibleColor.a = 0.5f;
+                itemSquare.GetComponent<Image>().color = visibleColor;
             }
         }
         else if (flag == "PLAY_THEME")
@@ -653,6 +676,7 @@ public class GameManager : NetworkComponent
             curTimer = roundEndTime;            
             SendUpdate("HIDE_TIMER", "");
             SendUpdate("HIDE_PLACE", "");
+            SendUpdate("HIDE_ITEM", "");
 
             SendUpdate("STOP_THEME", "GoodMorning");
 
@@ -692,7 +716,8 @@ public class GameManager : NetworkComponent
                 if(player.wins >= 3)
                 {
                     SendUpdate("WIN_GAME_SFX", "");
-                    winningPlayer = player;                                        
+                    winningPlayer = player;
+                    SendUpdate("WINNING_PLAYER", winningPlayer.Owner.ToString());
                     StartCoroutine(FadeScorePanelOut(1f));
 
                     GameManager.gameOver = true;                    
@@ -714,6 +739,7 @@ public class GameManager : NetworkComponent
 
             placeLbl.enabled = true;
             SendUpdate("SHOW_PLACE", "");
+            SendUpdate("SHOW_ITEM", "");
 
             //wait to do this so that players forced to finish by the timer have the correct background color
             //and so that the timer resets correctly            
@@ -743,7 +769,8 @@ public class GameManager : NetworkComponent
         placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
         timerLbl = GameObject.FindGameObjectWithTag("TIMER").GetComponent<Text>();
         countdownLbl = GameObject.FindGameObjectWithTag("COUNTDOWN").GetComponent<Text>();
-        npmPanel = GameObject.FindGameObjectWithTag("NPM_PANEL");        
+        npmPanel = GameObject.FindGameObjectWithTag("NPM_PANEL");
+        itemSquare = GameObject.FindGameObjectWithTag("ITEM_UI");
 
         /*Debug.Log("gameUI == null: " + (gameUI == null));
         Debug.Log("scorePanel == null: " + (scorePanel == null));
@@ -764,6 +791,20 @@ public class GameManager : NetworkComponent
             }    
         }
         return maxOwner;
+    }
+
+    private void ResetVariables()
+    {
+        gameStarted = false;
+        gameOver = false;
+
+        timerStarted = false;
+        curTimer = roundEndTime;
+
+        playersReady = 0;
+        everyoneFinished = false;
+        winningPlayer = null;
+        playersFinished.Clear();
     }
 
     public IEnumerator GameUpdate(){  
@@ -821,7 +862,7 @@ public class GameManager : NetworkComponent
 
             SendUpdate("HIDE_NPMS", "");
             int maxOwner = GetMaxOwner();
-            SendUpdate("HIDE_CHAR_IMAGES", maxOwner.ToString());    
+            SendUpdate("HIDE_CHAR_IMAGES", maxOwner.ToString());
 
             MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(0f, 0f, 0f), Quaternion.identity);
             MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(-3f, 0f, 0f), Quaternion.identity);
@@ -852,11 +893,10 @@ public class GameManager : NetworkComponent
             }
               
             yield return new WaitForSeconds(5f);
-                        
-            gameStarted = false;
 
             //make sure to reset all stats on game over!!!
-
+            ResetVariables();
+            
             MyId.NotifyDirty();
             MyCore.UI_Quit();
         }
