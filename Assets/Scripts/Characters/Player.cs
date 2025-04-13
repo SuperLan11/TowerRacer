@@ -93,17 +93,12 @@ public class Player : Character {
     public Sprite[] heroSprites;
     public string playerName;
 
-<<<<<<< HEAD
-    [SerializeField] private AudioSource winRoundSfx;    
-    [SerializeField] private AudioSource useItemSfx;
-=======
     [SerializeField] private Material dashMaterial;
 
     [SerializeField] private Color dashColor;
 
     [SerializeField] private AudioSource winRoundSfx;
     [SerializeField] private AudioSource useItemSfx;    
->>>>>>> 99f43c049b19f0c318552543a9b0c1a37acb7bfe
     [SerializeField] private AudioSource dashSfx;
     [SerializeField] private AudioSource jumpSfx;
     [SerializeField] private AudioSource doubleJumpSfx;
@@ -136,16 +131,12 @@ public class Player : Character {
     [SerializeField] private bool inMovementAbilityCooldown = false;
     private float dashSpeed;
     private float dashTimer;
-<<<<<<< HEAD
-    private const float MAX_DASH_TIME = 0.5f;
-=======
     
     private const float DASH_EFFECT_DURATION = 0.5f;
 
     private const float MAX_DASH_TIME = 0.5f;   
 
     private Coroutine dashCoroutine;   
->>>>>>> 99f43c049b19f0c318552543a9b0c1a37acb7bfe
 
     private uint numWallJumpsUsed = 0;
     private bool onWall = false;
@@ -287,31 +278,14 @@ public class Player : Character {
                 int place = (int)char.GetNumericValue(value[0]);
                 placeLbl.color = placeColors[place - 1];
             }
-<<<<<<< HEAD
-        }
-        else if (flag == "ITEM") {
-            if (IsLocalPlayer) {
-=======
         }else if (flag == "ITEM"){
             if (IsLocalPlayer){
->>>>>>> 99f43c049b19f0c318552543a9b0c1a37acb7bfe
                 int itemIdx = int.Parse(value);
                 GameObject itemImage = Instantiate(itemPrefabs[itemIdx], itemUI.transform.position, Quaternion.identity);
                 itemImage.transform.SetParent(itemUI.transform);
 
                 if (itemIdx == 0) {
                     hasChicken = true;
-<<<<<<< HEAD
-                } else if (itemIdx == 1) {
-                    hasSpeedBoost = true;
-                } else if (itemIdx == 2) {
-                    hasBomb = true;
-                }
-            }
-        }
-        else if (flag == "CAM_FREEZE") {
-            if (IsClient) {
-=======
                     SendCommand("HAS_CHICKEN", hasChicken.ToString());
                 }else if (itemIdx == 1){
                     hasSpeedBoost = true;
@@ -336,7 +310,6 @@ public class Player : Character {
         }                     
         else if (flag == "CAM_FREEZE"){
             if (IsClient){                
->>>>>>> 99f43c049b19f0c318552543a9b0c1a37acb7bfe
                 camFrozen = true;
             }
         }
@@ -541,10 +514,6 @@ public class Player : Character {
                 spriteRender.flipX = true;
                 //transform.Rotate(0f, -180f, 0f);
             }
-<<<<<<< HEAD
-        } else if (flag == "ENABLE_COLLIDERS") {
-            if (IsClient) {
-=======
         }else if (flag == "START_DASH_EFFECT"){
             if (IsClient){
                 StartDashEffect(dashColor);
@@ -555,7 +524,6 @@ public class Player : Character {
             }
         }else if (flag == "ENABLE_COLLIDERS"){
             if (IsClient){
->>>>>>> 99f43c049b19f0c318552543a9b0c1a37acb7bfe
                 feetCollider.enabled = true;
                 bodyCollider.enabled = true;
             }
@@ -1585,13 +1553,7 @@ public class Player : Character {
 
             if (health <= 0){
                 isStunned = true;
-<<<<<<< HEAD
-                Debug.Log("player got stunned!");
-                SendUpdate("STUN_SFX", "");
-                StartCoroutine(StunCooldown(0.5f));
-=======
                 StartCoroutine(StunCooldown());
->>>>>>> 99f43c049b19f0c318552543a9b0c1a37acb7bfe
             }else{      //give player a moment of brief invincibility after taking a hit of damage
                 isInvincible = true;
                 StartCoroutine(InvincibilityCooldown(TAKE_DAMAGE_INVINCIBILITY_TIME));

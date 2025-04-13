@@ -10,8 +10,7 @@ public class ItemBox : NetworkComponent
 	private Sprite sprite;
 	private SpriteRenderer spriteRender;
 	
-	private GameObject itemUI;
-	[SerializeField] private const int NUM_ITEMS = 3;
+	private GameObject itemUI;	
 	[SerializeField] private GameObject[] itemPrefabs;
 
 	private AudioSource getItemSfx;
@@ -26,23 +25,7 @@ public class ItemBox : NetworkComponent
 				GetComponent<Collider2D>().enabled = false;
 				spriteRender.enabled = false;
 			}
-		}
-		else if (flag == "ITEM_UI")
-		{
-			if (IsClient)
-			{
-				string[] args = value.Split(";");
-				Vector2 itemBoxPos = Player.Vector2FromString(args[0]);
-				int itemIdx = int.Parse(args[1]);
-
-				Player playerHit = Player.ClosestPlayerToPos(itemBoxPos);
-				if (playerHit.IsLocalPlayer)
-				{
-					GameObject itemImage = Instantiate(itemPrefabs[itemIdx], itemUI.transform.position, Quaternion.identity);
-					itemImage.transform.SetParent(itemUI.transform);
-				}
-			}
-		}			
+		}		
 		else if (flag == "DEBUG")
 		{
 			Debug.Log(value);
@@ -99,18 +82,17 @@ public class ItemBox : NetworkComponent
 
 			bool hasItem = playerHit.hasBomb || playerHit.hasChicken || playerHit.hasSpeedBoost;
 
-			if (playerHit != null && !hasItem)
-			{
-				int randIdx = Random.Range(0, NUM_ITEMS);
-				SendUpdate("ITEM_UI", this.transform.position.ToString());
-				playerHit.SendUpdate("ITEM", randIdx.ToString());			
+			if (!hasItem)
+			{				
+				int randIdx = Random.Range(0, itemPrefabs.Length);				
+				playerHit.SendUpdate("ITEM", randIdx.ToString());
 
 				//wait to destroy item box so that sfx can play
 				GetComponent<Collider2D>().enabled = false;
 				spriteRender.enabled = false;				
 				SendUpdate("GET_BOX", "");
 				StartCoroutine(DestroyAfterSfx());
-			}
+			}			
 		}
 	}
 
