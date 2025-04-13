@@ -1768,6 +1768,9 @@ public class Player : Character {
             if (IsDashing()){
                 if (dashTimer > 0f){
                     dashTimer -= Time.deltaTime;
+                    
+                    //returning instead of giving the player midair control makes it feel more like a Celeste-style dash
+                    return;
                 }else{
                     dashTimer = MAX_DASH_TIME;
                     currentMovementState = movementState.FALLING;
