@@ -718,7 +718,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 378318156}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.4405069
+  m_Size: 0.5875893
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -2624,8 +2624,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1658902906}
   m_HandleRect: {fileID: 1658902905}
   m_Direction: 0
-  m_Value: 0.49630833
-  m_Size: 0.99886215
+  m_Value: 0.4962591
+  m_Size: 0.9991083
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -3696,8 +3696,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1904947442}
   m_HandleRect: {fileID: 1904947441}
   m_Direction: 2
-  m_Value: 0.5
-  m_Size: 0.0301517
+  m_Value: 0.50000006
+  m_Size: 0.040722482
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -4052,6 +4052,8 @@ MonoBehaviour:
   - {fileID: 1504742809329571919, guid: 91e539099c5fe1f43a0563e16e5be71e, type: 3}
   - {fileID: 4563088948390849861, guid: fbbdc66098f6760449f140425e560b70, type: 3}
   - {fileID: 8294106288819697315, guid: 594441c2565d4a54cab1653c18718711, type: 3}
+  - {fileID: 8602483490467114865, guid: 7f60ca198c1264949a7a139a04f1f4db, type: 3}
+  - {fileID: 8602483490467114865, guid: fe48a36ac79f9d349bb9e74c6e498a44, type: 3}
   NetworkPlayerManager: {fileID: 1985349391537641156, guid: 03ec32c5e88b9da41af6ec3c9a89e3ff, type: 3}
   DefaultReturnScene: 0
 --- !u!4 &2124650040
