@@ -1670,7 +1670,7 @@ public class Player : Character {
                 Camera.main.orthographicSize = 7f;
             }
             else if (!camFrozen){
-                //Debug.Log("cam is moving!");
+                Debug.Log("cam is moving!");
                 Vector3 newCamPos = new Vector3(0, 0, cam.transform.position.z);
                 newCamPos.x = GameManager.CENTER_PIECE_X;
                 //Mathf.infinity is not bad on performance at all since it is stored as some sort of constant

@@ -19,7 +19,8 @@ public class GameManager : NetworkComponent
     //sync vars
     public static bool gameOver;
     private static bool gameStarted = false;
-    public static int playersReady = 0;    
+    public static int playersReady = 0;
+    public GameObject[] tutorialPrefabs;
 
     //non-sync vars
     private Vector3[] starts = new Vector3[4];
@@ -284,8 +285,7 @@ public class GameManager : NetworkComponent
             gameStarted = true;
         }        
     }
-
-    //called by server
+    
     private void RandomizeLevel(int numPieces)
     {        
         for (int i = 0; i < numPieces; i++)
@@ -322,9 +322,16 @@ public class GameManager : NetworkComponent
             RandomlyPlaceEnemies(piece);
             RandomlyPlaceItemBoxes(piece);
             RandomlyPlaceLadders(piece);            
+        }        
+    }
+
+    private void CreateTutorials()
+    {
+        foreach (NPM npm in FindObjectsOfType<NPM>())
+        {
+            
         }
-        //do jacob's translate thing here
-    }    
+    }
 
     private void PlaceDoor(GameObject endPiece)
     {
@@ -854,6 +861,11 @@ public class GameManager : NetworkComponent
                 player.playerName = n.PName;
 
                 player.SendUpdate("INIT_NAME", n.PName);
+
+                //for testing
+                if (camEndY == 0)
+                    camEndY = Mathf.Infinity;
+
                 player.SendUpdate("CAM_END", camEndY.ToString());
                 player.SendUpdate("INIT_SCORE_PANEL", "");
             }
@@ -892,7 +904,7 @@ public class GameManager : NetworkComponent
                 player.SendUpdate("WINNER_CAM", winningPlayer.Owner.ToString());
             }
               
-            yield return new WaitForSeconds(5f);
+            yield return new WaitForSeconds(4f);
 
             //make sure to reset all stats on game over!!!
             ResetVariables();

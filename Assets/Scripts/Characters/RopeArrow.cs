@@ -12,10 +12,24 @@ using NETWORK_ENGINE;
 public class RopeArrow : NetworkComponent
 {
     private const int ROPE_SPAWN_PREFAB_INDEX = Idx.ROPE; //7; 
+    private AudioSource spawnRopeSfx;
     
     public override void HandleMessage(string flag, string value)
     {
-        //throw new System.NotImplementedException();
+        if(flag == "HIDE")
+        {
+            if(IsClient)
+            {
+                spawnRopeSfx.Play();
+                GetComponent<SpriteRenderer>().enabled = false;
+                GetComponent<Collider2D>().enabled = false;
+            }
+        }
+    }
+
+    private void Start()
+    {
+        spawnRopeSfx = GetComponent<AudioSource>();
     }
 
     public override void NetworkedStart()
@@ -40,12 +54,27 @@ public class RopeArrow : NetworkComponent
     }
     */
 
-    void OnTriggerEnter2D (Collider2D collider){
-        if (IsServer){
-            GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+    private IEnumerator DestroyAfterSfx()
+    {
+        while(spawnRopeSfx.isPlaying)
+        {
+            yield return new WaitForSeconds(0.1f);
+        }
 
+        MyCore.NetDestroyObject(this.NetId);
+    }
+
+    void OnTriggerEnter2D (Collider2D collider){
+        if (IsServer){            
             MyCore.NetCreateObject(ROPE_SPAWN_PREFAB_INDEX, Owner, this.transform.position, Quaternion.identity);
-            MyCore.NetDestroyObject(this.NetId);
+
+            GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+            GetComponent<SpriteRenderer>().enabled = false;
+            GetComponent<Collider2D>().enabled = false;
+            SendUpdate("HIDE", "");
+
+            spawnRopeSfx.Play();
+            StartCoroutine(DestroyAfterSfx());
         }
     }
 }
