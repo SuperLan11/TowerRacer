@@ -341,13 +341,17 @@ public class Player : Character {
             if (IsClient) {
                 this.transform.position = startPos;
                 SendCommand("IDLE_ANIM", "");
+
+                int place = int.Parse(value.Split(";")[0]);
+                int owner = int.Parse(value.Split(";")[1]);
+                Color32 placeColor = placeColors[place - 1];
+                placeColor.a = 0;
+                //make score panel color correct for player's place
+                //scorePanel.GetComponent<Image>().color = placeColor;
+                scorePanel.transform.GetChild(owner).GetComponent<Image>().color = placeColor;
+
                 //only change the color of the local player's score background
-                if (IsLocalPlayer) {
-                    int place = int.Parse(value);
-                    Color32 placeColor = placeColors[place - 1];
-                    placeColor.a = 0;
-                    //make score panel color correct for player's place                
-                    scorePanel.GetComponent<Image>().color = placeColor;
+                if (IsLocalPlayer) {                    
                 }
             }
         }
@@ -1662,6 +1666,7 @@ public class Player : Character {
         RaycastHit2D[] hits = Physics2D.RaycastAll(position, direction, ATTACK_RAYCAST_LENGTH, ~0);
 
         foreach (RaycastHit2D hit in hits){
+            DrawDebugNormal(position, direction, ATTACK_RAYCAST_LENGTH, false);
             if (hit.collider.GetComponentInParent<Enemy>() != null){
                 hit.collider.GetComponentInParent<Enemy>().TakeDamage(1);
             }
@@ -1744,9 +1749,13 @@ public class Player : Character {
             }            
         }
 
-        if (IsServer){            
+        if (IsServer){
+            //for countdown
             if (playerFrozen)
+            {
+                rigidbody.velocity = Vector2.zero;
                 return;
+            }
 
             //only sendupdate when switching layers
             //phase through jump thrus when jumping up
@@ -2076,7 +2085,9 @@ public class Player : Character {
             }else if (wallJump){
                 InitiateWallJump();
                 SendUpdate("JUMP_ANIM", "");
-            }else if (extraJump){
+                SendUpdate("DOUBLE_JUMP_SFX", "");
+            }
+            else if (extraJump){
                 SendUpdate("DOUBLE_JUMP_SFX", "");
                 InitiateJump(1);
                 SendUpdate("JUMP_ANIM", "");
