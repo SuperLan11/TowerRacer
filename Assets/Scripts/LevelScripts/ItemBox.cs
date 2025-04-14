@@ -84,6 +84,7 @@ public class ItemBox : NetworkComponent
 			bool hasItem = playerHit.hasBomb || playerHit.hasChicken || playerHit.hasSpeedBoost;
 			if (!hasItem)
 			{
+				//items are in the following order: 0-chicken, 1-speedbost, 2-bomb
 				int randIdx = Random.Range(0, itemPrefabs.Length);
 				playerHit.SendUpdate("ITEM", randIdx.ToString());
 

@@ -89,7 +89,8 @@ public class Player : Character {
 
     private GameObject itemUI;
     private GameObject scorePanel;
-    public GameObject[] itemPrefabs;
+    //public GameObject[] itemPrefabs;
+    public Sprite[] itemSprites;
     [System.NonSerialized] public int wins = 0;
     public Sprite[] heroSprites;
     public string playerName;
@@ -290,8 +291,11 @@ public class Player : Character {
         }else if (flag == "ITEM"){
             if (IsLocalPlayer){
                 int itemIdx = int.Parse(value);
-                GameObject itemImage = Instantiate(itemPrefabs[itemIdx], itemUI.transform.position, Quaternion.identity);
-                itemImage.transform.SetParent(itemUI.transform);
+
+                ShowItem();
+                itemUI.transform.GetChild(0).GetComponent<Image>().sprite = itemSprites[itemIdx];
+
+                //GameObject itemImage = Instantiate(itemPrefabs[itemIdx], itemUI.transform.position, Quaternion.identity);                
 
                 if (itemIdx == 0) {
                     hasChicken = true;
@@ -1339,7 +1343,8 @@ public class Player : Character {
                 SendCommand("SHOOT_BOMB", "");
                 hasBomb = false;
                 SendCommand("HAS_BOMB", hasBomb.ToString());
-                Destroy(itemUI.transform.GetChild(0).gameObject);
+                //Destroy(itemUI.transform.GetChild(0).gameObject);                
+                HideItem();
 
                 lastAimDir = Vector2.zero;
                 aimArrow.GetComponent<SpriteRenderer>().enabled = false;
@@ -1370,7 +1375,8 @@ public class Player : Character {
                 SendCommand("SHOOT_BOMB", "");
                 hasBomb = false;
                 SendCommand("HAS_BOMB", hasBomb.ToString());
-                Destroy(itemUI.transform.GetChild(0).gameObject);
+                //Destroy(itemUI.transform.GetChild(0).gameObject);
+                HideItem();
             }
         }
     }
@@ -1408,7 +1414,8 @@ public class Player : Character {
         {
             if (context.started){                
                 SendCommand("USE_ITEM", "GoodMorning");
-                Destroy(itemUI.transform.GetChild(0).gameObject);
+                //Destroy(itemUI.transform.GetChild(0).gameObject);
+                HideItem();
             }
             else if (context.canceled){
                if (hasChicken){
@@ -1471,6 +1478,25 @@ public class Player : Character {
     #endregion
 
     #region ITEM
+
+    private void HideItem()
+    {
+        Image itemSprite = itemUI.transform.GetChild(0).GetComponent<Image>();
+        Debug.Log("hiding " + itemSprite.name + "...");
+        Color hiddenColor = itemSprite.color;
+        hiddenColor.a = 0;
+        itemSprite.color = hiddenColor;
+    }
+
+    private void ShowItem()
+    {
+        Image itemSprite = itemUI.transform.GetChild(0).GetComponent<Image>();
+        Debug.Log("showing " + itemSprite.name + "...");
+        Color visibleColor = itemSprite.color;
+        visibleColor.a = 1;
+        itemSprite.color = visibleColor;
+    }
+
     private void UseChickenItem(){
         health = MAX_HEALTH;
         isInvincible = true;
@@ -1707,8 +1733,7 @@ public class Player : Character {
                 Camera.main.transform.position = newCamPos;
                 Camera.main.orthographicSize = 7f;
             }
-            else if (!camFrozen){
-                Debug.Log("cam is moving!");
+            else if (!camFrozen){                
                 Vector3 newCamPos = new Vector3(0, 0, cam.transform.position.z);
                 newCamPos.x = GameManager.CENTER_PIECE_X;
                 //Mathf.infinity is not bad on performance at all since it is stored as some sort of constant

@@ -95,7 +95,10 @@ public abstract class Enemy : Character
             }
             //for hitting walls
             else if(collider.gameObject.GetComponent<TilemapCollider2D>() != null){
+                Debug.Log("flipping slime");
                 dir *= -1;
+                spriteRender.flipX = !spriteRender.flipX;
+                SendUpdate("FLIP", false.ToString());
             }
         }
     }

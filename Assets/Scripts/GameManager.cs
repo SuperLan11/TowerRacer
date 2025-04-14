@@ -1000,6 +1000,7 @@ public class GameManager : NetworkComponent
             MyCore.NotifyGameStart();
             SendUpdate("STOP_MENU_THEME", "GoodMorning");
             SendUpdate("PLAY_THEME", "GoodMorning");
+            SendUpdate("HIDE_PLACE", "");
 
             /*while(!tutorialFinished)
             {
@@ -1030,6 +1031,8 @@ public class GameManager : NetworkComponent
             }
 
             yield return Countdown();
+
+            SendUpdate("SHOW_PLACE", "");
 
             foreach (Player player in FindObjectsOfType<Player>())
             {

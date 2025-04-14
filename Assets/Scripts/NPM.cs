@@ -17,8 +17,10 @@ public class NPM : NetworkComponent
     [System.NonSerialized] public Toggle readyToggle;
     [System.NonSerialized] public TMP_Dropdown charDropdown;
     [System.NonSerialized] public Image charImage;
+    [System.NonSerialized] public Image abilityImage;
 
     public Sprite[] heroSprites;
+    public Sprite[] abilitySprites;
 
     [SerializeField] private AudioSource readySfx;
     [SerializeField] private AudioSource allReadySfx;
@@ -100,6 +102,7 @@ public class NPM : NetworkComponent
             CharSelected = int.Parse(value);            
             charDropdown.value = CharSelected;
             charImage.sprite = heroSprites[CharSelected];
+            abilityImage.sprite = abilitySprites[CharSelected];            
 
             if (IsServer)
             {
@@ -150,7 +153,9 @@ public class NPM : NetworkComponent
         nameField = npmPanel.GetComponentInChildren<InputField>();
         readyToggle = npmPanel.GetComponentInChildren<Toggle>();
         charDropdown = npmPanel.GetComponentInChildren<TMP_Dropdown>();
+        //don't move the children!!
         charImage = npmPanel.transform.GetChild(3).GetComponent<Image>();
+        abilityImage = npmPanel.transform.GetChild(4).GetComponent<Image>();
 
         //dynamically assign ui events so you can have anchored npm objects in the scene
         nameField.onValueChanged.AddListener(UI_NameChanged);
