@@ -119,7 +119,7 @@ public class Player : Character {
     //these values will probably need to change based on the size of the Player
 
     private const float COLLISION_RAYCAST_LENGTH = 0.02f;
-    private const float WALL_COLLISION_RAYCAST_LENGTH = COLLISION_RAYCAST_LENGTH + 0.01f;
+    private const float WALL_COLLISION_RAYCAST_LENGTH = (COLLISION_RAYCAST_LENGTH + 0.01f) * 8f;       //formerly COLLISION_RAYCAST_LENGTH + 0.1f
     private const float ATTACK_RAYCAST_LENGTH = 2f;
 
 
