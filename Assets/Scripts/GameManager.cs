@@ -43,7 +43,8 @@ public class GameManager : NetworkComponent
 
     public static Player winningPlayer = null;
     public static List<Player> playersFinished = new List<Player>();
-    public static bool everyoneFinished = false;    
+    public static bool everyoneFinished = false;
+    public static bool tutorialFinished = false;
 
     //the timer starts when the first player reaches the end door
     //the timer ends the round so players don't have to wait on the last player forever    
@@ -359,25 +360,26 @@ public class GameManager : NetworkComponent
                 //create tutorial prefabs in order of connection count
                 if (npmList[j].Owner == minOwner)
                 {
-                    Vector2 pos = Vector2.zero;
+                    Vector2 pos = new Vector2(-35, 0);
 
                     if (createdTutorials.Count > 0)
                     {
                         GameObject prevPiece = createdTutorials[createdTutorials.Count - 1];                                                
-                        pos = new Vector2(prevPiece.transform.position.x + 25f, 0);
+                        pos = new Vector2(prevPiece.transform.position.x + 23f, 0);
                     }                    
 
                     //create appropriate tutorial for character chosen
                     GameObject tutorial = MyCore.NetCreateObject(Idx.ARCHER_TUTORIAL + npms[j].CharSelected, Owner, pos, Quaternion.identity);
                     createdTutorials.Add(tutorial);
                     Debug.Log("created " + tutorial.name);
+                    PlaceDoor(tutorial);
 
                     tutorialsPlaced++;
                     minOwner++;                    
                     //don't remove player from list or you get concurrency error
                 }
             }                   
-        }        
+        }                
     }
 
     private void MovePlayersToTutorial()
@@ -393,7 +395,8 @@ public class GameManager : NetworkComponent
                 {
                     //startPos needs to be first child of tutorial prefab for this to work
                     Vector2 startPos = createdTutorials[minOwner].transform.GetChild(0).transform.position;
-                    players[i].transform.position = startPos;
+                    players[j].transform.position = startPos;
+                    Debug.Log("moved " + players[j].name + " to " + startPos);
                     minOwner++;
                 }
             }
@@ -834,6 +837,28 @@ public class GameManager : NetworkComponent
         SendUpdate("HIDE_COUNTDOWN", "");
     }
 
+    private void MovePlayersToRound()
+    {
+        foreach (Player player in FindObjectsOfType<Player>())
+        {
+            switch (player.Owner)
+            {
+                case 0:
+                    player.transform.position = starts[0];
+                    break;
+                case 1:
+                    player.transform.position = starts[1];
+                    break;
+                case 2:
+                    player.transform.position = starts[2];
+                    break;
+                case 3:
+                    player.transform.position = starts[3];
+                    break;
+            }
+        }
+    }
+
     private void InitUI()
     {        
         gameUI = GameObject.FindGameObjectWithTag("GAME_UI");
@@ -958,6 +983,41 @@ public class GameManager : NetworkComponent
             //stops server from listening, so nobody new can join.
             MyCore.NotifyGameStart();
             SendUpdate("PLAY_THEME", "GoodMorning");
+
+            /*while(!tutorialFinished)
+            {
+                yield return new WaitForSeconds(0.5f);
+            }
+            playersFinished.Clear();
+
+            SendUpdate("STOP_THEME", "");
+            SendUpdate("FADE_IN", "1");
+
+            yield return Wait(1f);
+            
+            //destroy tutorials in reverse to avoid concurrency issues
+            for(int i = createdTutorials.Count-1; i >= 0; i--)
+            {
+                int netID = createdTutorials[i].GetComponentInParent<NetworkID>().NetId;
+                MyCore.NetDestroyObject(netID);
+            }*/
+
+            //RandomizeLevel(5);
+            //SendUpdate("FADE_OUT", "1");
+            //MovePlayersToRound();
+            yield return Wait(1f);
+
+            foreach (Player player in FindObjectsOfType<Player>())
+            {
+                player.playerFrozen = true;
+            }
+
+            yield return Countdown();
+
+            foreach (Player player in FindObjectsOfType<Player>())
+            {
+                player.playerFrozen = false;
+            }            
 
             //this is basically our regular Update()
             while (!gameOver)

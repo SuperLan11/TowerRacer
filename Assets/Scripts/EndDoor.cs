@@ -87,8 +87,18 @@ public class EndDoor : NetworkComponent
         {
             Player playerHit = other.gameObject.GetComponentInParent<Player>();            
 
+            /*if(playerHit != null && !GameManager.tutorialFinished && !GameManager.playersFinished.Contains(playerHit))
+            {
+                GameManager.playersFinished.Add(playerHit);
+                if (GameManager.playersFinished.Count == FindObjectsOfType<Player>().Length)
+                    GameManager.tutorialFinished = true;
+
+                SendUpdate("ENTER_SFX", "");
+                playerHit.SendUpdate("CAM_FREEZE", "");
+                playerHit.SendUpdate("HIT_DOOR", GameManager.playersFinished.Count.ToString());
+            }
             //make sure player hit is not frozen in case of weird double collisions when teleporting
-            if (playerHit != null && !GameManager.playersFinished.Contains(playerHit) && !playerHit.playerFrozen)
+            else */if (playerHit != null && !GameManager.playersFinished.Contains(playerHit) && !playerHit.playerFrozen)
             {                
                 GameManager.playersFinished.Add(playerHit);
 
