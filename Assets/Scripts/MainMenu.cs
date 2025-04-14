@@ -11,6 +11,9 @@ public class MainMenu : MonoBehaviour
     public GameObject optionsMenuCanvas;
     public AudioMixer mixer;
 
+    private int oldWidth;
+    private int oldHeight;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -58,5 +61,20 @@ public class MainMenu : MonoBehaviour
     public void SFXVolume(float f)
     {
         mixer.SetFloat("SFX", Mathf.Log10(f) * 20);
+    }
+
+    public void FullscreenToggle(bool b)
+    {
+        if (b) {
+            // Save the current resolution
+            oldWidth = Screen.currentResolution.width;
+            oldHeight = Screen.currentResolution.height;
+            Screen.SetResolution(Display.main.systemWidth, Display.main.systemHeight, false);
+            Screen.fullScreenMode = FullScreenMode.ExclusiveFullScreen;
+        } else {
+            // Set the resolution back to the old one
+            Screen.SetResolution(oldWidth, oldHeight, false);
+            Screen.fullScreenMode = FullScreenMode.Windowed;
+        }
     }
 }
