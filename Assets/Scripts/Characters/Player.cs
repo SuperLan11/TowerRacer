@@ -1580,7 +1580,7 @@ public class Player : Character {
     }
 
     protected override void Attack(){
-        if (inAttackCooldown){
+        if (inAttackCooldown || isStunned){
             return;
         }
 
