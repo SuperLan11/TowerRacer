@@ -74,12 +74,12 @@ public class Skeleton : Enemy
         {
             base.OnCollisionEnter2D(collision);            
 
-            if(collision.gameObject.GetComponent<Enemy>() != null)
+            /*if(collision.gameObject.GetComponent<Enemy>() != null)
             {
                 dir *= -1;
                 spriteRender.flipX = !spriteRender.flipX;
                 SendUpdate("FLIP", spriteRender.flipX.ToString());
-            }
+            }*/
         }
     }
 
@@ -183,6 +183,7 @@ public class Skeleton : Enemy
         {
             if (IsServer)
             {
+                SendUpdate("FLIP", spriteRender.flipX.ToString());
                 IsDirty = false;
             }
             yield return new WaitForSeconds(0.05f);
@@ -194,7 +195,11 @@ public class Skeleton : Enemy
     {
         if(IsServer)
         {
-            if (state == STATE.MOVING)
+            if(GameManager.inCountdown)
+            {
+                myRig.velocity = Vector2.zero;
+            }
+            else if (state == STATE.MOVING)
             {
                 Move();
             }

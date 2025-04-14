@@ -37,7 +37,7 @@ public class Slime : Enemy
                 SendCommand(flag, value);
             }
         }
-    }    
+    }
 
     public override void NetworkedStart()
     {        
@@ -51,12 +51,12 @@ public class Slime : Enemy
         {
             base.OnCollisionEnter2D(collision);
             
-            if (collision.gameObject.GetComponent<Enemy>() != null)
+            /*if (collision.gameObject.GetComponent<Enemy>() != null)
             {
                 dir *= -1;
                 spriteRender.flipX = !spriteRender.flipX;
                 SendUpdate("FLIP", spriteRender.flipX.ToString());
-            }
+            }*/
         }
     } 
 
@@ -78,7 +78,10 @@ public class Slime : Enemy
     {
         if (IsServer)
         {
-            Move();
+            if (GameManager.inCountdown)
+                myRig.velocity = Vector2.zero;
+            else
+                Move();
         }
     }
 }

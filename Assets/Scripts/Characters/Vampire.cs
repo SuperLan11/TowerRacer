@@ -172,6 +172,7 @@ public class Vampire : Enemy
 		{
 			if (IsServer)
 			{
+				SendUpdate("FLIP", spriteRender.flipX.ToString());
 				IsDirty = false;
 			}
 			yield return new WaitForSeconds(0.05f);
@@ -182,6 +183,12 @@ public class Vampire : Enemy
 	{
 		if (IsServer)
 		{
+			if (GameManager.inCountdown)
+			{
+				myRig.velocity = Vector2.zero;
+				return;
+			}
+
 			switch (state)
 			{
 				case STATE.MOVING:

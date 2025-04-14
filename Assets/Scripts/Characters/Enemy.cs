@@ -59,14 +59,14 @@ public abstract class Enemy : Character
             dir = -1;
             spriteRender.flipX = !spriteRender.flipX;
             SendUpdate("FLIP", true.ToString());
-            StartCoroutine(PauseRaycasting(0.2f));            
+            StartCoroutine(PauseRaycasting(0.3f));            
         }
         else if (!floorBelow && dir == -1)
         {
             dir = 1;
             spriteRender.flipX = !spriteRender.flipX;
             SendUpdate("FLIP", false.ToString());
-            StartCoroutine(PauseRaycasting(0.2f));      
+            StartCoroutine(PauseRaycasting(0.3f));      
         }        
     }
     protected IEnumerator PauseRaycasting(float seconds)
@@ -89,17 +89,22 @@ public abstract class Enemy : Character
     }
 
     protected virtual void OnCollisionEnter2D(Collision2D collider){
-        if (IsServer){
-            if (collider.gameObject.GetComponentInParent<Player>() != null){                
-                collider.gameObject.GetComponentInParent<Player>().TakeDamage(1);
-            }
-            //for hitting walls
-            else if(collider.gameObject.GetComponent<TilemapCollider2D>() != null){
-                Debug.Log("flipping slime");
+        if (IsServer)
+        {
+            //consider doing for loop for collision contacts here
+            bool hitPlayer = collider.gameObject.GetComponentInParent<Player>() != null;
+            bool hitWall = collider.gameObject.GetComponent<TilemapCollider2D>() != null;
+            bool hitEnemy = collider.gameObject.GetComponent<Enemy>() != null;
+
+            if (hitPlayer)            
+                collider.gameObject.GetComponentInParent<Player>().TakeDamage(1);            
+
+            if(hitPlayer || hitWall || hitEnemy)
+            {
                 dir *= -1;
                 spriteRender.flipX = !spriteRender.flipX;
-                SendUpdate("FLIP", false.ToString());
-            }
+                SendUpdate("FLIP", spriteRender.flipX.ToString());
+            }                        
         }
     }
 }

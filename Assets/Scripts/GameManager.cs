@@ -21,6 +21,7 @@ public class GameManager : NetworkComponent
     private static bool gameStarted = false;
     public static int playersReady = 0;    
     private List<GameObject> createdTutorials = new List<GameObject>();
+    public static bool inCountdown = false;
 
     //non-sync vars
     private Vector3[] starts = new Vector3[4];
@@ -201,20 +202,24 @@ public class GameManager : NetworkComponent
         {
             if(IsClient)
             {
-                Color hiddenColor = itemSquare.GetComponent<Image>().color;
+                Color hiddenColor = itemSquare.GetComponent<Image>().color;                
                 hiddenColor.a = 0;
                 itemSquare.GetComponent<Image>().color = hiddenColor;
-                itemSquare.GetComponentInChildren<Image>().color = hiddenColor;
+                itemSquare.transform.GetChild(0).GetComponent<Image>().color = hiddenColor;
             }
         }
         else if (flag == "SHOW_ITEM")
         {
             if (IsClient)
             {
-                Color visibleColor = itemSquare.GetComponent<Image>().color;
+                Color visibleColor = itemSquare.GetComponent<Image>().color;                
+                Color fullItemColor = itemSquare.transform.GetChild(0).GetComponent<Image>().color;
+
                 visibleColor.a = 0.5f;
+                fullItemColor.a = 1f;
+
                 itemSquare.GetComponent<Image>().color = visibleColor;
-                itemSquare.GetComponentInChildren<Image>().color = visibleColor;
+                itemSquare.transform.GetChild(0).GetComponent<Image>().color = fullItemColor;
             }
         }
         else if (flag == "PLAY_THEME")
@@ -768,8 +773,9 @@ public class GameManager : NetworkComponent
             SendUpdate("HIDE_TIMER", "");
             SendUpdate("HIDE_PLACE", "");
             SendUpdate("HIDE_ITEM", "");
-
             SendUpdate("STOP_THEME", "GoodMorning");
+
+            DestroyAllEnemies();
 
             //yield return prevents the following lines from running until the coroutine is done
             yield return FadeScorePanelIn(1f);
@@ -841,6 +847,8 @@ public class GameManager : NetworkComponent
 
     private IEnumerator Countdown()
     {
+        inCountdown = true;
+
         SendUpdate("COUNTDOWN", "3");
         yield return Wait(1f);
 
@@ -851,6 +859,17 @@ public class GameManager : NetworkComponent
         yield return Wait(1f);
 
         SendUpdate("HIDE_COUNTDOWN", "");
+
+        inCountdown = false;
+    }
+
+    private void DestroyAllEnemies()
+    {
+        Enemy[] enemies = FindObjectsOfType<Enemy>();
+        for(int i = enemies.Length-1; i >= 0; i--)
+        {
+            MyCore.NetDestroyObject(enemies[i].NetId);
+        }
     }
 
     private void MovePlayersToRound()
