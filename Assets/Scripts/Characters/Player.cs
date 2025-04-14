@@ -75,6 +75,7 @@ public class Player : Character {
     private LayerMask floorLayer;
     //don't need to worry about this in the inspector
     Tilemap tilemap;
+    private Gamepad gamepad;
 
     private Camera cam;
     public static float highestCamY;
@@ -143,6 +144,8 @@ public class Player : Character {
 
     private Coroutine dashCoroutine;
     private Coroutine stunCoroutine;   
+    private Coroutine rumbleCoroutine;   
+
 
     private uint numWallJumpsUsed = 0;
     private bool onWall = false;
@@ -539,6 +542,11 @@ public class Player : Character {
             if (IsClient){
                 StartStunEffect(stunColor);
             }  
+        }else if (flag == "RUMBLE"){
+            if (IsLocalPlayer){
+                //these will need to be variables if rumble will be used for multiple actions
+                Rumble(0.25f, 1f, DASH_EFFECT_DURATION);
+            }
         }else if (flag == "ENABLE_COLLIDERS"){
             if (IsClient){
                 feetCollider.enabled = true;
@@ -785,6 +793,14 @@ public class Player : Character {
         //!WE ARE NOT USING SPEED OR MYRIG ON THE PLAYER!!!!!!
         speed = -9000000;
         myRig = null;
+
+        if (IsLocalPlayer){
+            GetCurrentGamepad();
+
+            if (gamepad == null){
+                Debug.LogWarning("gamepad not detected");
+            }
+        }
 
         health = MAX_HEALTH = 3;
         inAttackCooldown = false;
@@ -1503,6 +1519,24 @@ public class Player : Character {
         rigidbody.velocity = new Vector2(rigidbody.velocity.x, verticalVelocity);
     }
 
+    //should only be called in localplayer
+    private void Rumble(float lowFrequency, float highFrequency, float duration){
+        GetCurrentGamepad();
+        if (gamepad == null){
+            Debug.LogWarning("no gamepad detected");
+            return;
+        }
+
+        gamepad.SetMotorSpeeds(lowFrequency, highFrequency);
+        rumbleCoroutine = StartCoroutine(RumbleRoutine(duration));
+    }
+
+    private IEnumerator RumbleRoutine(float duration){
+        yield return new WaitForSeconds(duration);
+
+        gamepad.SetMotorSpeeds(0f, 0f);
+    } 
+
     private IEnumerator GrabCooldown(float seconds)
     {
         yield return new WaitForSeconds(seconds);        
@@ -1577,6 +1611,10 @@ public class Player : Character {
 
         spriteRender.material = regularMaterial;
         stunCoroutine = null;
+    }
+
+    private void GetCurrentGamepad(){
+        gamepad = Gamepad.current;
     }
 
     protected override void Attack(){
@@ -1731,6 +1769,7 @@ public class Player : Character {
                     currentMovementState = movementState.DASHING;
                     dashTimer = MAX_DASH_TIME;
                     SendUpdate("START_DASH_EFFECT", "GoodMorning");
+                    SendUpdate("RUMBLE", "GoodMorning");
                     
                     Vector2 dashVelocity;
                     float xDirection = 0f, yDirection = 0f;
