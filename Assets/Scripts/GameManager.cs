@@ -19,8 +19,8 @@ public class GameManager : NetworkComponent
     //sync vars
     public static bool gameOver;
     private static bool gameStarted = false;
-    public static int playersReady = 0;
-    public GameObject[] tutorialPrefabs;
+    public static int playersReady = 0;    
+    private List<GameObject> createdTutorials = new List<GameObject>();
 
     //non-sync vars
     private Vector3[] starts = new Vector3[4];
@@ -202,6 +202,7 @@ public class GameManager : NetworkComponent
                 Color hiddenColor = itemSquare.GetComponent<Image>().color;
                 hiddenColor.a = 0;
                 itemSquare.GetComponent<Image>().color = hiddenColor;
+                itemSquare.GetComponentInChildren<Image>().color = hiddenColor;
             }
         }
         else if (flag == "SHOW_ITEM")
@@ -211,6 +212,7 @@ public class GameManager : NetworkComponent
                 Color visibleColor = itemSquare.GetComponent<Image>().color;
                 visibleColor.a = 0.5f;
                 itemSquare.GetComponent<Image>().color = visibleColor;
+                itemSquare.GetComponentInChildren<Image>().color = visibleColor;
             }
         }
         else if (flag == "PLAY_THEME")
@@ -224,6 +226,14 @@ public class GameManager : NetworkComponent
             if (IsClient)
             {
                 theme.Stop();
+            }
+        }
+        else if(flag == "CLEAR_ITEM")
+        {
+            if(IsClient)
+            {
+                if(itemSquare.transform.childCount > 0)
+                    Destroy(itemSquare.transform.GetChild(0));
             }
         }
         //for objects in scene before clients connect, can't use SendCommand because
@@ -325,11 +335,68 @@ public class GameManager : NetworkComponent
         }        
     }
 
+    private GameObject GetFloorPiece(GameObject piece)
+    {
+        for(int i = 0; i < piece.transform.childCount; i++)
+        {
+            if (piece.transform.GetChild(i).tag == "FLOOR")
+                return piece.transform.GetChild(i).gameObject;
+        }
+        return null;
+    }
+
     private void CreateTutorials()
     {
-        foreach (NPM npm in FindObjectsOfType<NPM>())
+        NPM[] npms = FindObjectsOfType<NPM>();
+        List<NPM> npmList = new List<NPM>(npms);
+        int minOwner = 0;
+        int tutorialsPlaced = 0;
+
+        for(int i = 0; i < npms.Length; i++)
+        { 
+            for(int j = 0; j < npms.Length; j++)
+            {
+                //create tutorial prefabs in order of connection count
+                if (npmList[j].Owner == minOwner)
+                {
+                    Vector2 pos = Vector2.zero;
+
+                    if (createdTutorials.Count > 0)
+                    {
+                        GameObject prevPiece = createdTutorials[createdTutorials.Count - 1];                                                
+                        pos = new Vector2(prevPiece.transform.position.x + 25f, 0);
+                    }                    
+
+                    //create appropriate tutorial for character chosen
+                    GameObject tutorial = MyCore.NetCreateObject(Idx.ARCHER_TUTORIAL + npms[j].CharSelected, Owner, pos, Quaternion.identity);
+                    createdTutorials.Add(tutorial);
+                    Debug.Log("created " + tutorial.name);
+
+                    tutorialsPlaced++;
+                    minOwner++;                    
+                    //don't remove player from list or you get concurrency error
+                }
+            }                   
+        }        
+    }
+
+    private void MovePlayersToTutorial()
+    {
+        Player[] players = FindObjectsOfType<Player>();
+        int minOwner = 0;
+        for (int i = 0; i < players.Length; i++)
         {
-            
+            for (int j = 0; j < players.Length; j++)
+            {
+                //create tutorial prefabs in order of connection count
+                if (players[j].Owner == minOwner)
+                {
+                    //startPos needs to be first child of tutorial prefab for this to work
+                    Vector2 startPos = createdTutorials[minOwner].transform.GetChild(0).transform.position;
+                    players[i].transform.position = startPos;
+                    minOwner++;
+                }
+            }
         }
     }
 
@@ -377,8 +444,9 @@ public class GameManager : NetworkComponent
         }
 
         int randPos = Random.Range(0, enemyPlaces.Count);
-        int lastEnemyIdx = Idx.FIRST_ENEMY_IDX + Idx.NUM_ENEMIES - 1;
-        int randEnemy = Random.Range(Idx.FIRST_ENEMY_IDX, lastEnemyIdx);        
+        int lastEnemyIdx = Idx.FIRST_ENEMY_IDX + Idx.NUM_ENEMIES;
+        //this is end exclusive
+        int randEnemy = Random.Range(Idx.FIRST_ENEMY_IDX, lastEnemyIdx);
         MyCore.NetCreateObject(randEnemy, Owner, enemyPlaces[randPos], Quaternion.identity);
     }
 
@@ -651,10 +719,7 @@ public class GameManager : NetworkComponent
 
     private IEnumerator FlashWinPoint(int roundWinOwner, int wins, int numFlashes, float flashTime)
     {                
-        Image dotToFlash = scorePanel.transform.GetChild(roundWinOwner).GetChild(1).GetChild(wins-1).GetComponent<Image>();
-        Debug.Log("dot to flash: " + dotToFlash.name);
-        Debug.Log("owner for flash: " + roundWinOwner);
-        Debug.Log("wins for flash: " + wins);
+        Image dotToFlash = scorePanel.transform.GetChild(roundWinOwner).GetChild(1).GetChild(wins-1).GetComponent<Image>();        
 
         Color32 normalColor = dotToFlash.color;
         Color32 flashColor = new Color32(255, 220, 0, 255);
@@ -833,8 +898,9 @@ public class GameManager : NetworkComponent
             {
                 yield return new WaitForSeconds(0.5f);
             }
-            
+
             RandomizeLevel(5);
+            //CreateTutorials();            
 
             NPM[] players = GameObject.FindObjectsOfType<NPM>();
             foreach (NPM n in players)
@@ -867,8 +933,10 @@ public class GameManager : NetworkComponent
                     camEndY = Mathf.Infinity;
 
                 player.SendUpdate("CAM_END", camEndY.ToString());
-                player.SendUpdate("INIT_SCORE_PANEL", "");
+                player.SendUpdate("INIT_SCORE_PANEL", "");                
             }
+            //MovePlayersToTutorial();
+            //
             //don't move this line. put additional updates after this so clients have their ui
             SendUpdate("INIT_UI", "");
 
@@ -908,6 +976,7 @@ public class GameManager : NetworkComponent
 
             //make sure to reset all stats on game over!!!
             ResetVariables();
+            SendUpdate("CLEAR_ITEM", "");
             
             MyId.NotifyDirty();
             MyCore.UI_Quit();

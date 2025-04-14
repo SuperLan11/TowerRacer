@@ -155,7 +155,9 @@ public class NPM : NetworkComponent
         //dynamically assign ui events so you can have anchored npm objects in the scene
         nameField.onValueChanged.AddListener(UI_NameChanged);
         readyToggle.onValueChanged.AddListener(UI_Ready);
-        charDropdown.onValueChanged.AddListener(UI_CharInput);        
+        charDropdown.onValueChanged.AddListener(UI_CharInput);
+
+        FindObjectOfType<GameManager>().SendUpdate("PLAY_THEME", "");
     }    
 
     public override void NetworkedStart()
