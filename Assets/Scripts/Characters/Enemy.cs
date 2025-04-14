@@ -48,8 +48,8 @@ public abstract class Enemy : Character
     protected void Move()
     {
         myRig.velocity = new Vector2(dir * speed, myRig.velocity.y);
-        float playerHeight = GetComponent<Collider2D>().bounds.size.y;
-        bool floorBelow = Physics2D.Raycast(transform.position, Vector2.down, playerHeight * 1.5f, floorLayer);
+        float enemyHeight = GetComponent<Collider2D>().bounds.size.y;
+        bool floorBelow = Physics2D.Raycast(transform.position, Vector2.down, enemyHeight * 1.5f, floorLayer);
 
         if (raycastingPaused)
             return;        
@@ -57,6 +57,7 @@ public abstract class Enemy : Character
         if (!floorBelow && dir == 1)
         {
             dir = -1;
+            Debug.Log(name + " is now moving left");
             spriteRender.flipX = !spriteRender.flipX;
             SendUpdate("FLIP", true.ToString());
             StartCoroutine(PauseRaycasting(0.3f));            
@@ -64,10 +65,11 @@ public abstract class Enemy : Character
         else if (!floorBelow && dir == -1)
         {
             dir = 1;
+            Debug.Log(name + " is now moving right");
             spriteRender.flipX = !spriteRender.flipX;
             SendUpdate("FLIP", false.ToString());
             StartCoroutine(PauseRaycasting(0.3f));      
-        }        
+        }
     }
     protected IEnumerator PauseRaycasting(float seconds)
     {
@@ -78,7 +80,9 @@ public abstract class Enemy : Character
 
     public override void TakeDamage(int damage){
         health -= damage;
-        
+        this.transform.GetChild(health).GetComponent<SpriteRenderer>().enabled = false;
+        SendUpdate("HIDE_HP", health.ToString());
+
         if (health <= 0){
             Debug.Log("enemy is dead");
             MyCore.NetDestroyObject(this.NetId);
@@ -93,17 +97,22 @@ public abstract class Enemy : Character
         {
             //consider doing for loop for collision contacts here
             bool hitPlayer = collider.gameObject.GetComponentInParent<Player>() != null;
-            bool hitWall = collider.gameObject.GetComponent<TilemapCollider2D>() != null;
+            bool hitTilemap = collider.gameObject.GetComponent<TilemapCollider2D>() != null;
             bool hitEnemy = collider.gameObject.GetComponent<Enemy>() != null;
 
             if (hitPlayer)            
-                collider.gameObject.GetComponentInParent<Player>().TakeDamage(1);            
+                collider.gameObject.GetComponentInParent<Player>().TakeDamage(1);
 
-            if(hitPlayer || hitWall || hitEnemy)
+            //to prevent enemies from falling off their platform
+            if (hitTilemap)            
+                myRig.gravityScale = 0f;            
+
+            if(hitPlayer || hitTilemap || hitEnemy)
             {
                 dir *= -1;
                 spriteRender.flipX = !spriteRender.flipX;
                 SendUpdate("FLIP", spriteRender.flipX.ToString());
+                StartCoroutine(PauseRaycasting(0.3f));
             }                        
         }
     }

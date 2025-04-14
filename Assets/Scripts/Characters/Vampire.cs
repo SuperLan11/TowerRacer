@@ -62,6 +62,11 @@ public class Vampire : Enemy
 				SendCommand(flag, value);
 			}
 		}
+		else if(flag == "HIDE_HP")
+        {
+			int health = int.Parse(value);
+			this.transform.GetChild(health).GetComponent<SpriteRenderer>().enabled = false;
+        }
 		else if (!OTHER_FLAGS.ContainsKey(flag))
 		{
 			Debug.LogWarning(flag + " is not a valid flag in " + this.GetType().Name + ".cs");

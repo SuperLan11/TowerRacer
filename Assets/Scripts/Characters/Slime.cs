@@ -21,6 +21,11 @@ public class Slime : Enemy
                 StartHitEffect(hitColor);
             }
         }
+        else if (flag == "HIDE_HP")
+        {
+            int health = int.Parse(value);
+            this.transform.GetChild(health).GetComponent<SpriteRenderer>().enabled = false;
+        }
         else if (flag == "DEBUG")
         {
             Debug.Log(value);

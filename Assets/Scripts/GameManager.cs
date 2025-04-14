@@ -22,6 +22,7 @@ public class GameManager : NetworkComponent
     public static int playersReady = 0;    
     private List<GameObject> createdTutorials = new List<GameObject>();
     public static bool inCountdown = false;
+    private Color32[] playerPanelColors;
 
     //non-sync vars
     private Vector3[] starts = new Vector3[4];
@@ -102,7 +103,7 @@ public class GameManager : NetworkComponent
             if (IsClient)
             {
                 float seconds = float.Parse(value);
-                StartCoroutine(FadeScorePanelIn(seconds));
+                StartCoroutine(FadeScorePanelIn(seconds, 0.5f));
             }
         }
         else if (flag == "FADE_OUT")
@@ -289,6 +290,12 @@ public class GameManager : NetworkComponent
         starts[1] = start2.transform.position;
         starts[2] = start3.transform.position;
         starts[3] = start4.transform.position;
+
+        playerPanelColors = new Color32[4];
+        playerPanelColors[0] = new Color32(255, 220, 0, 255); //gold for first
+        playerPanelColors[1] = new Color32(148, 148, 148, 255); //silver for second
+        playerPanelColors[2] = new Color32(196, 132, 0, 255); //bronze for third
+        playerPanelColors[3] = new Color32(255, 255, 255, 255); //white for fourth
     }    
 
     public override void NetworkedStart()
@@ -646,7 +653,7 @@ public class GameManager : NetworkComponent
         yield return new WaitForSeconds(seconds);
     }
 
-    private IEnumerator FadeScorePanelIn(float seconds)
+    private IEnumerator FadeScorePanelIn(float seconds, float finalPanelOpacity)
     {
         if (IsServer)
         {
@@ -671,7 +678,12 @@ public class GameManager : NetworkComponent
             foreach (Image image in images)
             {
                 Color newColor = image.color;
-                newColor.a += alphaUpdateFreq / seconds;
+                
+                if (image.tag == "PLAYER_PANEL")                
+                    newColor.a += (finalPanelOpacity)*alphaUpdateFreq / seconds;
+                else
+                    newColor.a += alphaUpdateFreq / seconds;
+
                 image.color = newColor;
             }
 
@@ -681,6 +693,30 @@ public class GameManager : NetworkComponent
                 newColor.a += alphaUpdateFreq / seconds;
                 text.color = newColor;
             }
+        }
+
+        //this sets the alpha of all the score panel elements to 1 once one is 1
+        //this prevents certain elements from being slightly transparent once the fade "finishes"
+        Color finalPanelColor = scoreBackground.color;
+        finalPanelColor.a = 1;
+        scoreBackground.color = finalPanelColor;
+
+        foreach (Image image in images)
+        {
+            Color finalColor = image.color;
+            if (image.tag == "PLAYER_PANEL")
+                finalColor.a = finalPanelOpacity;
+            else
+                finalColor.a = 1;
+
+            image.color = finalColor;
+        }
+
+        foreach (Text text in labels)
+        {
+            Color finalColor = text.color;
+            finalColor.a = 1;
+            text.color = finalColor;
         }
     }
 
@@ -778,7 +814,7 @@ public class GameManager : NetworkComponent
             DestroyAllEnemies();
 
             //yield return prevents the following lines from running until the coroutine is done
-            yield return FadeScorePanelIn(1f);
+            yield return FadeScorePanelIn(1f, 0.5f);
 
             TilemapCollider2D[] pieces = FindObjectsOfType<TilemapCollider2D>();
             foreach (TilemapCollider2D piece in pieces)
