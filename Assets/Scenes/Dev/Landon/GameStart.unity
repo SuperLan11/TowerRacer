@@ -2636,6 +2636,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1137634633914559420, guid: fbbdc66098f6760449f140425e560b70, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -7.4999924
+      objectReference: {fileID: 0}
+    - target: {fileID: 3026432938374781353, guid: fbbdc66098f6760449f140425e560b70, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -7.5000076
+      objectReference: {fileID: 0}
     - target: {fileID: 7332150844612644414, guid: fbbdc66098f6760449f140425e560b70, type: 3}
       propertyPath: m_Name
       value: GameUI
@@ -2719,6 +2727,10 @@ PrefabInstance:
     - target: {fileID: 8419660768305437484, guid: fbbdc66098f6760449f140425e560b70, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9039176951020911224, guid: fbbdc66098f6760449f140425e560b70, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -7.5000076
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

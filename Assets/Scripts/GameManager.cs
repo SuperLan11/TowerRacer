@@ -38,7 +38,8 @@ public class GameManager : NetworkComponent
     private GameObject npmPanel;
     private GameObject itemSquare;
     //making these serializable cause it's multiple components on the same obj
-    [SerializeField] private AudioSource theme;    
+    [SerializeField] private AudioSource theme;
+    [SerializeField] public AudioSource menuTheme;      //AKA professor morning song    
     [SerializeField] private AudioSource winGameSfx;
 
     public static Player winningPlayer = null;
@@ -227,6 +228,21 @@ public class GameManager : NetworkComponent
             if (IsClient)
             {
                 theme.Stop();
+            }
+        }
+        /*else if (flag == "PLAY_MENU_THEME")
+        {
+            
+            //needs to be local player cause it starts asynchronously
+            if (IsLocalPlayer){
+                menuTheme.Play();
+            }
+        }*/
+        else if (flag == "STOP_MENU_THEME")
+        {
+            if (IsClient)
+            {
+                menuTheme.Stop();
             }
         }
         else if(flag == "CLEAR_ITEM")
@@ -810,7 +826,7 @@ public class GameManager : NetworkComponent
             foreach (Player player in players)            
                 player.playerFrozen = false;            
 
-            SendUpdate("PLAY_THEME", "GoodMorning");            
+            SendUpdate("PLAY_THEME", "GoodMorning");         
 
             placeLbl.enabled = true;
             SendUpdate("SHOW_PLACE", "");
@@ -982,6 +998,7 @@ public class GameManager : NetworkComponent
             SendUpdate("GAMESTART", "1");
             //stops server from listening, so nobody new can join.
             MyCore.NotifyGameStart();
+            SendUpdate("STOP_MENU_THEME", "GoodMorning");
             SendUpdate("PLAY_THEME", "GoodMorning");
 
             /*while(!tutorialFinished)

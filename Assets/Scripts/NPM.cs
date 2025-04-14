@@ -157,13 +157,20 @@ public class NPM : NetworkComponent
         readyToggle.onValueChanged.AddListener(UI_Ready);
         charDropdown.onValueChanged.AddListener(UI_CharInput);
 
-        FindObjectOfType<GameManager>().SendUpdate("PLAY_THEME", "");
+        //menu themes will start for each player as soon as they join, so it's asynchronous
+        //FindObjectOfType<GameManager>().SendUpdate("PLAY_MENU_THEME", "");
     }    
 
     public override void NetworkedStart()
     {
         if (IsServer)
             SendUpdate("SHOW_NPM", "");
+
+        //menu themes will start for each player as soon as they join, so it's asynchronous
+        //FindObjectOfType<GameManager>().SendUpdate("PLAY_MENU_THEME", "");
+        if (IsLocalPlayer){
+            FindObjectOfType<GameManager>().menuTheme.Play();
+        }
     }   
 
     private void DisableNpmUI(GameObject panel)
