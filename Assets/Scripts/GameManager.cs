@@ -857,8 +857,7 @@ public class GameManager : NetworkComponent
                 if(player.wins >= 3)
                 {
                     SendUpdate("WIN_GAME_SFX", "");
-                    winningPlayer = player;
-                    SendUpdate("WINNING_PLAYER", winningPlayer.Owner.ToString());
+                    winningPlayer = player;                    
                     StartCoroutine(FadeScorePanelOut(1f));
 
                     GameManager.gameOver = true;                    
@@ -1112,11 +1111,11 @@ public class GameManager : NetworkComponent
             }
 
             //zooms in on player that won
-            foreach(Player player in FindObjectsOfType<Player>())
+            foreach (Player player in FindObjectsOfType<Player>())
             {
-                player.SendUpdate("WINNER_CAM", winningPlayer.Owner.ToString());
+                player.SendUpdate("WINNING_PLAYER", winningPlayer.Owner.ToString());
             }
-              
+
             yield return new WaitForSeconds(4f);
 
             //make sure to reset all stats on game over!!!

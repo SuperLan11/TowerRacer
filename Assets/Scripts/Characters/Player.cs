@@ -1908,6 +1908,10 @@ public class Player : Character {
                 if (currentRope != null){
                     canGrabRope = false;
                     currentRope.GrabRope(this);
+                    
+                    this.gameObject.layer = noJumpThruLayer;
+                    SendUpdate("DISABLE_JUMP_THRU_COLLISION", "");
+
                     currentMovementState = movementState.SWINGING;
                     canRopeJump = false;
                     //prevents player from immediately jumping if they're holding jump while collding with a rope
@@ -1934,6 +1938,10 @@ public class Player : Character {
                 
                 if (ropeJumpPressed && canRopeJump){
                     currentRope.BoostPlayer(this);
+                    
+                    this.gameObject.layer = normalLayer;
+                    SendUpdate("ENABLE_JUMP_THRU_COLLISION", "");
+
                     currentMovementState = movementState.LAUNCHING;
                     currentRope.playerPresent = false;
                     currentRope.SendUpdate("ROPE_JUMP_SFX", "");
