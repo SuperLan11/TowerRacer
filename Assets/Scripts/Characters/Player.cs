@@ -111,37 +111,38 @@ public class Player : Character {
 
     //not const anymore cause we want to change it for speed boost powerup
     [System.NonSerialized] public float MAX_WALK_SPEED = 12.5f;
-    private float GROUND_ACCELERATION = 5f, GROUND_DECELERATION = 20f;
-    private float AIR_ACCELERATION = 5f, AIR_DECELERATION = 5f;
-    private float WALL_JUMP_ACCELERATION;
+    [SerializeField] private float GROUND_ACCELERATION = 5f, GROUND_DECELERATION = 20f;
 
-    private float MAX_RUN_SPEED = 20f;
+    [SerializeField] private float AIR_ACCELERATION = 5f, AIR_DECELERATION = 5f;
+    [SerializeField] private float WALL_JUMP_ACCELERATION;
+
+    [SerializeField] private float MAX_RUN_SPEED = 20f;
 
     //these values will probably need to change based on the size of the Player
 
-    private float COLLISION_RAYCAST_LENGTH;
-    private float WALL_COLLISION_RAYCAST_LENGTH;
-    private float ATTACK_RAYCAST_LENGTH = 2f;
+    private const float COLLISION_RAYCAST_LENGTH = 0.02f;
+    private const float WALL_COLLISION_RAYCAST_LENGTH = (COLLISION_RAYCAST_LENGTH + 0.01f) * 8f;       //formerly COLLISION_RAYCAST_LENGTH + 0.1f
+    private const float ATTACK_RAYCAST_LENGTH = 2f;
 
 
     private float JUMP_HEIGHT = 6.5f;
     private float JUMP_HEIGHT_COMPENSATION_FACTOR = 1.054f;
     //apex = max height of jump
-    private float TIME_TILL_JUMP_APEX = 0.35f;
-    private float GRAVITY_RELEASE_MULTIPLIER = 2f;
-    private float MAX_FALL_SPEED = 26f;
+    [SerializeField] private float TIME_TILL_JUMP_APEX = 0.35f;
+    [SerializeField] private float GRAVITY_RELEASE_MULTIPLIER = 2f;
+    [SerializeField] private float MAX_FALL_SPEED = 26f;
     //no need to have canDoubleJump or anything like that since we have this int. Unfortunately can't be a const cause of double jumping
     public int MAX_JUMPS = 1;
     private const int MAX_WALL_JUMPS = 1;
-    private float WALL_JUMP_HORIZONTAL_BOOST = 15f;
+    [SerializeField] private float WALL_JUMP_HORIZONTAL_BOOST = 15f;
 
     [SerializeField] private bool inMovementAbilityCooldown = false;
     private float dashSpeed;
     private float dashTimer;
-    
-    private float DASH_EFFECT_DURATION = 0.5f;
 
-    private float MAX_DASH_TIME = 0.5f;   
+    [SerializeField] private float DASH_EFFECT_DURATION = 0.5f;
+
+    [SerializeField] private float MAX_DASH_TIME = 0.5f;   
 
     private Coroutine dashCoroutine;
     private Coroutine stunCoroutine;   
@@ -161,7 +162,7 @@ public class Player : Character {
 
     [System.NonSerialized] public int swingPosHeight = 0;
     [System.NonSerialized] public Transform swingPos;
-    public const float MAX_SWING_SPEED = 7.0f;
+    [SerializeField] public const float MAX_SWING_SPEED = 7.0f;
     private float MAX_LAUNCH_SPEED;
 
     [SerializeField] private float TIME_FOR_UP_CANCEL = 0.027f;
@@ -171,12 +172,12 @@ public class Player : Character {
     [SerializeField] private float MAX_WALL_JUMP_TIME = 0.2f;
     [SerializeField] private float MAX_WALL_STICK_TIME = 3f;
 
-    private float TILEMAP_PLATFORM_OFFSET = 2f;
+    private const float TILEMAP_PLATFORM_OFFSET = 2f;
 
 
-    private float gravity;
-    private float initialJumpVelocity;
-    private float adjustedJumpHeight;
+    [SerializeField] private float gravity; // = -1 * (2f * adjustedJumpHeight) / Mathf.Pow(TIME_TILL_JUMP_APEX, 2f) * patrickBSAdjuster;    
+    [SerializeField] private float initialJumpVelocity; // = Mathf.Abs(gravity);
+    [SerializeField] private float adjustedJumpHeight; //jump height * compensation
 
     [System.NonSerialized] public float verticalVelocity;
     private Vector2 moveVelocity;
@@ -208,7 +209,7 @@ public class Player : Character {
     [SerializeField] private float CHICKEN_INVINCIBILITY_TIME = 5f, TAKE_DAMAGE_INVINCIBILITY_TIME = 0.5f;
     [SerializeField] private float SPEED_BOOST_TIME = 2.5f;
     public bool isStunned = false;
-    private float STUN_TIME = 1f;
+    [SerializeField] private float STUN_TIME = 1f;
     private bool clientCollidersEnabled = true;
 
     private Vector2 lastAimDir;
@@ -778,15 +779,17 @@ public class Player : Character {
 
         placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
         itemUI = GameObject.FindGameObjectWithTag("ITEM_UI");
-        scorePanel = GameObject.FindGameObjectWithTag("SCORE");        
+        scorePanel = GameObject.FindGameObjectWithTag("SCORE");
+        
+        WALL_JUMP_ACCELERATION = AIR_ACCELERATION * 4f;
 
-        //add this back in when we start doing player spawn eggs
-        /*
-        GameObject temp = GameObject.Find("SpawnPoint");
-        rigidbody.position = temp.transform.position;\
-        */
+    //add this back in when we start doing player spawn eggs
+    /*
+    GameObject temp = GameObject.Find("SpawnPoint");
+    rigidbody.position = temp.transform.position;\
+    */
 
-        rigidbody.gravityScale = 0f;
+    rigidbody.gravityScale = 0f;
     }
 
     public override void NetworkedStart()
