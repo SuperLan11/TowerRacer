@@ -1,6 +1,6 @@
 /*
 @Authors - Patrick
-@Description - Sword is in motion by default, and will stop being in motion when coming in contact with anything
+@Description - Rope arrow is in motion by default, and will stop being in motion when coming in contact with anything
 */
 
 using System.Collections;
@@ -11,8 +11,21 @@ using NETWORK_ENGINE;
 
 public class RopeArrow : NetworkComponent
 {
-    private const int ROPE_SPAWN_PREFAB_INDEX = Idx.ROPE; //7; 
+    //?change this to line renderer index?
+    //private const int ROPE_SPAWN_PREFAB_INDEX = Idx.ROPE;
+    
+    //may want to change this to default rope jump SFX
     private AudioSource spawnRopeSfx;
+    [System.NonSerialized] public Player currentPlayer;
+    public LineRenderer lineRenderer;
+
+    //passed from server to client every frame cause I can't think of a better way to do it
+    public Vector3 mostRecentPlayerPos;
+
+    //wait a fraction of a second to prevent jank
+    private const float JANK_LINE_WAIT_TIME = 0.01f;
+    private bool inJankCooldown;
+
     
     public override void HandleMessage(string flag, string value)
     {
@@ -23,6 +36,10 @@ public class RopeArrow : NetworkComponent
                 spawnRopeSfx.Play();
                 GetComponent<SpriteRenderer>().enabled = false;
                 GetComponent<Collider2D>().enabled = false;
+            }
+        }else if (flag == "SET_PLAYER_POS"){
+            if (IsClient){
+                mostRecentPlayerPos = NetworkCore.Vector3FromString(value);
             }
         }
     }
@@ -35,6 +52,33 @@ public class RopeArrow : NetworkComponent
     public override void NetworkedStart()
     {
         GetComponent<Rigidbody2D>().gravityScale = 0f;
+        //lineRenderer = GetComponent<LineRenderer>();
+        lineRenderer.positionCount = 2;
+
+
+        if (IsClient){
+            inJankCooldown = false;
+            lineRenderer.enabled = false;
+            StartCoroutine(Waiting());
+        }else if (IsServer){
+            lineRenderer.enabled = true;
+        }
+    }
+
+    private IEnumerator Waiting(){
+        yield return new WaitForSecondsRealtime(JANK_LINE_WAIT_TIME);
+
+        inJankCooldown = false;
+        lineRenderer.enabled = true;
+    }
+
+    private void DrawRope(Vector3 pos1, Vector3 pos2){
+        if (lineRenderer.positionCount < 2){
+            return;
+        }
+
+        lineRenderer.SetPosition(0, pos1);
+        lineRenderer.SetPosition(1, pos2);
     }
 
     public override IEnumerator SlowUpdate(){
@@ -66,8 +110,9 @@ public class RopeArrow : NetworkComponent
 
     void OnTriggerEnter2D (Collider2D collider){
         if (IsServer){            
-            MyCore.NetCreateObject(ROPE_SPAWN_PREFAB_INDEX, Owner, this.transform.position, Quaternion.identity);
-
+            currentPlayer.archerArrowHitPosition = this.transform;
+            currentPlayer.archerArrowHitObj = true;
+            
             GetComponent<Rigidbody2D>().velocity = Vector2.zero;
             GetComponent<SpriteRenderer>().enabled = false;
             GetComponent<Collider2D>().enabled = false;
@@ -75,6 +120,15 @@ public class RopeArrow : NetworkComponent
 
             spawnRopeSfx.Play();
             StartCoroutine(DestroyAfterSfx());
+        }
+    }
+
+    void Update(){
+        if (IsServer){
+            DrawRope(this.transform.position, currentPlayer.transform.position);
+            SendUpdate("SET_PLAYER_POS", currentPlayer.transform.position.ToString());
+        }else if (IsClient && !inJankCooldown){
+            DrawRope(this.transform.position, mostRecentPlayerPos);
         }
     }
 }

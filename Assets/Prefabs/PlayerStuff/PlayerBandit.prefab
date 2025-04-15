@@ -496,6 +496,7 @@ MonoBehaviour:
   dashMaterial: {fileID: 2100000, guid: aa1d87d25dc5d894b8e6c3a4b269b704, type: 2}
   stunMaterial: {fileID: 2100000, guid: cf29321fa4104e644b6bf001e7da0048, type: 2}
   dashColor: {r: 0.039215688, g: 0.79607844, b: 0.91764706, a: 1}
+  knightDashColor: {r: 0.91764706, g: 0.46666667, b: 0.05882353, a: 1}
   winRoundSfx: {fileID: 5757822176487553341}
   useItemSfx: {fileID: 7737252930161369857}
   dashSfx: {fileID: 0}
@@ -1105,8 +1106,8 @@ AudioSource:
   m_GameObject: {fileID: 5403542797868829238}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 6fe0944ec9b1901429a4315803b2e173, type: 3}
+  OutputAudioMixerGroup: {fileID: 9055280020551596378, guid: 29a4c8fdc5050934e814cf064f3ef9fd, type: 2}
+  m_audioClip: {fileID: 8300000, guid: daed0f776ceab454da38945d236c8a0d, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1

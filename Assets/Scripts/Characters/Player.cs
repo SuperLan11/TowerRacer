@@ -99,6 +99,7 @@ public class Player : Character {
     [SerializeField] private Material stunMaterial;
 
     [SerializeField] private Color dashColor;
+    [SerializeField] private Color knightDashColor;
     protected Color stunColor = Color.yellow;
 
 
@@ -137,6 +138,8 @@ public class Player : Character {
 
     [SerializeField] private bool inMovementAbilityCooldown = false;
     private float dashSpeed;
+    private float knightDashSpeed;
+    private float archerGrappleSpeed;
     private float dashTimer;
     
     private const float DASH_EFFECT_DURATION = 0.5f;
@@ -151,6 +154,7 @@ public class Player : Character {
     private uint numWallJumpsUsed = 0;
     private bool onWall = false;
     private bool inWallJump = false;
+    private bool justStartedWallJump = false;
     private bool onWallWithoutJumpPressed = false;
     private bool wallJumpPressed = false;
 
@@ -216,6 +220,9 @@ public class Player : Character {
     private GameObject arrowPivot;
     private const float ARROW_SENSITIVITY = 0.2f;
 
+    [System.NonSerialized] public bool archerArrowHitObj = false;
+    [System.NonSerialized] public Transform archerArrowHitPosition = null;
+
     [SerializeField] private float movementAbilityCooldownTimer;
     [SerializeField] private float MAX_MOVEMENT_ABILITY_COOLDOWN;
 
@@ -238,10 +245,12 @@ public class Player : Character {
         JUMPING,    //!jumping means you are in the air with the jump button pressed
         FALLING,
         FAST_FALLING,
-        SWINGING,   //trigger
-        LAUNCHING,  //trigger
-        CLIMBING,   //trigger
-        DASHING,    //abiliy
+        SWINGING,       //trigger
+        LAUNCHING,      //trigger
+        CLIMBING,       //trigger
+        DASHING,        //abiliy
+        KNIGHT_DASHING, //ability
+        GRAPPLING,      //ability
     };
 
     [SerializeField] private movementState currentMovementState;
@@ -538,6 +547,10 @@ public class Player : Character {
             if (IsClient){
                 StartDashEffect(dashColor);
             }
+        }else if (flag == "START_KNIGHT_DASH_EFFECT"){
+            if (IsClient){
+                StartDashEffect(knightDashColor);
+            }
         }else if (flag == "START_HIT_EFFECT"){
             if (IsClient){
                 StartHitEffect(hitColor);
@@ -607,6 +620,11 @@ public class Player : Character {
                 stunSfx.Play();
             }
         }
+        else if(flag == "STOP_STUN_SFX"){
+            if(IsClient){
+                stunSfx.Stop();
+            }
+        }
         else if (flag == "SELECTED_CHARACTER_CLASS")
         {
             //doing this for performance reasons since Enum.Parse<>() is apparently performance-intensive
@@ -673,6 +691,10 @@ public class Player : Character {
                 return "CLIMBING";
             case movementState.DASHING:
                 return "DASHING";
+            case movementState.KNIGHT_DASHING:
+                return "KNIGHT_DASHING";
+            case movementState.GRAPPLING:
+                return "GRAPPLING";
             default:
                 return "GROUND";
         }
@@ -681,7 +703,7 @@ public class Player : Character {
     private string CharacterClassToString(characterClass value){
         switch(value){
             case characterClass.ARCHER:
-                    return "ARCHER";
+                return "ARCHER";
             case characterClass.MAGE:
                 return "MAGE";
             case characterClass.BANDIT:
@@ -789,6 +811,8 @@ public class Player : Character {
     {
         CalculateInitialConditions();
         dashSpeed = initialJumpVelocity * 2f;
+        knightDashSpeed = dashSpeed * 1.5f;
+        archerGrappleSpeed = dashSpeed * 1f;
         MAX_LAUNCH_SPEED = MAX_WALK_SPEED * 20f;
 
         startPos = this.transform.position;
@@ -815,24 +839,29 @@ public class Player : Character {
         hitMaterial = new Material(hitMaterial);
         stunMaterial = new Material(stunMaterial);
 
+        if (IsClient){
+            GetComponent<TrailRenderer>().startColor = Color.red;
+            GetComponent<TrailRenderer>().endColor = new Color(255f, 0f, 0f, 0f);
+            //GetComponent<TrailRenderer>().endColor.WithAlpha(0f);
+        }else if (IsServer){
+            GetComponent<TrailRenderer>().enabled = false;
+        }
+
         switch (selectedCharacterClass){
             case characterClass.ARCHER:
-                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 20f;
+                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 2f;
                 break;
             case characterClass.MAGE:
                 movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 5f;
                 break;
-            //why 3 jumps for a double jump? Cause Unity can't do something as simple as make a functional input system. Set this to 2 at your own
-            //peril
             case characterClass.BANDIT:
-                MAX_JUMPS = 3;
+                MAX_JUMPS = 2;
                 movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 0.0001f;
                 //maybe increase movement speed as well?
                 break;
             case characterClass.KNIGHT:
-                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 2f;
+                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 7f;
                 break;
-
         }
 
         if (!GameManager.debugMode)
@@ -1046,7 +1075,7 @@ public class Player : Character {
     private bool CanLeftWallJump(){
         if (IsServer){
             Vector2 leftTempPos = new Vector2(bodyCollider.bounds.min.x - COLLISION_RAYCAST_LENGTH, bodyCollider.bounds.center.y);
-            RaycastHit2D[] leftHits = Physics2D.RaycastAll(leftTempPos, Vector2.left, WALL_COLLISION_RAYCAST_LENGTH, ~0);
+            RaycastHit2D[] leftHits = Physics2D.RaycastAll(leftTempPos, Vector2.left, WALL_COLLISION_RAYCAST_LENGTH*2f, ~0);
 
             bool leftCollision = false;
             foreach (RaycastHit2D hit in leftHits){
@@ -1066,7 +1095,7 @@ public class Player : Character {
     private bool CanRightWallJump(){
         if (IsServer){
             Vector2 rightTempPos = new Vector2(bodyCollider.bounds.max.x + COLLISION_RAYCAST_LENGTH, bodyCollider.bounds.center.y);
-            RaycastHit2D[] rightHits = Physics2D.RaycastAll(rightTempPos, Vector2.right, WALL_COLLISION_RAYCAST_LENGTH, ~0);
+            RaycastHit2D[] rightHits = Physics2D.RaycastAll(rightTempPos, Vector2.right, WALL_COLLISION_RAYCAST_LENGTH*2f, ~0);
 
             bool rightCollision = false;
             foreach (RaycastHit2D hit in rightHits){
@@ -1279,6 +1308,14 @@ public class Player : Character {
 
     public bool IsDashing(){
         return (currentMovementState == movementState.DASHING);
+    }
+
+    public bool IsKnightDashing(){
+        return (currentMovementState == movementState.KNIGHT_DASHING);
+    }
+
+    public bool IsGrappling(){
+        return (currentMovementState == movementState.GRAPPLING);
     }
 
     //add to this if we add any trigger movement states
@@ -1540,6 +1577,7 @@ public class Player : Character {
 
         //we're gonna give the horizontal boost in Update() cause that's where we change horizontal velocity
         inWallJump = true;
+        justStartedWallJump = true;
         verticalVelocity = initialJumpVelocity;
 
         rigidbody.velocity = new Vector2(rigidbody.velocity.x, verticalVelocity);
@@ -1587,6 +1625,7 @@ public class Player : Character {
 
         isStunned = false;
         health = 3;
+        SendUpdate("STOP_STUN_SFX", "GoodMorning");
     }
 
     private IEnumerator RopeJumpCooldown(float cooldown){
@@ -1680,6 +1719,7 @@ public class Player : Character {
                 isStunned = true;
                 StartCoroutine(StunCooldown());
                 SendUpdate("START_STUN_EFFECT", "GoodMorning");
+                SendUpdate("STUN_SFX", "GoodMorning");
             }else{      //give player a moment of brief invincibility after taking a hit of damage
                 isInvincible = true;
                 StartCoroutine(InvincibilityCooldown(TAKE_DAMAGE_INVINCIBILITY_TIME));
@@ -1779,23 +1819,36 @@ public class Player : Character {
 
             if (movementAbilityPressed && !inMovementAbilityCooldown){
                 if (selectedCharacterClass == characterClass.ARCHER){
-                    float yOffset = 4f;
+                    float yOffset = 2f;
                     Vector2 ropeArrowPos = new Vector2(this.transform.position.x, this.transform.position.y + yOffset);
-                    float ropeArrowSpeed = 1f;
-                    Quaternion arrowDirection = Quaternion.Euler(0f, 0f, 90f);     
+                    float ropeArrowSpeed = 10f;
+                    Vector2 direction = new Vector2(0f, 1f);
+                    Quaternion arrowDirection;
+
+                    //only 3 directions: top left, top right, and top
+                    if (moveInput.x > 0.01f){
+                        direction.x = 1f;
+                        arrowDirection = Quaternion.Euler(0f, 0f, 45f);     
+                    }else if (moveInput.x < -0.01f){
+                        direction.x = -1f;
+                        arrowDirection = Quaternion.Euler(0f, 0f, 135f);     
+                    }else{
+                        arrowDirection = Quaternion.Euler(0f, 0f, 90f);     
+                    }
                     
                     GameObject ropeArrow = MyCore.NetCreateObject(ROPE_ARROW_SPAWN_PREFAB_INDEX, Owner, ropeArrowPos, arrowDirection);
-                    ropeArrow.GetComponent<Rigidbody2D>().velocity = new Vector2(0f, ropeArrowSpeed);
+                    ropeArrow.GetComponent<RopeArrow>().currentPlayer = this;
+                    ropeArrow.GetComponent<Rigidbody2D>().velocity = direction.normalized * ropeArrowSpeed;
                     
                     inMovementAbilityCooldown = true;
                 }else if (selectedCharacterClass == characterClass.MAGE){
-                    //at least for right now, the only way to double jump is going to be to hit jump twice
                     SendUpdate("DASH_SFX", "");
                     currentMovementState = movementState.DASHING;
                     dashTimer = MAX_DASH_TIME;
                     SendUpdate("START_DASH_EFFECT", "GoodMorning");
                     SendUpdate("RUMBLE", "GoodMorning");
                     
+                    //may want to normalize the vector if we don't want diagonals to be op
                     Vector2 dashVelocity;
                     float xDirection = 0f, yDirection = 0f;
 
@@ -1834,32 +1887,25 @@ public class Player : Character {
                     inMovementAbilityCooldown = true;
                     return;
                 }else if (selectedCharacterClass == characterClass.KNIGHT){
-                    Quaternion swordDirection;   
-                        
-                    Vector2 swordPos = new Vector2(this.transform.position.x, this.transform.position.y);
-                    float xOffset = 4f;
-                    float swordSpeed;
-                    GameObject sword;
+                    SendUpdate("DASH_SFX", "");
+                    currentMovementState = movementState.KNIGHT_DASHING;
+                    //make these different variables if we want it to be different for the knight
+                    dashTimer = MAX_DASH_TIME;
+                    SendUpdate("START_KNIGHT_DASH_EFFECT", "GoodMorning");
+                    SendUpdate("RUMBLE", "GoodMorning");
                     
-                    if (isFacingRight){
-                        swordPos.x += xOffset;
-                        swordSpeed = 1f;
-                        swordDirection = Quaternion.Euler(0f, 0f, 270f);
-                        //doing two different prefabs cause it's the easiest way for one-way platform effector to work
-                        sword = MyCore.NetCreateObject(RIGHT_SWORD_SPAWN_PREFAB_INDEX, Owner, swordPos, swordDirection);
-                    }else{
-                        swordPos.x -= xOffset;
-                        swordSpeed = -1f;
-                        swordDirection = Quaternion.Euler(0f, 0f, 90f);
-                        sword = MyCore.NetCreateObject(LEFT_SWORD_SPAWN_PREFAB_INDEX, Owner, swordPos, swordDirection);
-                    }
+                    Vector2 dashVelocity;
 
-                    sword.GetComponent<Rigidbody2D>().velocity = new Vector2(swordSpeed, 0f);
+                    float xDirection = (isFacingRight ? 1f : -1f);
+                    float yDirection = 0f;
                     
+                    dashVelocity = new Vector2(xDirection * knightDashSpeed, yDirection);
+                    verticalVelocity = dashVelocity.y;
+                    rigidbody.velocity = dashVelocity;
+
                     inMovementAbilityCooldown = true;
+                    return;
                 }
-
-                //inMovementAbilityCooldown = true;
             }
 
             if (attackPressed){
@@ -1919,8 +1965,70 @@ public class Player : Character {
                 return;
             }
 
+            if (archerArrowHitObj && (archerArrowHitPosition != null)){
+                //SendUpdate("DASH_SFX", "");
+                currentMovementState = movementState.DASHING;
+                dashTimer = MAX_DASH_TIME;
+                //SendUpdate("START_DASH_EFFECT", "GoodMorning");
+                SendUpdate("RUMBLE", "GoodMorning");
+                
+                Vector2 arrowPos = new Vector2(archerArrowHitPosition.position.x, archerArrowHitPosition.position.y);
+                Vector2 direction = (arrowPos - rigidbody.position).normalized;
+                
+                Vector2 tempVelocity = direction * archerGrappleSpeed;
+                verticalVelocity = tempVelocity.y;
+                rigidbody.velocity = tempVelocity;
+
+                currentMovementState = movementState.GRAPPLING;
+
+                archerArrowHitObj = false;
+                archerArrowHitPosition = null;
+                
+                return;
+            }
+
+            if (IsGrappling()){
+                if (dashTimer > 0f){
+                    dashTimer -= Time.deltaTime;
+                    
+                    //returning instead of giving the player midair control makes it feel more like a Celeste-style dash
+                    return;
+                }else{
+                    dashTimer = MAX_DASH_TIME;
+                    currentMovementState = movementState.FALLING;
+                }
+            }
+
             if (IsDashing()){
                 if (dashTimer > 0f){
+                    dashTimer -= Time.deltaTime;
+                    
+                    //returning instead of giving the player midair control makes it feel more like a Celeste-style dash
+                    return;
+                }else{
+                    dashTimer = MAX_DASH_TIME;
+                    currentMovementState = movementState.FALLING;
+                }
+            }
+
+            if (IsKnightDashing()){
+                if (dashTimer > 0f){
+                    //hit wall while dashing horizontally
+                    if ((verticalVelocity <= 0f) && CheckForWalls()){
+                        //play crashing sfx
+                        Vector2 dashVelocity;
+
+                        //flip velocities but retain x velocity a little
+                        float xVelocity = (isFacingRight ? (knightDashSpeed / 8f) : (-knightDashSpeed / 8f));
+                        float yVelocity = knightDashSpeed;
+                        
+                        dashVelocity = new Vector2(xVelocity, yVelocity);
+                        verticalVelocity = dashVelocity.y;
+                        rigidbody.velocity = dashVelocity;
+                        //dashTimer = MAX_DASH_TIME;
+                        //inMovementAbilityCooldown = true;
+                    }
+                    
                     dashTimer -= Time.deltaTime;
                     
                     //returning instead of giving the player midair control makes it feel more like a Celeste-style dash
@@ -2061,10 +2169,11 @@ public class Player : Character {
             //no need to check for isJumpPressed since that's what jumpBufferTimer is doing
             bool normalJump = (jumpBufferTimer > 0f && !IsJumping() && (onGround || coyoteTimer > 0f));
             bool wallJump = (wallsTimer > 0f && onWall && wallJumpPressed && CanWallJump());
-            bool extraJump = (jumpBufferTimer > 0f && IsFastFalling() && (numJumpsUsed < MAX_JUMPS));
-            bool airJump = (jumpBufferTimer > 0f && IsFallingInTheAir() && (numJumpsUsed < MAX_JUMPS - 1));
+            bool extraJump = (jumpPressed && IsFastFalling() && (numJumpsUsed < MAX_JUMPS));
+            bool airJump = (jumpPressed && IsFallingInTheAir() && (numJumpsUsed < MAX_JUMPS - 1));
 
             if (normalJump){
+                Debug.Log("normal jump");
                 InitiateJump(1);
                 SendUpdate("JUMP_ANIM", "");
                 SendUpdate("JUMP_SFX", "");
@@ -2077,16 +2186,16 @@ public class Player : Character {
                 InitiateWallJump();
                 SendUpdate("JUMP_ANIM", "");
             }else if (extraJump){
+                Debug.Log("Extra jump");
                 SendUpdate("DOUBLE_JUMP_SFX", "");
                 InitiateJump(1);
                 SendUpdate("JUMP_ANIM", "");
             }else if (airJump){
+                Debug.Log("air jump");
                 SendUpdate("DOUBLE_JUMP_SFX", "");
                 //forces player to only get one jump when they're falling, so they can't fall off a ledge and then jump twice.
                 InitiateJump(2);
                 SendUpdate("JUMP_ANIM", "");
-                
-                currentMovementState = movementState.FAST_FALLING;
             }
 
             bool justLanded = (InTheAir() && onGround && (verticalVelocity <= 0f));
@@ -2162,13 +2271,29 @@ public class Player : Character {
                     inWallJump = false;
                 }
 
-                //can't do moveInput.x cause that would be using player input
-                float xDirection = (isFacingRight ? 1f : -1f);
+                //only calculate velocity on the first frame of the wall jump so we only have to check collision once, and so that the wall jump
+                //doesn't get cut off prematurely
+                if (justStartedWallJump){
+                    //float xDirection = (isFacingRight ? 1f : -1f);
+                    
+                    float xDirection;                
+                    //can't do moveInput.x cause that would be using player input
+                    if (CanLeftWallJump()){
+                        xDirection = 1f;
+                    }else if (CanRightWallJump()){
+                        xDirection = -1f;
+                    }else{
+                        xDirection = 0f;
+                        Debug.LogError("How can thou expect to jumpeth on a wall that doth not exist?");
+                    }
 
-                Vector2 targetVelocity = new Vector2(xDirection * WALL_JUMP_HORIZONTAL_BOOST, 0f);
+                    Vector2 targetVelocity = new Vector2(xDirection * WALL_JUMP_HORIZONTAL_BOOST, 0f);
 
-                moveVelocity = Vector2.Lerp(new Vector2(xDirection/10f, 0f), targetVelocity, WALL_JUMP_ACCELERATION * Time.deltaTime);
-                rigidbody.velocity = new Vector2(moveVelocity.x, rigidbody.velocity.y);
+                    moveVelocity = Vector2.Lerp(new Vector2(xDirection/10f, 0f), targetVelocity, WALL_JUMP_ACCELERATION * Time.deltaTime);
+                    rigidbody.velocity = new Vector2(moveVelocity.x, rigidbody.velocity.y);
+
+                    justStartedWallJump = false;
+                }
                 
                 //returning to temporarily take away horizontal control from the player
                 return;
