@@ -857,6 +857,9 @@ public class Player : Character {
         hitMaterial = new Material(hitMaterial);
         stunMaterial = new Material(stunMaterial);
 
+        
+        //!Uncomment this on WED so you can see if Towle can help make it look smooth
+        /*
         if (IsClient){
             GetComponent<TrailRenderer>().startColor = Color.red;
             GetComponent<TrailRenderer>().endColor = new Color(255f, 0f, 0f, 0f);
@@ -864,6 +867,7 @@ public class Player : Character {
         }else if (IsServer){
             GetComponent<TrailRenderer>().enabled = false;
         }
+        */
 
         switch (selectedCharacterClass){
             case characterClass.ARCHER:
@@ -2004,7 +2008,7 @@ public class Player : Character {
 
             if (archerArrowHitObj && (archerArrowHitPosition != null)){
                 //SendUpdate("DASH_SFX", "");
-                currentMovementState = movementState.DASHING;
+                //currentMovementState = movementState.DASHING;
                 dashTimer = MAX_DASH_TIME;
                 //SendUpdate("START_DASH_EFFECT", "GoodMorning");
                 SendUpdate("RUMBLE", "GoodMorning");

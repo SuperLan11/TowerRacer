@@ -5,6 +5,7 @@ using NETWORK_ENGINE;
 
 public class Slime : Enemy
 {       
+    //no need to worry about animator since there's only one animation
     public override void HandleMessage(string flag, string value)
     {
         if(flag == "FLIP")
