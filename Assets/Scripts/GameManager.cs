@@ -779,7 +779,7 @@ public class GameManager : NetworkComponent
 
     private IEnumerator FlashWinPoint(int roundWinOwner, int wins, int numFlashes, float flashTime)
     {                
-        Image dotToFlash = scorePanel.transform.GetChild(roundWinOwner).GetChild(1).GetChild(wins-1).GetComponent<Image>();        
+        Image dotToFlash = scorePanel.transform.GetChild(roundWinOwner).GetChild(1).GetChild(wins-1).GetComponent<Image>();   
 
         Color32 normalColor = dotToFlash.color;
         Color32 flashColor = new Color32(255, 220, 0, 255);

@@ -49,31 +49,28 @@ public abstract class Enemy : Character
     {
         myRig.velocity = new Vector2(dir * speed, myRig.velocity.y);
         float enemyHeight = GetComponent<Collider2D>().bounds.size.y;
-        bool floorBelow = Physics2D.Raycast(transform.position, Vector2.down, enemyHeight * 1.5f, floorLayer);
+        bool floorBelow = Physics2D.Raycast(transform.position, Vector2.down, enemyHeight * 1.5f, floorLayer);        
 
-        if (raycastingPaused)
-            return;        
-
-        if (!floorBelow && dir == 1)
+        if(!floorBelow && !raycastingPaused)
         {
-            dir = -1;
-            Debug.Log(name + " is now moving left");
-            spriteRender.flipX = !spriteRender.flipX;
-            SendUpdate("FLIP", true.ToString());
-            StartCoroutine(PauseRaycasting(0.3f));            
+            dir *= -1;
+            raycastingPaused = true;
+            StartCoroutine(PauseRaycasting(0.3f));
         }
-        else if (!floorBelow && dir == -1)
+
+        if (myRig.velocity.x > 0.01f && spriteRender.flipX)
         {
-            dir = 1;
-            Debug.Log(name + " is now moving right");
-            spriteRender.flipX = !spriteRender.flipX;
+            spriteRender.flipX = false;
             SendUpdate("FLIP", false.ToString());
-            StartCoroutine(PauseRaycasting(0.3f));      
+        }
+        else if (myRig.velocity.x < -0.01f && !spriteRender.flipX)
+        {
+            spriteRender.flipX = true;
+            SendUpdate("FLIP", true.ToString());
         }
     }
     protected IEnumerator PauseRaycasting(float seconds)
-    {
-        raycastingPaused = true;
+    {        
         yield return new WaitForSeconds(seconds);
         raycastingPaused = false;
     }
@@ -104,8 +101,8 @@ public abstract class Enemy : Character
                 collider.gameObject.GetComponentInParent<Player>().TakeDamage(1);
 
             //to prevent enemies from falling off their platform
-            if (hitTilemap)            
-                myRig.gravityScale = 0f;            
+            if (hitTilemap)
+                myRig.gravityScale = 0f;
 
             if(hitPlayer || hitTilemap || hitEnemy)
             {

@@ -111,37 +111,37 @@ public class Player : Character {
 
     //not const anymore cause we want to change it for speed boost powerup
     [System.NonSerialized] public float MAX_WALK_SPEED = 12.5f;
-    private const float GROUND_ACCELERATION = 5f, GROUND_DECELERATION = 20f;
-    private const float AIR_ACCELERATION = 5f, AIR_DECELERATION = 5f;
-    private const float WALL_JUMP_ACCELERATION = AIR_ACCELERATION * 4f;     //totally fine if we want to make it independent
+    private float GROUND_ACCELERATION = 5f, GROUND_DECELERATION = 20f;
+    private float AIR_ACCELERATION = 5f, AIR_DECELERATION = 5f;
+    private float WALL_JUMP_ACCELERATION;
 
-    private const float MAX_RUN_SPEED = 20f;
+    private float MAX_RUN_SPEED = 20f;
 
     //these values will probably need to change based on the size of the Player
 
-    private const float COLLISION_RAYCAST_LENGTH = 0.02f;
-    private const float WALL_COLLISION_RAYCAST_LENGTH = (COLLISION_RAYCAST_LENGTH + 0.01f) * 8f;       //formerly COLLISION_RAYCAST_LENGTH + 0.1f
-    private const float ATTACK_RAYCAST_LENGTH = 2f;
+    private float COLLISION_RAYCAST_LENGTH;
+    private float WALL_COLLISION_RAYCAST_LENGTH;
+    private float ATTACK_RAYCAST_LENGTH = 2f;
 
 
-    private const float JUMP_HEIGHT = 6.5f;
-    private const float JUMP_HEIGHT_COMPENSATION_FACTOR = 1.054f;
+    private float JUMP_HEIGHT = 6.5f;
+    private float JUMP_HEIGHT_COMPENSATION_FACTOR = 1.054f;
     //apex = max height of jump
-    private const float TIME_TILL_JUMP_APEX = 0.35f;
-    private const float GRAVITY_RELEASE_MULTIPLIER = 2f;
-    private const float MAX_FALL_SPEED = 26f;
+    private float TIME_TILL_JUMP_APEX = 0.35f;
+    private float GRAVITY_RELEASE_MULTIPLIER = 2f;
+    private float MAX_FALL_SPEED = 26f;
     //no need to have canDoubleJump or anything like that since we have this int. Unfortunately can't be a const cause of double jumping
     public int MAX_JUMPS = 1;
     private const int MAX_WALL_JUMPS = 1;
-    private const float WALL_JUMP_HORIZONTAL_BOOST = 15f;
+    private float WALL_JUMP_HORIZONTAL_BOOST = 15f;
 
     [SerializeField] private bool inMovementAbilityCooldown = false;
     private float dashSpeed;
     private float dashTimer;
     
-    private const float DASH_EFFECT_DURATION = 0.5f;
+    private float DASH_EFFECT_DURATION = 0.5f;
 
-    private const float MAX_DASH_TIME = 0.5f;   
+    private float MAX_DASH_TIME = 0.5f;   
 
     private Coroutine dashCoroutine;
     private Coroutine stunCoroutine;   
@@ -161,17 +161,17 @@ public class Player : Character {
 
     [System.NonSerialized] public int swingPosHeight = 0;
     [System.NonSerialized] public Transform swingPos;
-    [System.NonSerialized] public const float MAX_SWING_SPEED = 7.0f;
+    public const float MAX_SWING_SPEED = 7.0f;
     private float MAX_LAUNCH_SPEED;
 
-    private const float TIME_FOR_UP_CANCEL = 0.027f;
-    private const float APEX_THRESHOLD = 0.97f, APEX_HANG_TIME = 0.075f;
-    private const float MAX_JUMP_BUFFER_TIME = 0.125f;
-    private const float MAX_JUMP_COYOTE_TIME = 0.1f;
-    private const float MAX_WALL_JUMP_TIME = 0.2f;
-    private const float MAX_WALL_STICK_TIME = 3f;
+    [SerializeField] private float TIME_FOR_UP_CANCEL = 0.027f;
+    [SerializeField] private float APEX_THRESHOLD = 0.97f, APEX_HANG_TIME = 0.075f;
+    [SerializeField] private float MAX_JUMP_BUFFER_TIME = 0.125f;
+    [SerializeField] private float MAX_JUMP_COYOTE_TIME = 0.1f;
+    [SerializeField] private float MAX_WALL_JUMP_TIME = 0.2f;
+    [SerializeField] private float MAX_WALL_STICK_TIME = 3f;
 
-    private const float TILEMAP_PLATFORM_OFFSET = 2f;
+    private float TILEMAP_PLATFORM_OFFSET = 2f;
 
 
     private float gravity;
@@ -205,16 +205,16 @@ public class Player : Character {
     //private Item currentlyEquippedItem = null;
 
     [System.NonSerialized] public bool isInvincible = false;
-    private const float CHICKEN_INVINCIBILITY_TIME = 5f, TAKE_DAMAGE_INVINCIBILITY_TIME = 0.5f;
-    private const float SPEED_BOOST_TIME = 2.5f;
+    [SerializeField] private float CHICKEN_INVINCIBILITY_TIME = 5f, TAKE_DAMAGE_INVINCIBILITY_TIME = 0.5f;
+    [SerializeField] private float SPEED_BOOST_TIME = 2.5f;
     public bool isStunned = false;
-    private const float STUN_TIME = 1f;
+    private float STUN_TIME = 1f;
     private bool clientCollidersEnabled = true;
 
     private Vector2 lastAimDir;
     private GameObject aimArrow;
     private GameObject arrowPivot;
-    private const float ARROW_SENSITIVITY = 0.2f;
+    [SerializeField] private float ARROW_SENSITIVITY = 0.2f;
 
     [SerializeField] private float movementAbilityCooldownTimer;
     [SerializeField] private float MAX_MOVEMENT_ABILITY_COOLDOWN;
@@ -1665,10 +1665,16 @@ public class Player : Character {
 
         RaycastHit2D[] hits = Physics2D.RaycastAll(position, direction, ATTACK_RAYCAST_LENGTH, ~0);
 
-        foreach (RaycastHit2D hit in hits){
+        foreach (RaycastHit2D hit in hits)
+        {
             DrawDebugNormal(position, direction, ATTACK_RAYCAST_LENGTH, false);
-            if (hit.collider.GetComponentInParent<Enemy>() != null){
+            if (hit.collider.GetComponentInParent<Enemy>() != null)
+            {
                 hit.collider.GetComponentInParent<Enemy>().TakeDamage(1);
+            }
+            else if (hit.collider.GetComponent<Enemy>() != null)
+            {
+                hit.collider.GetComponent<Enemy>().TakeDamage(1);
             }
         }
         
