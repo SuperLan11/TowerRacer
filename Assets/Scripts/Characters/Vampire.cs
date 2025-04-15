@@ -62,6 +62,11 @@ public class Vampire : Enemy
 				SendCommand(flag, value);
 			}
 		}
+		else if(flag == "HIDE_HP")
+        {
+			int health = int.Parse(value);
+			this.transform.GetChild(health).GetComponent<SpriteRenderer>().enabled = false;
+        }
 		else if (!OTHER_FLAGS.ContainsKey(flag))
 		{
 			Debug.LogWarning(flag + " is not a valid flag in " + this.GetType().Name + ".cs");
@@ -75,6 +80,16 @@ public class Vampire : Enemy
 	public override void NetworkedStart()
 	{
 		health = 3;
+		
+		Vector2 belowFeet = transform.position;
+		belowFeet.y -= GetComponent<Collider2D>().bounds.size.y;
+
+		//teleport slime to platform below it to avoid fall off issues
+		RaycastHit2D hit = Physics2D.Raycast(belowFeet, Vector2.down, Mathf.Infinity, floorLayer);
+		float standingY = GetTileUpperY(hit);
+		Vector2 standingPos = transform.position;
+		standingPos.y = standingY + GetComponent<Collider2D>().bounds.size.y / 2;
+		transform.position = standingPos;
 	}
 
 	protected override void OnCollisionEnter2D(Collision2D collision)

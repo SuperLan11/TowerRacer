@@ -6,7 +6,7 @@ using NETWORK_ENGINE;
 public abstract class Character : NetworkComponent
 {
     //sync vars
-    public int health;        
+    [System.NonSerialized] public int health;
     [SerializeField] protected float speed;    
 
     //non-sync vars

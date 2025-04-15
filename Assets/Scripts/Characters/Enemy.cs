@@ -48,37 +48,55 @@ public abstract class Enemy : Character
     protected void Move()
     {
         myRig.velocity = new Vector2(dir * speed, myRig.velocity.y);
-        float playerHeight = GetComponent<Collider2D>().bounds.size.y;
-        bool floorBelow = Physics2D.Raycast(transform.position, Vector2.down, playerHeight * 1.5f, floorLayer);
+        Vector2 feetPos = GetComponent<Collider2D>().bounds.min;
+        feetPos.x = transform.position.x;
+        bool floorBelow = Physics2D.Raycast(feetPos, Vector2.down, 0.1f, floorLayer);
 
-        if (raycastingPaused)
-            return;        
+        if (!floorBelow && !raycastingPaused)
+        {
+            dir *= -1;
+            //transform.position += new Vector3(dir / 2, 0, 0);
+            raycastingPaused = true;
+            StartCoroutine(PauseRaycasting(0.3f));
+        }    
 
-        if (!floorBelow && dir == 1)
+        if (myRig.velocity.x > 0.01f && spriteRender.flipX)
         {
-            dir = -1;
-            spriteRender.flipX = !spriteRender.flipX;
-            SendUpdate("FLIP", true.ToString());
-            StartCoroutine(PauseRaycasting(0.3f));            
-        }
-        else if (!floorBelow && dir == -1)
-        {
-            dir = 1;
-            spriteRender.flipX = !spriteRender.flipX;
+            spriteRender.flipX = false;
             SendUpdate("FLIP", false.ToString());
-            StartCoroutine(PauseRaycasting(0.3f));      
-        }        
+        }
+        else if (myRig.velocity.x < -0.01f && !spriteRender.flipX)
+        {
+            spriteRender.flipX = true;
+            SendUpdate("FLIP", true.ToString());
+        }
     }
     protected IEnumerator PauseRaycasting(float seconds)
-    {
-        raycastingPaused = true;
+    {        
         yield return new WaitForSeconds(seconds);
         raycastingPaused = false;
     }
 
+    protected float GetTileUpperY(RaycastHit2D hit)
+    {        
+        Tilemap tilemap = hit.collider.GetComponent<Tilemap>();
+        if (tilemap == null)
+            return -1;
+
+        Vector3 hitWorldPos = hit.point;
+        Vector3Int cellPosition = tilemap.WorldToCell(hitWorldPos);
+
+        Vector3 tileWorldPos = tilemap.CellToWorld(cellPosition);
+        float tileHeight = tilemap.cellSize.y;
+
+        return tileWorldPos.y + tileHeight;
+    }
+
     public override void TakeDamage(int damage){
-        health -= damage;
-        
+        health -= damage;        
+        /*this.transform.GetChild(health).GetComponent<SpriteRenderer>().enabled = false;
+        SendUpdate("HIDE_HP", health.ToString());*/
+
         if (health <= 0){
             Debug.Log("enemy is dead");
             MyCore.NetDestroyObject(this.NetId);
@@ -93,8 +111,16 @@ public abstract class Enemy : Character
         {
             //consider doing for loop for collision contacts here
             bool hitPlayer = collider.gameObject.GetComponentInParent<Player>() != null;
-            bool hitWall = collider.gameObject.GetComponent<TilemapCollider2D>() != null;
+            bool hitWall = collider.gameObject.tag == "WALL";
             bool hitEnemy = collider.gameObject.GetComponent<Enemy>() != null;
+
+            /*if(hitTilemap)
+            {
+                minX = MinPlatformX(collider.collider.GetComponent<Tilemap>());
+                maxX = MaxPlatformX(collider.collider.GetComponent<Tilemap>());
+                Debug.Log("minX for " + name + " is " + minX);
+                Debug.Log("maxX for " + name + " is " + maxX);
+            }*/
 
             if (hitPlayer)            
                 collider.gameObject.GetComponentInParent<Player>().TakeDamage(1);            
@@ -104,7 +130,8 @@ public abstract class Enemy : Character
                 dir *= -1;
                 spriteRender.flipX = !spriteRender.flipX;
                 SendUpdate("FLIP", spriteRender.flipX.ToString());
-            }                        
+                StartCoroutine(PauseRaycasting(0.3f));
+            }
         }
     }
 }

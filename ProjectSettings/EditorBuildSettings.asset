@@ -12,6 +12,9 @@ EditorBuildSettings:
     path: Assets/Scenes/Dev/Landon/WAN_Game.unity
     guid: 51813430cce0539428c97c435ec47c73
   - enabled: 0
+    path: Assets/Scenes/Dev/Landon/FastTesting.unity
+    guid: 24a0509febf1b42408d4583bc65ead46
+  - enabled: 0
     path: Assets/Scenes/Dev/Patrick/PatrickGameStart.unity
     guid: bc17bb022a65bc146b31bd66228b8c13
   - enabled: 1

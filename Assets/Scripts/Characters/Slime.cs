@@ -21,6 +21,11 @@ public class Slime : Enemy
                 StartHitEffect(hitColor);
             }
         }
+        else if (flag == "HIDE_HP")
+        {
+            int health = int.Parse(value);
+            this.transform.GetChild(health).GetComponent<SpriteRenderer>().enabled = false;
+        }
         else if (flag == "DEBUG")
         {
             Debug.Log(value);
@@ -43,6 +48,16 @@ public class Slime : Enemy
     {        
         spriteRender.flipX = true;
         health = 1;
+
+        Vector2 belowFeet = transform.position;
+        belowFeet.y -= GetComponent<Collider2D>().bounds.size.y;
+        
+        //teleport slime to platform below it to avoid fall off issues
+        RaycastHit2D hit = Physics2D.Raycast(belowFeet, Vector2.down, Mathf.Infinity, floorLayer);        
+        float standingY = GetTileUpperY(hit);
+        Vector2 standingPos = transform.position;
+        standingPos.y = standingY + GetComponent<Collider2D>().bounds.size.y / 2;
+        transform.position = standingPos;        
     }
 
     protected override void OnCollisionEnter2D(Collision2D collision)
@@ -79,9 +94,15 @@ public class Slime : Enemy
         if (IsServer)
         {
             if (GameManager.inCountdown)
+            {
+                myRig.gravityScale = 0f;
                 myRig.velocity = Vector2.zero;
+            }
             else
+            {
+                myRig.gravityScale = 1f;
                 Move();
+            }
         }
     }
 }

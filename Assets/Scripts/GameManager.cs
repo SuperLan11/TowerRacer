@@ -22,6 +22,7 @@ public class GameManager : NetworkComponent
     public static int playersReady = 0;    
     private List<GameObject> createdTutorials = new List<GameObject>();
     public static bool inCountdown = false;
+    private Color32[] playerPanelColors;
 
     //non-sync vars
     private Vector3[] starts = new Vector3[4];
@@ -42,6 +43,7 @@ public class GameManager : NetworkComponent
     [SerializeField] private AudioSource theme;
     [SerializeField] public AudioSource menuTheme;      //AKA professor morning song    
     [SerializeField] private AudioSource winGameSfx;
+    [SerializeField] private AudioSource countdownSfx;
 
     public static Player winningPlayer = null;
     public static List<Player> playersFinished = new List<Player>();
@@ -102,7 +104,7 @@ public class GameManager : NetworkComponent
             if (IsClient)
             {
                 float seconds = float.Parse(value);
-                StartCoroutine(FadeScorePanelIn(seconds));
+                StartCoroutine(FadeScorePanelIn(seconds, 0.5f));
             }
         }
         else if (flag == "FADE_OUT")
@@ -151,7 +153,7 @@ public class GameManager : NetworkComponent
         else if (flag == "COUNTDOWN")
         {
             if (IsClient)
-            {
+            {                
                 countdownLbl.enabled = true;
                 countdownLbl.text = value;
             }
@@ -161,6 +163,13 @@ public class GameManager : NetworkComponent
             if (IsClient)
             {
                 countdownLbl.enabled = false;
+            }
+        }
+        else if(flag == "COUNTDOWN_SFX")
+        {
+            if(IsClient)
+            {
+                countdownSfx.Play();
             }
         }
         else if (flag == "FLASH_WIN")
@@ -214,12 +223,21 @@ public class GameManager : NetworkComponent
             {
                 Color visibleColor = itemSquare.GetComponent<Image>().color;                
                 Color fullItemColor = itemSquare.transform.GetChild(0).GetComponent<Image>().color;
+                Color invisibleItemColor = itemSquare.transform.GetChild(0).GetComponent<Image>().color;
 
                 visibleColor.a = 0.5f;
                 fullItemColor.a = 1f;
+                invisibleItemColor.a = 0f;
 
                 itemSquare.GetComponent<Image>().color = visibleColor;
                 itemSquare.transform.GetChild(0).GetComponent<Image>().color = fullItemColor;
+
+                foreach (Player player in FindObjectsOfType<Player>())
+                {
+                    bool hasItem = player.hasBomb || player.hasChicken || player.hasSpeedBoost;
+                    if (player.IsLocalPlayer && !hasItem)                    
+                        itemSquare.transform.GetChild(0).GetComponent<Image>().color = invisibleItemColor;                    
+                }
             }
         }
         else if (flag == "PLAY_THEME")
@@ -289,6 +307,12 @@ public class GameManager : NetworkComponent
         starts[1] = start2.transform.position;
         starts[2] = start3.transform.position;
         starts[3] = start4.transform.position;
+
+        playerPanelColors = new Color32[4];
+        playerPanelColors[0] = new Color32(255, 220, 0, 255); //gold for first
+        playerPanelColors[1] = new Color32(148, 148, 148, 255); //silver for second
+        playerPanelColors[2] = new Color32(196, 132, 0, 255); //bronze for third
+        playerPanelColors[3] = new Color32(255, 255, 255, 255); //white for fourth
     }    
 
     public override void NetworkedStart()
@@ -471,7 +495,7 @@ public class GameManager : NetworkComponent
         int lastEnemyIdx = Idx.FIRST_ENEMY_IDX + Idx.NUM_ENEMIES;
         //this is end exclusive
         int randEnemy = Random.Range(Idx.FIRST_ENEMY_IDX, lastEnemyIdx);
-        MyCore.NetCreateObject(randEnemy, Owner, enemyPlaces[randPos], Quaternion.identity);
+        MyCore.NetCreateObject(randEnemy, Owner, enemyPlaces[randPos], Quaternion.identity);        
     }
 
     private void RandomlyPlaceItemBoxes(GameObject levelPiece)
@@ -646,7 +670,7 @@ public class GameManager : NetworkComponent
         yield return new WaitForSeconds(seconds);
     }
 
-    private IEnumerator FadeScorePanelIn(float seconds)
+    private IEnumerator FadeScorePanelIn(float seconds, float finalPanelOpacity)
     {
         if (IsServer)
         {
@@ -671,7 +695,12 @@ public class GameManager : NetworkComponent
             foreach (Image image in images)
             {
                 Color newColor = image.color;
-                newColor.a += alphaUpdateFreq / seconds;
+                
+                if (image.tag == "PLAYER_PANEL")                
+                    newColor.a += (finalPanelOpacity)*alphaUpdateFreq / seconds;
+                else
+                    newColor.a += alphaUpdateFreq / seconds;
+
                 image.color = newColor;
             }
 
@@ -681,6 +710,30 @@ public class GameManager : NetworkComponent
                 newColor.a += alphaUpdateFreq / seconds;
                 text.color = newColor;
             }
+        }
+
+        //this sets the alpha of all the score panel elements to 1 once one is 1
+        //this prevents certain elements from being slightly transparent once the fade "finishes"
+        Color finalPanelColor = scoreBackground.color;
+        finalPanelColor.a = 1;
+        scoreBackground.color = finalPanelColor;
+
+        foreach (Image image in images)
+        {
+            Color finalColor = image.color;
+            if (image.tag == "PLAYER_PANEL")
+                finalColor.a = finalPanelOpacity;
+            else
+                finalColor.a = 1;
+
+            image.color = finalColor;
+        }
+
+        foreach (Text text in labels)
+        {
+            Color finalColor = text.color;
+            finalColor.a = 1;
+            text.color = finalColor;
         }
     }
 
@@ -743,7 +796,7 @@ public class GameManager : NetworkComponent
 
     private IEnumerator FlashWinPoint(int roundWinOwner, int wins, int numFlashes, float flashTime)
     {                
-        Image dotToFlash = scorePanel.transform.GetChild(roundWinOwner).GetChild(1).GetChild(wins-1).GetComponent<Image>();        
+        Image dotToFlash = scorePanel.transform.GetChild(roundWinOwner).GetChild(1).GetChild(wins-1).GetComponent<Image>();   
 
         Color32 normalColor = dotToFlash.color;
         Color32 flashColor = new Color32(255, 220, 0, 255);
@@ -778,7 +831,7 @@ public class GameManager : NetworkComponent
             DestroyAllEnemies();
 
             //yield return prevents the following lines from running until the coroutine is done
-            yield return FadeScorePanelIn(1f);
+            yield return FadeScorePanelIn(1f, 0.5f);
 
             TilemapCollider2D[] pieces = FindObjectsOfType<TilemapCollider2D>();
             foreach (TilemapCollider2D piece in pieces)
@@ -813,8 +866,7 @@ public class GameManager : NetworkComponent
                 if(player.wins >= 3)
                 {
                     SendUpdate("WIN_GAME_SFX", "");
-                    winningPlayer = player;
-                    SendUpdate("WINNING_PLAYER", winningPlayer.Owner.ToString());
+                    winningPlayer = player;                    
                     StartCoroutine(FadeScorePanelOut(1f));
 
                     GameManager.gameOver = true;                    
@@ -848,6 +900,8 @@ public class GameManager : NetworkComponent
     private IEnumerator Countdown()
     {
         inCountdown = true;
+        
+        SendUpdate("COUNTDOWN_SFX", "");
 
         SendUpdate("COUNTDOWN", "3");
         yield return Wait(1f);
@@ -1017,8 +1071,7 @@ public class GameManager : NetworkComponent
             SendUpdate("GAMESTART", "1");
             //stops server from listening, so nobody new can join.
             MyCore.NotifyGameStart();
-            SendUpdate("STOP_MENU_THEME", "GoodMorning");
-            SendUpdate("PLAY_THEME", "GoodMorning");
+            SendUpdate("STOP_MENU_THEME", "GoodMorning");            
             SendUpdate("HIDE_PLACE", "");
 
             /*while(!tutorialFinished)
@@ -1049,8 +1102,9 @@ public class GameManager : NetworkComponent
                 player.playerFrozen = true;
             }
 
-            yield return Countdown();
+            yield return Countdown();            
 
+            SendUpdate("PLAY_THEME", "GoodMorning");
             SendUpdate("SHOW_PLACE", "");
 
             foreach (Player player in FindObjectsOfType<Player>())
@@ -1066,11 +1120,11 @@ public class GameManager : NetworkComponent
             }
 
             //zooms in on player that won
-            foreach(Player player in FindObjectsOfType<Player>())
+            foreach (Player player in FindObjectsOfType<Player>())
             {
-                player.SendUpdate("WINNER_CAM", winningPlayer.Owner.ToString());
+                player.SendUpdate("WINNING_PLAYER", winningPlayer.Owner.ToString());
             }
-              
+
             yield return new WaitForSeconds(4f);
 
             //make sure to reset all stats on game over!!!

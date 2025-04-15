@@ -42,7 +42,7 @@ public class NPM : NetworkComponent
         {
             //handle message is sometimes dumb and runs before Start()
             //so need to run Start() manually to assign UI vars
-            Start();            
+            Start();
 
             IsReady = bool.Parse(value);            
             readyToggle.isOn = IsReady;                        
@@ -160,7 +160,7 @@ public class NPM : NetworkComponent
         //dynamically assign ui events so you can have anchored npm objects in the scene
         nameField.onValueChanged.AddListener(UI_NameChanged);
         readyToggle.onValueChanged.AddListener(UI_Ready);
-        charDropdown.onValueChanged.AddListener(UI_CharInput);
+        charDropdown.onValueChanged.AddListener(UI_CharInput);  
 
         //menu themes will start for each player as soon as they join, so it's asynchronous
         //FindObjectOfType<GameManager>().SendUpdate("PLAY_MENU_THEME", "");
