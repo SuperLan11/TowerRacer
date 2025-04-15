@@ -79,7 +79,7 @@ public class Vampire : Enemy
 
 	public override void NetworkedStart()
 	{
-		health = 3;
+		health = 3;		
 	}
 
 	protected override void OnCollisionEnter2D(Collision2D collision)

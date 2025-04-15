@@ -48,14 +48,22 @@ public abstract class Enemy : Character
     protected void Move()
     {
         myRig.velocity = new Vector2(dir * speed, myRig.velocity.y);
-        float enemyHeight = GetComponent<Collider2D>().bounds.size.y;
-        bool floorBelow = Physics2D.Raycast(transform.position, Vector2.down, enemyHeight * 1.5f, floorLayer);        
+        Vector2 feetPos = GetComponent<Collider2D>().bounds.min;
+        feetPos.x = transform.position.x;
+        bool floorBelow = Physics2D.Raycast(feetPos, Vector2.down, 0.1f, floorLayer);
 
         if(!floorBelow && !raycastingPaused)
         {
             dir *= -1;
+            transform.position += new Vector3(dir/2, 0, 0);
             raycastingPaused = true;
             StartCoroutine(PauseRaycasting(0.3f));
+        }
+
+        if(name.Contains("Slime"))
+        {
+            Debug.Log("raycasting paused for slime: " + raycastingPaused);
+            Debug.Log("floor below for slime: " + floorBelow);
         }
 
         if (myRig.velocity.x > 0.01f && spriteRender.flipX)
@@ -75,10 +83,25 @@ public abstract class Enemy : Character
         raycastingPaused = false;
     }
 
+    protected float GetTileUpperY(RaycastHit2D hit)
+    {        
+        Tilemap tilemap = hit.collider.GetComponent<Tilemap>();
+        if (tilemap == null)
+            return -1;
+
+        Vector3 hitWorldPos = hit.point;
+        Vector3Int cellPosition = tilemap.WorldToCell(hitWorldPos);
+
+        Vector3 tileWorldPos = tilemap.CellToWorld(cellPosition);
+        float tileHeight = tilemap.cellSize.y;
+
+        return tileWorldPos.y + tileHeight;
+    }
+
     public override void TakeDamage(int damage){
-        health -= damage;
-        this.transform.GetChild(health).GetComponent<SpriteRenderer>().enabled = false;
-        SendUpdate("HIDE_HP", health.ToString());
+        health -= damage;        
+        /*this.transform.GetChild(health).GetComponent<SpriteRenderer>().enabled = false;
+        SendUpdate("HIDE_HP", health.ToString());*/
 
         if (health <= 0){
             Debug.Log("enemy is dead");
@@ -98,11 +121,7 @@ public abstract class Enemy : Character
             bool hitEnemy = collider.gameObject.GetComponent<Enemy>() != null;
 
             if (hitPlayer)            
-                collider.gameObject.GetComponentInParent<Player>().TakeDamage(1);
-
-            //to prevent enemies from falling off their platform
-            if (hitTilemap)
-                myRig.gravityScale = 0f;
+                collider.gameObject.GetComponentInParent<Player>().TakeDamage(1);            
 
             if(hitPlayer || hitTilemap || hitEnemy)
             {

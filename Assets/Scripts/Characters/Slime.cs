@@ -48,6 +48,18 @@ public class Slime : Enemy
     {        
         spriteRender.flipX = true;
         health = 1;
+
+        Vector2 belowFeet = transform.position;
+        belowFeet.y -= GetComponent<Collider2D>().bounds.size.y;
+
+        Debug.Log("slime started at " + transform.position);
+        RaycastHit2D hit = Physics2D.Raycast(belowFeet, Vector2.down, Mathf.Infinity, floorLayer);
+        Debug.Log("slime raycast hit " + hit.collider.gameObject.name);
+        float standingY = GetTileUpperY(hit);
+        Vector2 standingPos = transform.position;
+        standingPos.y = standingY + GetComponent<Collider2D>().bounds.size.y / 2;
+        transform.position = standingPos;
+        Debug.Log("teleport slime to " + standingPos);
     }
 
     protected override void OnCollisionEnter2D(Collision2D collision)
@@ -84,9 +96,15 @@ public class Slime : Enemy
         if (IsServer)
         {
             if (GameManager.inCountdown)
+            {
+                myRig.gravityScale = 0f;
                 myRig.velocity = Vector2.zero;
+            }
             else
+            {
+                myRig.gravityScale = 1f;
                 Move();
+            }
         }
     }
 }

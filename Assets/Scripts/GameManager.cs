@@ -485,7 +485,8 @@ public class GameManager : NetworkComponent
         int randPos = Random.Range(0, enemyPlaces.Count);
         int lastEnemyIdx = Idx.FIRST_ENEMY_IDX + Idx.NUM_ENEMIES;
         //this is end exclusive
-        int randEnemy = Random.Range(Idx.FIRST_ENEMY_IDX, lastEnemyIdx);
+        //int randEnemy = Random.Range(Idx.FIRST_ENEMY_IDX, lastEnemyIdx);
+        int randEnemy = Random.Range(Idx.SLIME, lastEnemyIdx);
         MyCore.NetCreateObject(randEnemy, Owner, enemyPlaces[randPos], Quaternion.identity);
     }
 
