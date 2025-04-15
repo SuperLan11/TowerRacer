@@ -113,10 +113,10 @@ public class Player : Character {
     [System.NonSerialized] public float MAX_WALK_SPEED = 12.5f;
     [SerializeField] private float GROUND_ACCELERATION = 5f, GROUND_DECELERATION = 20f;
 
-    [SerializeField] private float AIR_ACCELERATION = 5f, AIR_DECELERATION = 5f;
-    [SerializeField] private float WALL_JUMP_ACCELERATION;
+    private float AIR_ACCELERATION = 5f, AIR_DECELERATION = 5f;
+    private float WALL_JUMP_ACCELERATION;
 
-    [SerializeField] private float MAX_RUN_SPEED = 20f;
+    private float MAX_RUN_SPEED = 20f;
 
     //these values will probably need to change based on the size of the Player
 
@@ -128,21 +128,21 @@ public class Player : Character {
     private float JUMP_HEIGHT = 6.5f;
     private float JUMP_HEIGHT_COMPENSATION_FACTOR = 1.054f;
     //apex = max height of jump
-    [SerializeField] private float TIME_TILL_JUMP_APEX = 0.35f;
-    [SerializeField] private float GRAVITY_RELEASE_MULTIPLIER = 2f;
-    [SerializeField] private float MAX_FALL_SPEED = 26f;
+    private float TIME_TILL_JUMP_APEX = 0.35f;
+    private float GRAVITY_RELEASE_MULTIPLIER = 2f;
+    private float MAX_FALL_SPEED = 26f;
     //no need to have canDoubleJump or anything like that since we have this int. Unfortunately can't be a const cause of double jumping
     public int MAX_JUMPS = 1;
     private const int MAX_WALL_JUMPS = 1;
-    [SerializeField] private float WALL_JUMP_HORIZONTAL_BOOST = 15f;
+    private float WALL_JUMP_HORIZONTAL_BOOST = 15f;
 
-    [SerializeField] private bool inMovementAbilityCooldown = false;
+    private bool inMovementAbilityCooldown = false;
     private float dashSpeed;
     private float dashTimer;
 
-    [SerializeField] private float DASH_EFFECT_DURATION = 0.5f;
+    private float DASH_EFFECT_DURATION = 0.5f;
 
-    [SerializeField] private float MAX_DASH_TIME = 0.5f;   
+    private float MAX_DASH_TIME = 0.5f;   
 
     private Coroutine dashCoroutine;
     private Coroutine stunCoroutine;   
@@ -175,9 +175,9 @@ public class Player : Character {
     private const float TILEMAP_PLATFORM_OFFSET = 2f;
 
 
-    [SerializeField] private float gravity; // = -1 * (2f * adjustedJumpHeight) / Mathf.Pow(TIME_TILL_JUMP_APEX, 2f) * patrickBSAdjuster;    
-    [SerializeField] private float initialJumpVelocity; // = Mathf.Abs(gravity);
-    [SerializeField] private float adjustedJumpHeight; //jump height * compensation
+    private float gravity; // = -1 * (2f * adjustedJumpHeight) / Mathf.Pow(TIME_TILL_JUMP_APEX, 2f) * patrickBSAdjuster;    
+    private float initialJumpVelocity; // = Mathf.Abs(gravity);
+    private float adjustedJumpHeight; //jump height * compensation
 
     [System.NonSerialized] public float verticalVelocity;
     private Vector2 moveVelocity;
@@ -185,8 +185,8 @@ public class Player : Character {
     [System.NonSerialized] public Vector2 ropeLaunchVec = Vector2.zero;
 
     //how fast you can change directions midair
-    [SerializeField] private float launchCorrectionSpeed = 32f;      //previously 8f
-    [SerializeField] private float airSlowdownMult = 1f;
+    private float launchCorrectionSpeed = 32f;      //previously 8f
+    private float airSlowdownMult = 1f;
 
     private float fastFallTimer;
     private float fastFallReleaseSpeed;
@@ -206,10 +206,10 @@ public class Player : Character {
     //private Item currentlyEquippedItem = null;
 
     [System.NonSerialized] public bool isInvincible = false;
-    [SerializeField] private float CHICKEN_INVINCIBILITY_TIME = 5f, TAKE_DAMAGE_INVINCIBILITY_TIME = 0.5f;
-    [SerializeField] private float SPEED_BOOST_TIME = 2.5f;
+    private float CHICKEN_INVINCIBILITY_TIME = 5f, TAKE_DAMAGE_INVINCIBILITY_TIME = 0.5f;
+    private float SPEED_BOOST_TIME = 2.5f;
     public bool isStunned = false;
-    [SerializeField] private float STUN_TIME = 1f;
+    private float STUN_TIME = 1f;
     private bool clientCollidersEnabled = true;
 
     private Vector2 lastAimDir;
@@ -217,8 +217,8 @@ public class Player : Character {
     private GameObject arrowPivot;
     [SerializeField] private float ARROW_SENSITIVITY = 0.2f;
 
-    [SerializeField] private float movementAbilityCooldownTimer;
-    [SerializeField] private float MAX_MOVEMENT_ABILITY_COOLDOWN;
+    private float movementAbilityCooldownTimer;
+    private float MAX_MOVEMENT_ABILITY_COOLDOWN;
 
 
     private Vector2 upNormal = new Vector2(0, 1f);

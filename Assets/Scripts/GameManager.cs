@@ -43,6 +43,7 @@ public class GameManager : NetworkComponent
     [SerializeField] private AudioSource theme;
     [SerializeField] public AudioSource menuTheme;      //AKA professor morning song    
     [SerializeField] private AudioSource winGameSfx;
+    [SerializeField] private AudioSource countdownSfx;
 
     public static Player winningPlayer = null;
     public static List<Player> playersFinished = new List<Player>();
@@ -152,7 +153,7 @@ public class GameManager : NetworkComponent
         else if (flag == "COUNTDOWN")
         {
             if (IsClient)
-            {
+            {                
                 countdownLbl.enabled = true;
                 countdownLbl.text = value;
             }
@@ -162,6 +163,13 @@ public class GameManager : NetworkComponent
             if (IsClient)
             {
                 countdownLbl.enabled = false;
+            }
+        }
+        else if(flag == "COUNTDOWN_SFX")
+        {
+            if(IsClient)
+            {
+                countdownSfx.Play();
             }
         }
         else if (flag == "FLASH_WIN")
@@ -884,6 +892,8 @@ public class GameManager : NetworkComponent
     private IEnumerator Countdown()
     {
         inCountdown = true;
+        
+        SendUpdate("COUNTDOWN_SFX", "");
 
         SendUpdate("COUNTDOWN", "3");
         yield return Wait(1f);
@@ -1053,8 +1063,7 @@ public class GameManager : NetworkComponent
             SendUpdate("GAMESTART", "1");
             //stops server from listening, so nobody new can join.
             MyCore.NotifyGameStart();
-            SendUpdate("STOP_MENU_THEME", "GoodMorning");
-            SendUpdate("PLAY_THEME", "GoodMorning");
+            SendUpdate("STOP_MENU_THEME", "GoodMorning");            
             SendUpdate("HIDE_PLACE", "");
 
             /*while(!tutorialFinished)
@@ -1085,8 +1094,9 @@ public class GameManager : NetworkComponent
                 player.playerFrozen = true;
             }
 
-            yield return Countdown();
+            yield return Countdown();            
 
+            SendUpdate("PLAY_THEME", "GoodMorning");
             SendUpdate("SHOW_PLACE", "");
 
             foreach (Player player in FindObjectsOfType<Player>())

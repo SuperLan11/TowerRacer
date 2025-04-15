@@ -2636,14 +2636,26 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 4433775442073110396, guid: fbbdc66098f6760449f140425e560b70, type: 3}
-      propertyPath: m_Type
+    - target: {fileID: 481677634603627915, guid: fbbdc66098f6760449f140425e560b70, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3235235098405654040, guid: fbbdc66098f6760449f140425e560b70, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4433775442073110396, guid: fbbdc66098f6760449f140425e560b70, type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: 21300000, guid: 356ba02a27279924e8e38465039d7c4a, type: 3}
+      propertyPath: m_Color.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4433775442073110396, guid: fbbdc66098f6760449f140425e560b70, type: 3}
+      propertyPath: m_Color.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4433775442073110396, guid: fbbdc66098f6760449f140425e560b70, type: 3}
+      propertyPath: m_Color.r
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7332150844612644414, guid: fbbdc66098f6760449f140425e560b70, type: 3}
       propertyPath: m_Name
       value: GameUI
