@@ -1779,17 +1779,17 @@ public class Player : Character {
 
             //only sendupdate when switching layers
             //phase through jump thrus when jumping up
-            if (verticalVelocity > 0.000001f && this.gameObject.layer == normalLayer && currentMovementState != movementState.CLIMBING)
+            if (verticalVelocity > 0.000001f && this.gameObject.layer == normalLayer && !IsClimbing() && !IsSwinging())
             {
                 this.gameObject.layer = noJumpThruLayer;
                 SendUpdate("DISABLE_JUMP_THRU_COLLISION", "");
             }
             //enable jump thru collision when falling
-            else if (verticalVelocity < 0.000001f && this.gameObject.layer == noJumpThruLayer && currentMovementState != movementState.CLIMBING)
+            else if (verticalVelocity < 0.000001f && this.gameObject.layer == noJumpThruLayer && !IsClimbing() && !IsSwinging())
             {                
                 this.gameObject.layer = normalLayer;
                 SendUpdate("ENABLE_JUMP_THRU_COLLISION", "");
-            }
+            }            
 
             //Debug.Log("CurrentMovementState: " + currentMovementState);
             //Debug.Log("Move input" + moveInput);

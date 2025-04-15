@@ -223,12 +223,21 @@ public class GameManager : NetworkComponent
             {
                 Color visibleColor = itemSquare.GetComponent<Image>().color;                
                 Color fullItemColor = itemSquare.transform.GetChild(0).GetComponent<Image>().color;
+                Color invisibleItemColor = itemSquare.transform.GetChild(0).GetComponent<Image>().color;
 
                 visibleColor.a = 0.5f;
                 fullItemColor.a = 1f;
+                invisibleItemColor.a = 0f;
 
                 itemSquare.GetComponent<Image>().color = visibleColor;
                 itemSquare.transform.GetChild(0).GetComponent<Image>().color = fullItemColor;
+
+                foreach (Player player in FindObjectsOfType<Player>())
+                {
+                    bool hasItem = player.hasBomb || player.hasChicken || player.hasSpeedBoost;
+                    if (player.IsLocalPlayer && !hasItem)                    
+                        itemSquare.transform.GetChild(0).GetComponent<Image>().color = invisibleItemColor;                    
+                }
             }
         }
         else if (flag == "PLAY_THEME")
