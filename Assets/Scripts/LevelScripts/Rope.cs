@@ -80,7 +80,17 @@ public class Rope : NetworkComponent
             playerTorque *= -1;
         
         pivotRig.angularVelocity += playerTorque * initialTorqueMult;
+        if(pivotRig.angularVelocity>Mathf.PI/2)
+        {
+            pivotRig.angularVelocity= Mathf.PI/2;
+        }
+        if(pivotRig.angularVelocity < -Mathf.PI/2)
+        {
+            pivotRig.angularVelocity = -Mathf.PI/2;
+        }
+    
     }
+    
 
     private Transform ClosestSwingPos(Player player)
     {

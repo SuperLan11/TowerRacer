@@ -54,6 +54,30 @@ public class Vampire : Enemy
                 StartHitEffect(hitColor);
             }
         }
+		else if (flag == "WALK_ANIM")
+        {
+            if (IsServer)
+            {
+                SendUpdate("WALK_ANIM", "");
+            }
+            else if (IsClient)
+            {
+                if (!anim.GetCurrentAnimatorStateInfo(0).IsName("VampireWalk"))
+                    anim.Play("VampireWalk", -1, 0f);
+            }
+        }
+		else if (flag == "CLIMB_ANIM")
+        {
+            if (IsServer)
+            {
+                SendUpdate("CLIMB_ANIM", "");
+            }
+            else if (IsClient)
+            {
+                if (!anim.GetCurrentAnimatorStateInfo(0).IsName("VampireClimb"))
+                    anim.Play("VampireClimb", -1, 0f);
+            }
+        }
 		else if (flag == "DEBUG")
 		{
 			Debug.Log(value);
@@ -84,6 +108,8 @@ public class Vampire : Enemy
 		Vector2 belowFeet = transform.position;
 		belowFeet.y -= GetComponent<Collider2D>().bounds.size.y;
 
+		anim = GetComponent<Animator>();
+
 		//teleport slime to platform below it to avoid fall off issues
 		RaycastHit2D hit = Physics2D.Raycast(belowFeet, Vector2.down, Mathf.Infinity, floorLayer);
 		float standingY = GetTileUpperY(hit);
@@ -113,6 +139,7 @@ public class Vampire : Enemy
 				else
 				{					
 					state = STATE.MOVING;
+					SendUpdate("WALK_ANIM", "GoodMorning");
 					myRig.gravityScale = 1f;
 				}
 			}
@@ -143,6 +170,7 @@ public class Vampire : Enemy
 				if (state == STATE.MOVING)
 				{										
 					state = STATE.LADDER_DOWN;
+					SendUpdate("CLIMB_ANIM", "GoodMorning");
 					transform.position = new Vector2(dismountHit.transform.position.x, this.transform.position.y);
 					myRig.gravityScale = 0f;
 					
@@ -153,6 +181,7 @@ public class Vampire : Enemy
                 {					
 					myRig.velocity = Vector2.zero;					
 					state = STATE.MOVING;
+					SendUpdate("WALK_ANIM", "GoodMorning");
 					
 					float height = GetComponent<Collider2D>().bounds.size.y;
 					//raycast to floor instead
@@ -173,6 +202,7 @@ public class Vampire : Enemy
 				if (state == STATE.MOVING && hitLadderBottom)
 				{					
 					state = STATE.LADDER_UP;
+					SendUpdate("CLIMB_ANIM", "GoodMorning");
 					transform.position = new Vector2(ladderHit.transform.position.x, this.transform.position.y);
 					myRig.gravityScale = 0f;
 					SendUpdate("GRAVITY", "0");

@@ -469,7 +469,6 @@ MonoBehaviour:
   MyCore: {fileID: 0}
   MyId: {fileID: 0}
   IsDirty: 0
-  health: 0
   speed: 0
   spriteRender: {fileID: 0}
   hitMaterial: {fileID: 2100000, guid: 87da1e757bf4de545ab0564d971ed988, type: 2}
@@ -505,22 +504,7 @@ MonoBehaviour:
   stunSfx: {fileID: 7197997356562168179}
   GROUND_ACCELERATION: 5
   GROUND_DECELERATION: 20
-  AIR_ACCELERATION: 5
-  AIR_DECELERATION: 5
-  WALL_JUMP_ACCELERATION: 0
-  MAX_RUN_SPEED: 20
-  ATTACK_RAYCAST_LENGTH: 2
-  JUMP_HEIGHT: 6.5
-  JUMP_HEIGHT_COMPENSATION_FACTOR: 1.054
-  TIME_TILL_JUMP_APEX: 0.35
-  GRAVITY_RELEASE_MULTIPLIER: 2
-  MAX_FALL_SPEED: 26
   MAX_JUMPS: 1
-  WALL_JUMP_HORIZONTAL_BOOST: 15
-  inMovementAbilityCooldown: 0
-  DASH_EFFECT_DURATION: 0.5
-  MAX_DASH_TIME: 0.5
-  MAX_LAUNCH_SPEED: 0
   TIME_FOR_UP_CANCEL: 0.027
   APEX_THRESHOLD: 0.97
   APEX_HANG_TIME: 0.075
@@ -528,15 +512,7 @@ MonoBehaviour:
   MAX_JUMP_COYOTE_TIME: 0.1
   MAX_WALL_JUMP_TIME: 0.2
   MAX_WALL_STICK_TIME: 3
-  launchCorrectionSpeed: 8
-  airSlowdownMult: 1
-  CHICKEN_INVINCIBILITY_TIME: 5
-  TAKE_DAMAGE_INVINCIBILITY_TIME: 0.5
-  SPEED_BOOST_TIME: 2.5
   isStunned: 0
-  ARROW_SENSITIVITY: 0.2
-  movementAbilityCooldownTimer: 0
-  MAX_MOVEMENT_ABILITY_COOLDOWN: 0
   currentMovementState: 2
 --- !u!212 &4906707819597775948
 SpriteRenderer:
@@ -811,7 +787,7 @@ MonoBehaviour:
   MyId: {fileID: 0}
   IsDirty: 0
   threshold: 0.01
-  eThreshold: 0.1
+  eThreshold: 1.5
   myRig: {fileID: 0}
   useAdjustVel: 0
   useAdjustAngVel: 0
