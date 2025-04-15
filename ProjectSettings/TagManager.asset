@@ -25,6 +25,7 @@ TagManager:
   - NPM_PANEL
   - SOUND_PLAYER
   - PLAYER_PANEL
+  - WALL
   layers:
   - Default
   - TransparentFX

@@ -52,19 +52,13 @@ public abstract class Enemy : Character
         feetPos.x = transform.position.x;
         bool floorBelow = Physics2D.Raycast(feetPos, Vector2.down, 0.1f, floorLayer);
 
-        if(!floorBelow && !raycastingPaused)
+        if (!floorBelow && !raycastingPaused)
         {
             dir *= -1;
-            transform.position += new Vector3(dir/2, 0, 0);
+            //transform.position += new Vector3(dir / 2, 0, 0);
             raycastingPaused = true;
             StartCoroutine(PauseRaycasting(0.3f));
-        }
-
-        if(name.Contains("Slime"))
-        {
-            Debug.Log("raycasting paused for slime: " + raycastingPaused);
-            Debug.Log("floor below for slime: " + floorBelow);
-        }
+        }    
 
         if (myRig.velocity.x > 0.01f && spriteRender.flipX)
         {
@@ -117,19 +111,27 @@ public abstract class Enemy : Character
         {
             //consider doing for loop for collision contacts here
             bool hitPlayer = collider.gameObject.GetComponentInParent<Player>() != null;
-            bool hitTilemap = collider.gameObject.GetComponent<TilemapCollider2D>() != null;
+            bool hitWall = collider.gameObject.tag == "WALL";
             bool hitEnemy = collider.gameObject.GetComponent<Enemy>() != null;
+
+            /*if(hitTilemap)
+            {
+                minX = MinPlatformX(collider.collider.GetComponent<Tilemap>());
+                maxX = MaxPlatformX(collider.collider.GetComponent<Tilemap>());
+                Debug.Log("minX for " + name + " is " + minX);
+                Debug.Log("maxX for " + name + " is " + maxX);
+            }*/
 
             if (hitPlayer)            
                 collider.gameObject.GetComponentInParent<Player>().TakeDamage(1);            
 
-            if(hitPlayer || hitTilemap || hitEnemy)
+            if(hitPlayer || hitWall || hitEnemy)
             {
                 dir *= -1;
                 spriteRender.flipX = !spriteRender.flipX;
                 SendUpdate("FLIP", spriteRender.flipX.ToString());
                 StartCoroutine(PauseRaycasting(0.3f));
-            }                        
+            }
         }
     }
 }

@@ -65,12 +65,17 @@ public class Skeleton : Enemy
 
     public override void NetworkedStart()
     {
-        health = 2;
-        
-        if(IsServer)
-        {
-            //MyCore.NetCreateObject(1, Owner, new Vector3(-5, 1, 0), Quaternion.identity);
-        }
+        health = 2;        
+
+        Vector2 belowFeet = transform.position;
+        belowFeet.y -= GetComponent<Collider2D>().bounds.size.y;
+
+        //teleport slime to platform below it to avoid fall off issues
+        RaycastHit2D hit = Physics2D.Raycast(belowFeet, Vector2.down, Mathf.Infinity, floorLayer);
+        float standingY = GetTileUpperY(hit);
+        Vector2 standingPos = transform.position;
+        standingPos.y = standingY + GetComponent<Collider2D>().bounds.size.y / 2;
+        transform.position = standingPos;
     }
 
     protected override void OnCollisionEnter2D(Collision2D collision)

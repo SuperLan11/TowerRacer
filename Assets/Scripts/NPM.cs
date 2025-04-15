@@ -42,7 +42,7 @@ public class NPM : NetworkComponent
         {
             //handle message is sometimes dumb and runs before Start()
             //so need to run Start() manually to assign UI vars
-            Start();            
+            Start();
 
             IsReady = bool.Parse(value);            
             readyToggle.isOn = IsReady;                        

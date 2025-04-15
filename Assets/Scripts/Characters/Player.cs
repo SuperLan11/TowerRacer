@@ -86,6 +86,7 @@ public class Player : Character {
     private Color32[] placeColors;
     [System.NonSerialized] public Vector2 startPos;
     public bool isRoundWinner = false;
+    private Player winningPlayer;
 
     private GameObject itemUI;
     private GameObject scorePanel;
@@ -605,6 +606,16 @@ public class Player : Character {
         else if(flag == "DASH_SFX"){
             if(IsClient){
                 dashSfx.Play();
+            }
+        }
+        else if(flag == "WINNING_PLAYER"){
+            if(IsClient){
+                int winningOwner = int.Parse(value);
+                foreach(Player player in FindObjectsOfType<Player>())
+                {
+                    if (player.Owner == winningOwner)
+                        winningPlayer = player;
+                }
             }
         }
         else if(flag == "STUN_SFX"){
@@ -1737,12 +1748,12 @@ public class Player : Character {
 
         if (IsLocalPlayer){      
             //synchronized variable
-            if (GameManager.winningPlayer != null){
+            if (winningPlayer != null){
                 //win game sfx played in game manager
                 //preserve z position of camera
                 Vector3 newCamPos = Camera.main.transform.position;
-                newCamPos.x = GameManager.winningPlayer.transform.position.x;
-                newCamPos.y = GameManager.winningPlayer.transform.position.y;
+                newCamPos.x = winningPlayer.transform.position.x;
+                newCamPos.y = winningPlayer.transform.position.y;
                 
                 Camera.main.transform.position = newCamPos;
                 Camera.main.orthographicSize = 7f;

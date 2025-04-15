@@ -51,15 +51,13 @@ public class Slime : Enemy
 
         Vector2 belowFeet = transform.position;
         belowFeet.y -= GetComponent<Collider2D>().bounds.size.y;
-
-        Debug.Log("slime started at " + transform.position);
-        RaycastHit2D hit = Physics2D.Raycast(belowFeet, Vector2.down, Mathf.Infinity, floorLayer);
-        Debug.Log("slime raycast hit " + hit.collider.gameObject.name);
+        
+        //teleport slime to platform below it to avoid fall off issues
+        RaycastHit2D hit = Physics2D.Raycast(belowFeet, Vector2.down, Mathf.Infinity, floorLayer);        
         float standingY = GetTileUpperY(hit);
         Vector2 standingPos = transform.position;
         standingPos.y = standingY + GetComponent<Collider2D>().bounds.size.y / 2;
-        transform.position = standingPos;
-        Debug.Log("teleport slime to " + standingPos);
+        transform.position = standingPos;        
     }
 
     protected override void OnCollisionEnter2D(Collision2D collision)
