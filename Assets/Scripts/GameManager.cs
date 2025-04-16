@@ -3,8 +3,6 @@
 @Description - General game management, and also potentially level generation
 */
 
-//!Ask Towle if we should make this a singleton that has DontDestroyOnLoad(), or if that'd be pointless considering we're not scene switching
-
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -881,8 +879,10 @@ public class GameManager : NetworkComponent
 
             yield return Countdown();
 
-            foreach (Player player in players)            
-                player.playerFrozen = false;            
+            foreach (Player player in players){            
+                player.playerFrozen = false;
+                player.SendUpdate("ENABLE_TRAIL", "GoodMorning");
+            } 
 
             SendUpdate("PLAY_THEME", "GoodMorning");         
 
