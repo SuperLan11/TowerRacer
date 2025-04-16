@@ -277,8 +277,8 @@ MonoBehaviour:
   playerTorque: 5
   heightFallInfluence: 0.16
   initialTorqueMult: 18
-  xJumpForce: 0.08
-  extraYJumpForce: 0.05
+  xJumpForce: 0.1
+  extraYJumpForce: 0.07
   baseYJumpForce: 4
   swingSnapMult: 50
   dirChangeTorque: 6

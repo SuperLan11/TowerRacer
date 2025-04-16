@@ -93,9 +93,11 @@ public abstract class Enemy : Character
     }
 
     public override void TakeDamage(int damage){
-        health -= damage;        
-        /*this.transform.GetChild(health).GetComponent<SpriteRenderer>().enabled = false;
-        SendUpdate("HIDE_HP", health.ToString());*/
+        health -= damage;
+        
+        this.transform.GetChild(health).GetComponent<SpriteRenderer>().enabled = false;
+        Debug.Log("disabling " + this.transform.GetChild(health));
+        SendUpdate("HIDE_HP", health.ToString());
 
         if (health <= 0){
             Debug.Log("enemy is dead");

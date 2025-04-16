@@ -1943,7 +1943,7 @@ GameObject:
   - component: {fileID: 4656302496620687459}
   m_Layer: 0
   m_Name: Walls
-  m_TagString: FLOOR
+  m_TagString: WALL
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

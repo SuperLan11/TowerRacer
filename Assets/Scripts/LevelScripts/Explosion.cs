@@ -6,7 +6,7 @@ using NETWORK_ENGINE;
 public class Explosion : NetworkComponent
 {
 	public Dictionary<string, string> OTHER_FLAGS = new Dictionary<string, string>();
-	private float explodeTime = 1f;
+	private float explodeTime = 1f; //should be the number of frames of the animation
 	public Player currentPlayer;	
 
 	public override void HandleMessage(string flag, string value)
