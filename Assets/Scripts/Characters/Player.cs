@@ -355,6 +355,8 @@ public class Player : Character {
 
                 int place = int.Parse(value.Split(";")[0]);
                 int owner = int.Parse(value.Split(";")[1]);
+                
+                GetComponent<TrailRenderer>().enabled = false;
                 Color32 placeColor = placeColors[place - 1];
                 placeColor.a = 0;
                 //make score panel color correct for player's place
@@ -579,6 +581,14 @@ public class Player : Character {
             if (IsClient) {
                 feetCollider.enabled = false;
                 bodyCollider.enabled = false;
+            }
+        }else if (flag == "ENABLE_TRAIL"){
+            if (IsClient){
+                GetComponent<TrailRenderer>().enabled = true;
+            }
+        }else if (flag == "DISABLE_TRAIL") {
+            if (IsClient) {
+                GetComponent<TrailRenderer>().enabled = false;
             }
         }else if (flag == "INIT_SCORE_PANEL") {
             if (IsClient) {
