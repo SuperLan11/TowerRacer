@@ -575,13 +575,12 @@ public class Player : Character {
                 feetCollider.enabled = true;
                 bodyCollider.enabled = true;
             }
-        } else if (flag == "DISABLE_COLLIDERS") {
+        }else if (flag == "DISABLE_COLLIDERS") {
             if (IsClient) {
                 feetCollider.enabled = false;
                 bodyCollider.enabled = false;
             }
-        }        
-        else if (flag == "INIT_SCORE_PANEL") {
+        }else if (flag == "INIT_SCORE_PANEL") {
             if (IsClient) {
                 //need to assign ui here because Start doesn't always run before sending handle msg on a newly instantiated object
                 GameObject scorePanel = GameObject.FindGameObjectWithTag("SCORE");
@@ -825,6 +824,7 @@ public class Player : Character {
     rigidbody.gravityScale = 0f;
     }
 
+    //!remember that if you get an error ANYWHERE in this script, the rest of it won't run, so you actually do need to worry about errors here
     public override void NetworkedStart()
     {
         CalculateInitialConditions();
@@ -860,40 +860,41 @@ public class Player : Character {
         
        
         
-        if (IsClient){
-            GetComponent<TrailRenderer>().startColor = Color.red;
-            GetComponent<TrailRenderer>().endColor = new Color(255f, 0f, 0f, 0f);
-            //GetComponent<TrailRenderer>().endColor.WithAlpha(0f);
-        }else if (IsServer){
-            GetComponent<TrailRenderer>().enabled = false;
-        }
+        
 
         switch (selectedCharacterClass){
             case characterClass.ARCHER:
                 movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 2f;
+                GetComponent<TrailRenderer>().startColor = Color.green;
+                GetComponent<TrailRenderer>().endColor = new Color(0f, 255f, 0f, 0f);
                 break;
             case characterClass.MAGE:
                 movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 5f;
+                GetComponent<TrailRenderer>().startColor = Color.yellow;
+                GetComponent<TrailRenderer>().endColor = new Color(255f, 255f, 0f, 0f);
                 break;
             case characterClass.BANDIT:
-                MAX_JUMPS = 2;
+                MAX_JUMPS = 4;
                 movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 0.0001f;
+                GetComponent<TrailRenderer>().startColor = Color.blue;
+                GetComponent<TrailRenderer>().endColor = new Color(0f, 0f, 255f, 0f);
                 //maybe increase movement speed as well?
                 break;
             case characterClass.KNIGHT:
                 movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 7f;
+                GetComponent<TrailRenderer>().startColor = Color.red;
+                GetComponent<TrailRenderer>().endColor = new Color(255f, 0f, 0f, 0f);
                 break;
+        }
+
+        if (IsServer){
+            GetComponent<TrailRenderer>().enabled = false;
         }
 
         if (!GameManager.debugMode)
         {
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
-        }
-
-        if (IsClient){
-            // feetCollider.enabled = false;
-            // bodyCollider.enabled = false;
         }
 
         currentMovementState = movementState.FALLING;
@@ -1966,6 +1967,10 @@ public class Player : Character {
                     //prevents player from immediately jumping if they're holding jump while collding with a rope
                     StartCoroutine(RopeJumpCooldown(0.1f));
                     SendUpdate("JUMP_ANIM", "");
+                    
+                    feetCollider.enabled = false;
+                    bodyCollider.enabled = false;
+                    SendUpdate("DISABLE_COLLIDERS", "GoodMorning");
                 }
             }
 
@@ -1995,8 +2000,11 @@ public class Player : Character {
                     currentRope.playerPresent = false;
                     currentRope.SendUpdate("ROPE_JUMP_SFX", "");
                     currentRope = null;
-                    StartCoroutine(GrabCooldown(1f));                    
+                    StartCoroutine(GrabCooldown(1f));
 
+                    feetCollider.enabled = true;
+                    bodyCollider.enabled = true;
+                    SendUpdate("ENABLE_COLLIDERS", "GoodMorning");                    
                 }else{
                     //don't worry about horizontal movement cause it's already taken care of in the rope script
                     rigidbody.velocity = (swingPos.position - transform.position) * currentRope.swingSnapMult;
