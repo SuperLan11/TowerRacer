@@ -274,7 +274,7 @@ MonoBehaviour:
   slowdownMult: 2
   deadzoneLength: 1
   fallStrength: 0.06
-  playerTorque: 5
+  playerTorque: 6
   heightFallInfluence: 0.16
   initialTorqueMult: 18
   xJumpForce: 0.1

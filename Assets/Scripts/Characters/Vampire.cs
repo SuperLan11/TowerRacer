@@ -238,17 +238,20 @@ public class Vampire : Enemy
 			{
 				case STATE.MOVING:
 				{
+					Debug.Log("vampire moving");
 					Move();
 					break;
 				}
 				case STATE.LADDER_UP:
 				{
+					Debug.Log("vampire moving up");
 					myRig.velocity = new Vector2(0, ladderSpeed);
 					break;
 				}
 				case STATE.LADDER_DOWN:
 				{
-					myRig.velocity = new Vector2(0, -ladderSpeed);					
+					Debug.Log("vampire moving down");
+					myRig.velocity = new Vector2(0, -ladderSpeed);				
 					break;
 				}
 			}
