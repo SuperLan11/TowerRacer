@@ -14,6 +14,9 @@ public class MainMenu : MonoBehaviour
     private int oldWidth;
     private int oldHeight;
 
+    //would be in game manager, but we don't want to create a game manager in this scene just for one variable
+    private bool fullScreen = false;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -28,6 +31,10 @@ public class MainMenu : MonoBehaviour
         // Set the main menu active and options menu inactive
         mainMenuCanvas.SetActive(true);
         optionsMenuCanvas.SetActive(false);
+
+        if (fullScreen){
+            Screen.fullScreen = true;
+        }
     }
 
     // Update is called once per frame
