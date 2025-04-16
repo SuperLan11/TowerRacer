@@ -707,7 +707,7 @@ MonoBehaviour:
   MyCore: {fileID: 0}
   MyId: {fileID: 0}
   IsDirty: 0
-  threshold: 0.01
+  threshold: 0
   eThreshold: 1.5
   myRig: {fileID: 0}
   useAdjustVel: 0

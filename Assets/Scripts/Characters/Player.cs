@@ -511,6 +511,11 @@ public class Player : Character {
                 transform.position = Vector2FromString(value);
             }
         }
+        else if(flag == "TELEPORT"){
+            if(IsClient){
+                transform.position = Vector2FromString(value);
+            }
+        }
         else if (flag == "JUMP_ANIM")
         {
             if (IsClient)
@@ -537,6 +542,12 @@ public class Player : Character {
             {
                 if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Climb"))
                     anim.Play("Climb", -1, 0f);
+            }
+        }
+        else if(flag == "LUNGE_ANIM"){
+            if(IsClient){
+                if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Lunge"))
+                    anim.Play("Lunge", -1, 0f);
             }
         }
         else if (flag == "TURN")
@@ -785,7 +796,7 @@ public class Player : Character {
             Debug.LogError("Thine rigidbody is missing, good sir!");
         }
 
-        floorLayer = LayerMask.GetMask("Floor");
+        floorLayer = LayerMask.GetMask("Floor", "JumpThru");
         bool invalidFloor = (floorLayer == 0);
         if (invalidFloor){
             Debug.LogError("Thine floor layer is missing, good sir!");
@@ -1716,6 +1727,13 @@ public class Player : Character {
         gamepad = Gamepad.current;
     }
 
+    private float PlayerHeight()
+    {
+        float height = bodyCollider.bounds.max.y;
+        height -= feetCollider.bounds.min.y;
+        return height;
+    }
+
     protected override void Attack(){
         if (inAttackCooldown || isStunned){
             return;
@@ -1936,8 +1954,9 @@ public class Player : Character {
                     currentMovementState = movementState.KNIGHT_DASHING;
                     //make these different variables if we want it to be different for the knight
                     dashTimer = MAX_DASH_TIME;
-                    SendUpdate("START_KNIGHT_DASH_EFFECT", "GoodMorning");
+                    //SendUpdate("START_KNIGHT_DASH_EFFECT", "GoodMorning");
                     SendUpdate("RUMBLE", "GoodMorning");
+                    SendUpdate("LUNGE_ANIM", "");
                     
                     Vector2 dashVelocity;
 
@@ -2085,6 +2104,7 @@ public class Player : Character {
                         dashVelocity = new Vector2(xVelocity, yVelocity);
                         verticalVelocity = dashVelocity.y;
                         rigidbody.velocity = dashVelocity;
+                        SendUpdate("JUMP_ANIM", "");
                         //dashTimer = MAX_DASH_TIME;
                         //inMovementAbilityCooldown = true;
                     }
@@ -2096,6 +2116,7 @@ public class Player : Character {
                 }else{
                     dashTimer = MAX_DASH_TIME;
                     currentMovementState = movementState.FALLING;
+                    SendUpdate("IDLE_ANIM", "");
                 }
             }
 
@@ -2267,7 +2288,7 @@ public class Player : Character {
                 clientCollidersEnabled = true;
                 SendUpdate("ENABLE_COLLIDERS", "GoodMorning");
                 JumpVariableCleanup();
-                RopeVariableCleanup();
+                RopeVariableCleanup();                
                 
                 //force it to reset cause Unity's input system is a piece of dogcrap, and otherwise it'll infintely jump
                 jumpPressed = false;

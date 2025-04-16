@@ -83,7 +83,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: bfa81f815a08ed64f9b6b5149bbef714, type: 3}
   - {fileID: 21300000, guid: f01217d875bdac343a12cddea64efcc0, type: 3}
   - {fileID: 21300000, guid: 7eea2ba83f329cd48948ef1104a3d62c, type: 3}
-  - {fileID: 21300000, guid: 8f0bd7538757baa4386888abdb6ccec9, type: 3}
+  - {fileID: 21300000, guid: e280105dfd0bb4a4cbc5a716c52e8e38, type: 3}
   readySfx: {fileID: 8678223896290069609}
   allReadySfx: {fileID: 4245203820472647005}
 --- !u!82 &8678223896290069609

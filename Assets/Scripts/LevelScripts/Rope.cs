@@ -159,12 +159,12 @@ public class Rope : NetworkComponent
                 bool nowMovingRight = ((newInput.x > 0f) && (lastPlayerInput.x <= 0f));
                 
                 if (nowMovingLeft){
-                    //Debug.Log("adding left torque");
-                    pivotRig.AddTorque(-dirChangeTorque);
+                    //Debug.Log("adding left torque");                    
+                    pivotRig.AddTorque(-dirChangeTorque);                    
                 }else if (nowMovingRight){
                     //Debug.Log("adding right torque");
                     pivotRig.AddTorque(dirChangeTorque);
-                }
+                }                
 
                 lastPlayerInput = newInput;
             }
@@ -207,7 +207,16 @@ public class Rope : NetworkComponent
             else if ((player.moveInput.x > 0f) && playerPresent)
             {                
                 pivotRig.angularVelocity += playerTorque;
-            }            
+            }
+
+            if (pivotRig.angularVelocity > 90)
+            {
+                pivotRig.angularVelocity = 90;
+            }
+            if (pivotRig.angularVelocity < -90)
+            {
+                pivotRig.angularVelocity = -90;
+            }
         }        
     }            
 }

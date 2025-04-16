@@ -83,7 +83,7 @@ public class GameManager : NetworkComponent
         {
             if (IsClient)
             {
-                Debug.Log("client is getting ui...");
+                //Debug.Log("client is getting ui...");
                 InitUI();
             }
         }
@@ -341,7 +341,7 @@ public class GameManager : NetworkComponent
         if (playersReady >= numPlayers && numPlayers >= 1)
         {
             gameStarted = true;
-        }        
+        }
     }
     
     private void RandomizeLevel(int numPieces)

@@ -122,13 +122,7 @@ public class ItemBox : NetworkComponent
     private void OnTriggerEnter2D(Collider2D collision)
     {
 		if (IsServer)
-		{
-			if (itemUI == null)
-			{
-				Debug.Log("item box collided before setting item ui!");
-				return;
-			}
-
+		{			
 			Player playerHit = collision.gameObject.GetComponentInParent<Player>();
 			if (playerHit == null)
 				return;
