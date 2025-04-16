@@ -32,9 +32,7 @@ public class MainMenu : MonoBehaviour
         mainMenuCanvas.SetActive(true);
         optionsMenuCanvas.SetActive(false);
 
-        if (fullScreen){
-            Screen.fullScreen = true;
-        }
+        Screen.fullScreen = fullScreen;
     }
 
     // Update is called once per frame
