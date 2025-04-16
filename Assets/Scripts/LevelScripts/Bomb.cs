@@ -38,6 +38,7 @@ public class Bomb : Projectile
 		if (IsServer)
 		{
 			myRig.velocity = launchVec;
+			Debug.Log("bomb launch vec: " + launchVec);
 		}
 	}	
 
@@ -48,9 +49,10 @@ public class Bomb : Projectile
 			bool hitFloor = collision.GetComponent<TilemapCollider2D>() != null;
 			bool hitLadder = collision.GetComponent<LadderObj>() != null;
 
-			if (collision.GetComponent<NetworkComponent>() != null)
+			//for player's networkid
+			if (collision.GetComponentInParent<NetworkComponent>() != null)
 			{				
-				int collidedOwner = collision.GetComponent<NetworkComponent>().Owner;
+				int collidedOwner = collision.GetComponentInParent<NetworkComponent>().Owner;
 				//means the bomb hit a networked object besides the current player
 				if (collidedOwner != this.Owner)
 				{

@@ -270,8 +270,12 @@ public class GameManager : NetworkComponent
         {
             if(IsClient)
             {
-                if(itemSquare.transform.childCount > 0)
-                    Destroy(itemSquare.transform.GetChild(0));
+                if (itemSquare.transform.childCount > 0)
+                {                    
+                    Color invisibleColor = itemSquare.transform.GetChild(0).GetComponent<Image>().color;
+                    invisibleColor.a = 0;
+                    itemSquare.transform.GetChild(0).GetComponent<Image>().color = invisibleColor;
+                }
             }
         }
         //for objects in scene before clients connect, can't use SendCommand because
@@ -1053,8 +1057,7 @@ public class GameManager : NetworkComponent
             //
             //don't move this line. put additional updates after this so clients have their ui
             SendUpdate("INIT_UI", "");
-
-            SendUpdate("HIDE_NPMS", "");
+            
             int maxOwner = GetMaxOwner();
             SendUpdate("HIDE_CHAR_IMAGES", maxOwner.ToString());
 
@@ -1063,10 +1066,6 @@ public class GameManager : NetworkComponent
             MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(3, 0f, 0f), Quaternion.identity);
             MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(5f, 0f, 0f), Quaternion.identity);
             MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(-5f, 0f, 0f), Quaternion.identity);
-
-            /*GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, new Vector3(-8, -3, 0), Quaternion.identity);
-            GameObject itemBox1 = MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(8, -7, 0), Quaternion.identity);
-            GameObject itemBox2 = MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(5, -7, 0), Quaternion.identity);*/
 
             SendUpdate("GAMESTART", "1");
             //stops server from listening, so nobody new can join.
@@ -1095,7 +1094,11 @@ public class GameManager : NetworkComponent
             //RandomizeLevel(5);
             //SendUpdate("FADE_OUT", "1");
             //MovePlayersToRound();
-            yield return Wait(1f);
+            
+            //so that the players don't see the default skybox the instant the npm panel disappears
+            yield return Wait(0.5f);
+            SendUpdate("HIDE_NPMS", "");
+            yield return Wait(0.5f);
 
             foreach (Player player in FindObjectsOfType<Player>())
             {

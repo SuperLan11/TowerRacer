@@ -95,12 +95,13 @@ public abstract class Enemy : Character
     public override void TakeDamage(int damage){
         health -= damage;
         
-        this.transform.GetChild(health).GetComponent<SpriteRenderer>().enabled = false;
-        Debug.Log("disabling " + this.transform.GetChild(health));
+        this.transform.GetChild(health).GetComponent<SpriteRenderer>().enabled = false;        
         SendUpdate("HIDE_HP", health.ToString());
 
         if (health <= 0){
             Debug.Log("enemy is dead");
+            //enemy drops item box on death
+            MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, this.transform.position, Quaternion.identity);
             MyCore.NetDestroyObject(this.NetId);
         }else{
             SendUpdate("START_HIT_EFFECT", "GoodMorning");

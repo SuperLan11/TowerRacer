@@ -123,10 +123,10 @@ public class Vampire : Enemy
 		if (IsServer)
 		{
             base.OnCollisionEnter2D(collision);
-			
+
 			//the index of the layer on the layers list			
-			bool hitFloor = collision.gameObject.layer == 6;	
-			
+			bool hitFloor = collision.gameObject.layer == 6 || collision.gameObject.layer == 7;
+
 			if (hitFloor && state == STATE.LADDER_DOWN)
 			{
 				if (phasingThroughFloor)
@@ -142,8 +142,8 @@ public class Vampire : Enemy
 					SendUpdate("WALK_ANIM", "GoodMorning");
 					myRig.gravityScale = 1f;
 				}
-			}
-		}
+			}			
+		}		
 	}
 
 	private IEnumerator PhaseThroughFloor(float seconds)
@@ -153,9 +153,9 @@ public class Vampire : Enemy
 		SendUpdate("COLLIDER", "false");
 		yield return new WaitForSeconds(seconds);
 		
-		GetComponent<Collider2D>().enabled = true;
-		phasingThroughFloor = false;
+		GetComponent<Collider2D>().enabled = true;		
 		SendUpdate("COLLIDER", "true");
+		phasingThroughFloor = false;
 	}
 
 	private void OnTriggerEnter2D(Collider2D collision)
@@ -255,6 +255,8 @@ public class Vampire : Enemy
 					break;
 				}
 			}
+
+			Debug.Log("state: " + state);
 		}
 	}
 }

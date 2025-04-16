@@ -797,6 +797,8 @@ public class Player : Character {
         anim = GetComponent<Animator>();
         cam = Camera.main;
 
+        Cursor.visible = false;
+
         if (GetComponent<NetworkRB2D>() != null)
             OTHER_FLAGS = GetComponent<NetworkRB2D>().FLAGS;
         else if (GetComponentInChildren<NetworkRB2D>() != null)
