@@ -11,8 +11,6 @@ public class MenuPlayer : MonoBehaviour
     public PlayerInput input;
     public InputAction inputAction;
 
-    public Canvas menuCanvas;
-
 
     void Awake()
     {
