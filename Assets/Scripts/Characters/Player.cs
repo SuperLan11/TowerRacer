@@ -355,6 +355,12 @@ public class Player : Character {
                 Player.highestCamY = float.Parse(value);
             }
         }
+        else if(flag == "SHOOT_ANIM"){
+            if(IsClient){
+                if (!anim.GetCurrentAnimatorStateInfo(0).IsName("ArcherShoot"))
+                    anim.Play("ArcherShoot", -1, 0f);
+            }
+        }
         else if (flag == "HIT_DOOR") {
             if (IsClient) {
                 this.transform.position = startPos;
@@ -442,6 +448,12 @@ public class Player : Character {
         else if (flag == "ATTACK_SFX"){
             if (IsClient){
                 attackSfx.Play();
+            }
+        }
+        else if(flag == "ATTACK_ANIM"){
+            if(IsClient){
+                if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Stab"))
+                    anim.Play("Stab", -1, 0f);
             }
         }
         else if (flag == "AIM_STICK")
@@ -1775,7 +1787,7 @@ public class Player : Character {
 
     private IEnumerator AttackCooldown(){
         yield return new WaitForSecondsRealtime(ATTACK_COOLDOWN_DURATION);
-
+        //SendUpdate("IDLE_ANIM", "");
         inAttackCooldown = false;
     }
 
@@ -1862,7 +1874,7 @@ public class Player : Character {
         //!don't forget to actually put this in handle message!
         //SendUpdate("ATTACK_ANIM", "GoodMorning");
         SendUpdate("ATTACK_SFX", "");
-
+        SendUpdate("ATTACK_ANIM", "");
 
         Vector2 direction = (isFacingRight ? Vector2.right : Vector2.left);
         float xPos = (isFacingRight ? (bodyCollider.bounds.max.x + COLLISION_RAYCAST_LENGTH) : (bodyCollider.bounds.min.x - COLLISION_RAYCAST_LENGTH));
@@ -2016,6 +2028,8 @@ public class Player : Character {
                     float ropeArrowSpeed = 10f;
                     Vector2 direction = new Vector2(0f, 1f);
                     Quaternion arrowDirection;
+
+                    SendUpdate("SHOOT_ANIM", "");
 
                     //only 3 directions: top left, top right, and top
                     if (moveInput.x > 0.01f){
