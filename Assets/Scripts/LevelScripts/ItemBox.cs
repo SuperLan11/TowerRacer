@@ -88,6 +88,7 @@ public class ItemBox : NetworkComponent
 			}
 
 			Player playerHit = collision.gameObject.GetComponentInParent<Player>();
+
 			bool enemyHit = collision.gameObject.GetComponent<Enemy>() != null;
 
 			if (playerHit != null || enemyHit)
@@ -95,6 +96,10 @@ public class ItemBox : NetworkComponent
 				GetComponent<Collider2D>().isTrigger = true;
 				GetComponent<Rigidbody2D>().gravityScale = 0f;
 				SendUpdate("TRIGGER", "");
+			}
+
+			if (playerHit == null){
+				return;
 			}
 
 			bool hasItem = playerHit.hasBomb || playerHit.hasChicken || playerHit.hasSpeedBoost;
@@ -120,6 +125,10 @@ public class ItemBox : NetworkComponent
 		if (IsServer)
 		{			
 			Player playerHit = collision.gameObject.GetComponentInParent<Player>();			
+
+			if (playerHit == null){
+				return;
+			}
 
 			bool hasItem = playerHit.hasBomb || playerHit.hasChicken || playerHit.hasSpeedBoost;
 			if (playerHit != null && !hasItem)
