@@ -103,8 +103,6 @@ public class Vampire : Enemy
 
 	public override void NetworkedStart()
 	{
-		health = 3;
-		
 		Vector2 belowFeet = transform.position;
 		belowFeet.y -= GetComponent<Collider2D>().bounds.size.y;
 
@@ -237,26 +235,21 @@ public class Vampire : Enemy
 			switch (state)
 			{
 				case STATE.MOVING:
-				{
-					Debug.Log("vampire moving");
+				{					
 					Move();
 					break;
 				}
 				case STATE.LADDER_UP:
-				{
-					Debug.Log("vampire moving up");
+				{					
 					myRig.velocity = new Vector2(0, ladderSpeed);
 					break;
 				}
 				case STATE.LADDER_DOWN:
-				{
-					Debug.Log("vampire moving down");
+				{					
 					myRig.velocity = new Vector2(0, -ladderSpeed);				
 					break;
 				}
 			}
-
-			Debug.Log("state: " + state);
 		}
 	}
 }

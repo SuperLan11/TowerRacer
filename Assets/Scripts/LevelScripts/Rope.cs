@@ -66,24 +66,18 @@ public class Rope : NetworkComponent
 
     
     public void GrabRope(Player player)
-    {                
-        //player.currentRope = this;
+    {                        
         this.player = player;
         player.swingPos = swingPos;
-        //Vector2 teleportPos = new Vector2(player.swingPos.position.x, player.swingPos.position.y);            
         playerPresent = true;
 
-        /*player.SendUpdate("PARENT_ROPE", this.transform.position.ToString());
-        //parent to the pivot
-        player.transform.SetParent(pivotRig.transform);*/
+        player.transform.position = swingPos.position;
+        player.SendUpdate("TELEPORT", swingPos.position.ToString());
 
         //use local position when childed so you don't need to worry about world space
-        /*player.transform.localPosition = swingPos.localPosition;
-        Debug.Log("setting localPosition: " + transform.localPosition);
-        player.SendUpdate("LOCAL_POS", transform.localPosition.ToString());*/
-
-        player.transform.position = swingPos.position;
-        player.SendUpdate("TELEPORT", swingPos.ToString());
+        //Debug.Log("setting localPosition: " + transform.localPosition);
+        /*player.transform.localPosition = swingPos.localPosition;        
+        player.SendUpdate("LOCAL_POS", transform.localPosition.ToString());    */    
 
         //calculate initial torque using player speed variables. don't use player rigidbody velocity since that's used to connect to rope
         float playerTorque = Mathf.Max(Player.MAX_SWING_SPEED, Mathf.Abs(player.ropeLaunchVec.x));
@@ -187,15 +181,6 @@ public class Rope : NetworkComponent
             {                
                 pivotRig.angularVelocity += playerTorque;
             }
-
-            /*if (pivotRig.angularVelocity > 90)
-            {
-                pivotRig.angularVelocity = 90;
-            }
-            if (pivotRig.angularVelocity < -90)
-            {
-                pivotRig.angularVelocity = -90;
-            }*/
         }        
     }            
 }

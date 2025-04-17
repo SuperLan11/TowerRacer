@@ -512,17 +512,21 @@ public class Player : Character {
                 }
             }
         }
-        else if(flag == "PARENT_ROPE"){
+        else if(flag == "PARENT_TO_ROPE"){
             if(IsClient){
                 Vector2 pos = Vector2FromString(value);
                 Rope closestRope = ClosestRopeToPos(pos);
                 Debug.Log("parenting to " + closestRope.transform.parent);
                 transform.SetParent(closestRope.pivotRig.transform);
+
+                rigidbody.freezeRotation = false;
             }
         }
         else if (flag == "UNPARENT"){
             if (IsClient){
                 transform.SetParent(null);
+                transform.eulerAngles = Vector3.zero;
+                rigidbody.freezeRotation = true;
             }
         }
         else if (flag == "DISMOUNT")
@@ -780,7 +784,8 @@ public class Player : Character {
     private float DirToDegrees(Vector2 dir){
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
         //return -(angle + 360) % 360;
-        return angle + 180;
+        //return angle + 180;
+        return angle + 90;
     }
 
     //this assumes 0 degrees means the arrow is facing left
@@ -835,6 +840,9 @@ public class Player : Character {
         cam = Camera.main;
 
         Cursor.visible = false;
+
+        if(GameObject.FindGameObjectWithTag("QUIT") != null)
+            GameObject.FindGameObjectWithTag("QUIT").SetActive(false);
 
         if (GetComponent<NetworkRB2D>() != null)
             OTHER_FLAGS = GetComponent<NetworkRB2D>().FLAGS;
@@ -1441,17 +1449,21 @@ public class Player : Character {
 
                 //do this only on local player
                 aimArrow.GetComponent<SpriteRenderer>().enabled = true;
-                Vector3 aimDir = new Vector3(lastAimDir.x, lastAimDir.y, 0);
+                Vector3 aimDir = new Vector3(lastAimDir.x, lastAimDir.y, 0);                
+                
                 Vector3 newRot = arrowPivot.transform.eulerAngles;
                 newRot.z = DirToDegrees(aimDir);
-                arrowPivot.transform.eulerAngles = newRot;
+                if (newRot.z < 0)
+                    newRot.z += 360f;
+
+                if (newRot.z > 45 && newRot.z < 315)
+                    arrowPivot.transform.eulerAngles = newRot;   
             }
             else if (aim.canceled)
             {                
                 SendCommand("SHOOT_BOMB", "");
                 hasBomb = false;
-                SendCommand("HAS_BOMB", hasBomb.ToString());
-                //Destroy(itemUI.transform.GetChild(0).gameObject);                
+                SendCommand("HAS_BOMB", hasBomb.ToString());                            
                 HideItem();
 
                 lastAimDir = Vector2.zero;
@@ -1879,7 +1891,7 @@ public class Player : Character {
                 newCamPos.y = winningPlayer.transform.position.y;
                 
                 Camera.main.transform.position = newCamPos;
-                Camera.main.orthographicSize = 7f;
+                Camera.main.orthographicSize = 3f;
             }
             else if (!camFrozen){                
                 Vector3 newCamPos = new Vector3(0, 0, cam.transform.position.z);
@@ -2036,8 +2048,12 @@ public class Player : Character {
             //can't bypass jumping code cause we need gravity to work to be bypassed by special movement states
             if (canGrabRope && CheckForTriggers("Rope")/*CheckForRopes()*/){
                 if (currentRope != null){
+                    /*SendUpdate("PARENT_TO_ROPE", currentRope.transform.position.ToString());
+                    transform.SetParent(currentRope.pivotRig.transform);
+                    rigidbody.velocity = Vector2.zero;*/
+
                     canGrabRope = false;
-                    currentRope.GrabRope(this);
+                    currentRope.GrabRope(this);                    
 
                     this.gameObject.layer = noJumpThruLayer;
                     SendUpdate("DISABLE_JUMP_THRU_COLLISION", "");
@@ -2089,8 +2105,8 @@ public class Player : Character {
                     SendUpdate("ENABLE_COLLIDERS", "GoodMorning");                    
                 }else{
                     //don't worry about horizontal movement cause it's already taken care of in the rope script
-                    rigidbody.velocity = (swingPos.position - transform.position) * currentRope.swingSnapMult;
-                    //rigidbody.velocity = Vector2.zero;
+                    //rigidbody.velocity = (swingPos.position - transform.position) * currentRope.swingSnapMult;
+                    rigidbody.velocity = Vector2.zero;
                 }
 
                 return;

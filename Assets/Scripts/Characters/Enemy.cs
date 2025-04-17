@@ -20,6 +20,7 @@ public abstract class Enemy : Character
     // Start is called before the first frame update
     private void Start()
     {
+        health = 1;
         myRig = GetComponent<Rigidbody2D>();
         
         //serialize this in the prefab for each enemy to prevent null reference exceptions
@@ -93,13 +94,9 @@ public abstract class Enemy : Character
     }
 
     public override void TakeDamage(int damage){
-        health -= damage;
-        
-        this.transform.GetChild(health).GetComponent<SpriteRenderer>().enabled = false;        
-        SendUpdate("HIDE_HP", health.ToString());
+        health -= damage;        
 
-        if (health <= 0){
-            Debug.Log("enemy is dead");
+        if (health <= 0){            
             //enemy drops item box on death
             MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, this.transform.position, Quaternion.identity);
             MyCore.NetDestroyObject(this.NetId);

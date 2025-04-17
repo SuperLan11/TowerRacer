@@ -652,7 +652,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 378318156}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.4405069
+  m_Size: 0.39411175
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -1953,7 +1953,7 @@ GameObject:
   - component: {fileID: 1474014037}
   m_Layer: 5
   m_Name: Quit
-  m_TagString: Untagged
+  m_TagString: QUIT
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3488,7 +3488,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1904947441}
   m_Direction: 2
   m_Value: 0.5
-  m_Size: 0.0301517
+  m_Size: 0.026768792
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:

@@ -22,15 +22,17 @@ public class TestPlayer : MonoBehaviour
     public GameObject singleObject;
     public GameObject multiObject;
 
+    public GameObject childPrefab;
+
     // Start is called before the first frame update
     void Start()
     {
         rig = GetComponent<Rigidbody2D>();
-        GameObject singleObj = Instantiate(singleObject, Vector2.zero, Quaternion.identity);
+        /*GameObject singleObj = Instantiate(singleObject, Vector2.zero, Quaternion.identity);
         singleObj.name = "SingleObj324324";
 
         GameObject multiObj = Instantiate(multiObject, Vector2.zero, Quaternion.identity);
-        multiObject.name = "MultiObj234324";
+        multiObject.name = "MultiObj234324";*/
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -39,7 +41,7 @@ public class TestPlayer : MonoBehaviour
         {
             isGrounded = true;
             state = "NORMAL";
-        }
+        }        
     }
     
     private void OnTriggerEnter2D(Collider2D collision)
@@ -48,6 +50,10 @@ public class TestPlayer : MonoBehaviour
         {
             //using a wrapper so all rope variables can be modified on the rope script
             //collision.gameObject.GetComponentInParent<Rope>().GrabRope(this);
+        }
+        else if (collision.gameObject.name == "obj")
+        {
+           
         }
     }
 
@@ -67,6 +73,18 @@ public class TestPlayer : MonoBehaviour
         {
             Debug.Log("mouse delta canceled");
         }        
+    }
+
+    public void Lmb(InputAction.CallbackContext lmb)
+    {
+        if(lmb.started)
+        {
+            TestRope rope = FindObjectOfType<TestRope>();
+            GameObject obj = Instantiate(childPrefab, rope.GetComponentInChildren<Collider2D>().transform.position, Quaternion.identity);
+            obj.transform.SetParent(rope.pivotRig.transform);
+
+            Debug.Log("lmb");
+        }
     }
 
     private IEnumerator GrabCooldown(float seconds)
