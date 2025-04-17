@@ -1746,6 +1746,12 @@ public class Player : Character {
         rigidbody.velocity = new Vector2(rigidbody.velocity.x, verticalVelocity);
     }
 
+    public void ResetTimers(){
+        movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN;
+        inMovementAbilityCooldown = false;
+        inAttackCooldown = false;
+    }
+
     //should only be called in localplayer
     private void Rumble(float lowFrequency, float highFrequency, float duration){
         GetCurrentGamepad();
