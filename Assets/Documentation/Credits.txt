@@ -35,6 +35,10 @@ Assets Used:
 
 	Spawn Rope: https://pixabay.com/sound-effects/poof-80161/
 
+	Sword Swing SFX: https://pixabay.com/sound-effects/sword-sound-260274/
+
+	Blip (Movement Ability Recharched): https://pixabay.com/sound-effects/blip-131856/
+
 
 	Round Music: https://opengameart.org/content/game847-soundloops
 
