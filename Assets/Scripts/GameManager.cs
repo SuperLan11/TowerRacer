@@ -340,8 +340,8 @@ public class GameManager : NetworkComponent
             levelTime = 0;
 
             if (debugMode){
-                Enemy[] enemies = GetAllEnemies();
-                DestroyAllEnemies(enemies);
+                //Enemy[] enemies = GetAllEnemies();
+                //DestroyAllEnemies(enemies);
             }            
         }        
     }

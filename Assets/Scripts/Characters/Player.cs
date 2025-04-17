@@ -116,10 +116,10 @@ public class Player : Character {
     [SerializeField] private AudioSource movementRechargeSfx;
 
     //not const anymore cause we want to change it for speed boost powerup
-    [System.NonSerialized] public float MAX_WALK_SPEED = 18f;
-    [SerializeField] private float GROUND_ACCELERATION = 1f, GROUND_DECELERATION = 20f;
+    public float MAX_WALK_SPEED = 18f;
+    private const float GROUND_ACCELERATION = 15f, GROUND_DECELERATION = 12f;
 
-    private float AIR_ACCELERATION = 5f, AIR_DECELERATION = 5f;
+    private const float AIR_ACCELERATION = 10f, AIR_DECELERATION = 2f;
     private float WALL_JUMP_ACCELERATION;
 
     private float MAX_RUN_SPEED = 20f;
@@ -131,7 +131,7 @@ public class Player : Character {
     private const float ATTACK_RAYCAST_LENGTH = 2f;
 
 
-    private float JUMP_HEIGHT = 6.5f;
+    private float JUMP_HEIGHT = 7f;
     private float JUMP_HEIGHT_COMPENSATION_FACTOR = 1.054f;
     //apex = max height of jump
     private float TIME_TILL_JUMP_APEX = 0.35f;
@@ -178,7 +178,7 @@ public class Player : Character {
     [SerializeField] private float APEX_THRESHOLD = 0.97f, APEX_HANG_TIME = 0.075f;
     [SerializeField] private float MAX_JUMP_BUFFER_TIME = 0.125f;
     [SerializeField] private float MAX_JUMP_COYOTE_TIME = 0.1f;
-    [SerializeField] private float MAX_WALL_JUMP_TIME = 0.2f;
+    [SerializeField] private float MAX_WALL_JUMP_TIME = 0.05f;
     [SerializeField] private float MAX_WALL_STICK_TIME = 3f;
 
     private const float TILEMAP_PLATFORM_OFFSET = 2f;
@@ -1187,30 +1187,37 @@ public class Player : Character {
 
     private bool CheckForCeiling(){
         if (IsServer){
+            int floorLayer = 6;
+            int defaultLayer = 0;
+            //bit shifting mumbo jumbo that lets me do this without having a for loop for each layer mask
+            int combinedLayerMask = (1 << floorLayer) | (1 << defaultLayer);
+            
             Vector2 tempPos = new Vector2(bodyCollider.bounds.center.x, bodyCollider.bounds.max.y + COLLISION_RAYCAST_LENGTH);
-            RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.up, COLLISION_RAYCAST_LENGTH, noJumpThruLayer, ~0);            
+            RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.up, COLLISION_RAYCAST_LENGTH*3f, combinedLayerMask);           
 
             foreach (RaycastHit2D hit in hits){
-                if (!hit.collider.isTrigger && (hit.normal == downNormal) && (hit.collider.gameObject.name != "SuperPatrickTilemap")){
+                DrawDebugNormal(tempPos, Vector2.up, COLLISION_RAYCAST_LENGTH*3f, false);
+                if (!hit.collider.isTrigger && (hit.normal == downNormal)){
                     return true;
                 }
             }
 
+
             //shoot left and right raycast only if middle raycast didn't detect anything
             tempPos.x = bodyCollider.bounds.min.x;
-            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+            hits = Physics2D.RaycastAll(tempPos, Vector2.up, COLLISION_RAYCAST_LENGTH*3f, combinedLayerMask);
 
             foreach (RaycastHit2D hit in hits){
-                if (!hit.collider.isTrigger && (hit.normal == downNormal) && (hit.collider.gameObject.name != "SuperPatrickTilemap")){
+                if (!hit.collider.isTrigger && (hit.normal == downNormal)){
                     return true;
                 }
             }
 
             tempPos.x = bodyCollider.bounds.max.x;
-            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+            hits = Physics2D.RaycastAll(tempPos, Vector2.up, COLLISION_RAYCAST_LENGTH*3f, combinedLayerMask);
 
             foreach (RaycastHit2D hit in hits){
-                if (!hit.collider.isTrigger && (hit.normal == downNormal) && (hit.collider.gameObject.name != "SuperPatrickTilemap")){
+                if (!hit.collider.isTrigger && (hit.normal == downNormal)){
                     return true;
                 }
             }
@@ -1899,7 +1906,7 @@ public class Player : Character {
     }
 
     public override void TakeDamage(int damage){
-        if (!isInvincible && !isStunned){
+        if (!isInvincible && !isStunned && !playerFrozen){
             Debug.Log("taking damage");
             health -= damage;
 
@@ -2215,8 +2222,9 @@ public class Player : Character {
                 return;
             }
 
+            //3 movement abilities
             if (IsGrappling()){
-                if (dashTimer > 0f){
+                if ((dashTimer > 0f) && !CheckForCeiling()){
                     dashTimer -= Time.deltaTime;
                     
                     //returning instead of giving the player midair control makes it feel more like a Celeste-style dash
@@ -2228,7 +2236,7 @@ public class Player : Character {
             }
 
             if (IsDashing()){
-                if (dashTimer > 0f){
+                if ((dashTimer > 0f) && !CheckForCeiling()){
                     dashTimer -= Time.deltaTime;
                     
                     //returning instead of giving the player midair control makes it feel more like a Celeste-style dash
@@ -2243,7 +2251,6 @@ public class Player : Character {
                 if (dashTimer > 0f){
                     //hit wall while dashing horizontally
                     if ((verticalVelocity <= 0f) && CheckForWalls()){
-                        //play crashing sfx
                         Vector2 dashVelocity;
 
                         //flip velocities but retain x velocity a little
@@ -2406,9 +2413,11 @@ public class Player : Character {
 
             //no need to check for isJumpPressed since that's what jumpBufferTimer is doing
             bool normalJump = (jumpBufferTimer > 0f && !IsJumping() && (onGround || coyoteTimer > 0f));
-            bool wallJump = (wallsTimer > 0f && onWall && wallJumpPressed && CanWallJump());
+            //make sure x input isn't 0
+            bool wallJump = (wallsTimer > 0f && onWall && wallJumpPressed && CanWallJump() && (moveInput.x != 0f));
             bool extraJump = (jumpPressed && IsFastFalling() && (numJumpsUsed < MAX_JUMPS));
             bool airJump = (jumpPressed && IsFallingInTheAir() && (numJumpsUsed < MAX_JUMPS - 1));
+            
 
             if (normalJump){
                 Debug.Log("normal jump");
