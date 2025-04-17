@@ -113,6 +113,7 @@ public class Player : Character {
     [SerializeField] private AudioSource lungeSfx;
     [SerializeField] private AudioSource lungeHitSfx;
     [SerializeField] private AudioSource attackSfx;
+    [SerializeField] private AudioSource movementRechargeSfx;
 
     //not const anymore cause we want to change it for speed boost powerup
     [System.NonSerialized] public float MAX_WALK_SPEED = 18f;
@@ -698,6 +699,10 @@ public class Player : Character {
         else if(flag == "STOP_STUN_SFX"){
             if(IsClient){
                 stunSfx.Stop();
+            }
+        }else if (flag == "MOVEMENT_RECHARGE_SFX"){
+            if (IsLocalPlayer){
+                movementRechargeSfx.Play();
             }
         }else if (flag == "SET_GROUND_POS"){
             if (IsClient){
@@ -1997,6 +2002,10 @@ public class Player : Character {
                 }else{
                     movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN;
                     inMovementAbilityCooldown = false;
+
+                    if (selectedCharacterClass != characterClass.BANDIT){
+                        SendUpdate("MOVEMENT_RECHARGE_SFX", "");
+                    }
                 }
             }
 
