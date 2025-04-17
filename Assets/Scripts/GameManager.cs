@@ -48,13 +48,20 @@ public class GameManager : NetworkComponent
     public static bool everyoneFinished = false;
     public static bool tutorialFinished = false;
 
+    private GameObject start1;
+    private GameObject start2;
+    private GameObject start3;
+    private GameObject start4;
+
     //the timer starts when the first player reaches the end door
     //the timer ends the round so players don't have to wait on the last player forever    
     private int roundEndTime = 30;
     private float curTimer;
     [System.NonSerialized] public bool timerStarted = false;    
     private float camEndY;
-    private float tilemapHeight = 48f;
+    private float startPieceHeight = 48f;
+    private float middlePieceHeight = 40f;
+    private float endPieceHeight = 48f;
 
     private float resultsTimer = 5f;
     private float alphaUpdateFreq = 0.01f;
@@ -307,17 +314,17 @@ public class GameManager : NetworkComponent
     // Start is called before the first frame update
     void Start()
     {
-        GameObject start1 = GameObject.Find("P1Start");
+        /*GameObject start1 = GameObject.Find("P1Start");
         GameObject start2 = GameObject.Find("P2Start");
         GameObject start3 = GameObject.Find("P3Start");
-        GameObject start4 = GameObject.Find("P4Start");
+        GameObject start4 = GameObject.Find("P4Start");*/
         
         curTimer = roundEndTime;
 
-        starts[0] = start1.transform.position;
+        /*starts[0] = start1.transform.position;
         starts[1] = start2.transform.position;
         starts[2] = start3.transform.position;
-        starts[3] = start4.transform.position;
+        starts[3] = start4.transform.position;*/
 
         playerPanelColors = new Color32[4];
         playerPanelColors[0] = new Color32(255, 220, 0, 255); //gold for first
@@ -354,14 +361,17 @@ public class GameManager : NetworkComponent
     }
     
     //chance to place is from 0 to 1 and represents the chance a tagged object will have that object placed
-    private void RandomizeLevel(int numPieces)
-    {        
+    //returns the starting piece so the start positions can be retrieved
+    private GameObject RandomizeLevel(int numPieces)
+    {
+        GameObject startPiece = null;
+
         for (int i = 0; i < numPieces; i++)
         {
             if(i == 0)
             {
-                GameObject startPiece = MyCore.NetCreateObject(Idx.START_LEVEL_PIECE, this.Owner,
-                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y, 0), Quaternion.identity);
+                startPiece = MyCore.NetCreateObject(Idx.START_LEVEL_PIECE, this.Owner,
+                    new Vector3(CENTER_PIECE_X, 0, 0), Quaternion.identity);
 
                 RandomlyPlaceRopes(startPiece, 100);
                 RandomlyPlaceEnemies(startPiece, 100);
@@ -369,28 +379,36 @@ public class GameManager : NetworkComponent
                 RandomlyPlaceLadders(startPiece, 100);
                 continue;
             }
-
-            int randIdx = Random.Range(0, Idx.NUM_LEVEL_PIECES);
+            
             if (i == numPieces - 1)
             {
                 /*GameObject endPiece = MyCore.NetCreateObject(Idx.END_LEVEL_PIECE, this.Owner,
                     new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);                */
+
+                float endPieceY = startPieceHeight + ((i-1) * middlePieceHeight) + endPieceHeight;
+
                 GameObject endPiece = MyCore.NetCreateObject(Idx.END_LEVEL_PIECE, this.Owner,
-                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * tilemapHeight, 0), Quaternion.identity);
+                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * endPieceHeight, 0), Quaternion.identity);
+
                 PlaceDoor(endPiece);
 
-                camEndY = endPiece.transform.position.y;                
+                camEndY = endPiece.transform.position.y;    
                 break;
             }
-                      
+
+            //exclude start piece and end piece
+            int randIdx = Random.Range(1, Idx.NUM_LEVEL_PIECES - 1);            
+            float pieceY = startPieceHeight / 2 + (middlePieceHeight / 2) + middlePieceHeight * (i-1);
+
             GameObject piece = MyCore.NetCreateObject(Idx.FIRST_LEVEL_PIECE_IDX + randIdx, this.Owner,
-                new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * tilemapHeight, 0), Quaternion.identity);
+                new Vector3(CENTER_PIECE_X, pieceY, 0), Quaternion.identity);
 
             RandomlyPlaceRopes(piece, 100);
             RandomlyPlaceEnemies(piece, 100);
             RandomlyPlaceItemBoxes(piece, 100);
             RandomlyPlaceLadders(piece, 100);
-        }        
+        }
+        return startPiece;
     }
 
     private GameObject GetFloorPiece(GameObject piece)
@@ -464,8 +482,11 @@ public class GameManager : NetworkComponent
     {        
         for(int i = 0; i < endPiece.transform.childCount; i++)
         {
-            if(endPiece.transform.GetChild(i).tag == "END_DOOR_POS")            
-                MyCore.NetCreateObject(Idx.END_DOOR, Owner, endPiece.transform.GetChild(i).transform.position, Quaternion.identity);
+            if (endPiece.transform.GetChild(i).tag == "END_DOOR_POS")
+            {
+                GameObject door = MyCore.NetCreateObject(Idx.END_DOOR, Owner, endPiece.transform.GetChild(i).transform.position, Quaternion.identity);
+                //door.transform.SetParent(endPiece.transform);
+            }
         }
     }
 
@@ -478,7 +499,10 @@ public class GameManager : NetworkComponent
             GameObject child = levelPiece.transform.GetChild(i).gameObject;
 
             if (child.tag == "ROPE_POS" && gotChance)
-                MyCore.NetCreateObject(Idx.ROPE, Owner, child.transform.position, Quaternion.identity);
+            {
+                GameObject rope = MyCore.NetCreateObject(Idx.ROPE, Owner, child.transform.position, Quaternion.identity);
+                //rope.transform.SetParent(levelPiece.transform);
+            }
         }   
     }
 
@@ -508,7 +532,10 @@ public class GameManager : NetworkComponent
             GameObject child = levelPiece.transform.GetChild(i).gameObject;
 
             if (child.tag == "ITEM_POS" && gotChance)
-                MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, child.transform.position, Quaternion.identity);
+            {
+                GameObject itemBox = MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, child.transform.position, Quaternion.identity);
+                //itemBox.transform.SetParent(levelPiece.transform);
+            }
         }
     }
 
@@ -523,11 +550,13 @@ public class GameManager : NetworkComponent
             if (child.tag == "LADDER_POS" && gotChance)
             {
                 GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, child.transform.position, Quaternion.identity);
+                ladder.transform.SetParent(levelPiece.transform);
 
                 Vector2 dismountPos = ladder.GetComponent<Collider2D>().bounds.max;
                 dismountPos.x = ladder.transform.position.x;
                 GameObject dismount = MyCore.NetCreateObject(Idx.DISMOUNT, Owner, dismountPos, Quaternion.identity);
                 dismount.transform.position += new Vector3(0, dismount.GetComponent<Collider2D>().bounds.size.y, 0);
+                //dismount.transform.SetParent(ladder.transform);
             }
         }
     }
@@ -998,6 +1027,19 @@ public class GameManager : NetworkComponent
         yield return new WaitForSeconds(0.5f);
     }
 
+    private void AssignStarts(GameObject startPiece)
+    {
+        starts[0] = startPiece.transform.GetChild(0).transform.position;
+        starts[1] = startPiece.transform.GetChild(1).transform.position;
+        starts[2] = startPiece.transform.GetChild(2).transform.position;
+        starts[3] = startPiece.transform.GetChild(3).transform.position;
+
+        Debug.Log("start0: " + starts[0]);
+        Debug.Log("start1: " + starts[1]);
+        Debug.Log("start2: " + starts[2]);
+        Debug.Log("start3: " + starts[3]);
+    }
+
     public override IEnumerator SlowUpdate()
     {
         if (IsServer)
@@ -1012,7 +1054,8 @@ public class GameManager : NetworkComponent
                 yield return new WaitForSeconds(0.5f);
             }
 
-            RandomizeLevel(5);
+            GameObject startPiece = RandomizeLevel(5);
+            AssignStarts(startPiece);
             //CreateTutorials();            
 
             NPM[] players = GameObject.FindObjectsOfType<NPM>();
@@ -1048,8 +1091,7 @@ public class GameManager : NetworkComponent
                 player.SendUpdate("CAM_END", camEndY.ToString());
                 player.SendUpdate("INIT_SCORE_PANEL", "");                
             }
-            //MovePlayersToTutorial();
-            //
+            //MovePlayersToTutorial();            
             //don't move this line. put additional updates after this so clients have their ui
             SendUpdate("INIT_UI", "");
             

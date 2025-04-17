@@ -1015,7 +1015,7 @@ GameObject:
   - component: {fileID: 3860345742978359744}
   - component: {fileID: 4176373967053700204}
   m_Layer: 0
-  m_Name: Piece2
+  m_Name: RafPieces
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
