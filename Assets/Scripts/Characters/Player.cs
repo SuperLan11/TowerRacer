@@ -1175,30 +1175,37 @@ public class Player : Character {
 
     private bool CheckForCeiling(){
         if (IsServer){
+            int floorLayer = 6;
+            int defaultLayer = 0;
+            //bit shifting mumbo jumbo that lets me do this without having a for loop for each layer mask
+            int combinedLayerMask = (1 << floorLayer) | (1 << defaultLayer);
+            
             Vector2 tempPos = new Vector2(bodyCollider.bounds.center.x, bodyCollider.bounds.max.y + COLLISION_RAYCAST_LENGTH);
-            RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.up, COLLISION_RAYCAST_LENGTH, noJumpThruLayer, ~0);            
+            RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.up, COLLISION_RAYCAST_LENGTH*3f, combinedLayerMask);           
 
             foreach (RaycastHit2D hit in hits){
-                if (!hit.collider.isTrigger && (hit.normal == downNormal) && (hit.collider.gameObject.name != "SuperPatrickTilemap")){
+                DrawDebugNormal(tempPos, Vector2.up, COLLISION_RAYCAST_LENGTH*3f, false);
+                if (!hit.collider.isTrigger && (hit.normal == downNormal)){
                     return true;
                 }
             }
 
+
             //shoot left and right raycast only if middle raycast didn't detect anything
             tempPos.x = bodyCollider.bounds.min.x;
-            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+            hits = Physics2D.RaycastAll(tempPos, Vector2.up, COLLISION_RAYCAST_LENGTH*3f, combinedLayerMask);
 
             foreach (RaycastHit2D hit in hits){
-                if (!hit.collider.isTrigger && (hit.normal == downNormal) && (hit.collider.gameObject.name != "SuperPatrickTilemap")){
+                if (!hit.collider.isTrigger && (hit.normal == downNormal)){
                     return true;
                 }
             }
 
             tempPos.x = bodyCollider.bounds.max.x;
-            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+            hits = Physics2D.RaycastAll(tempPos, Vector2.up, COLLISION_RAYCAST_LENGTH*3f, combinedLayerMask);
 
             foreach (RaycastHit2D hit in hits){
-                if (!hit.collider.isTrigger && (hit.normal == downNormal) && (hit.collider.gameObject.name != "SuperPatrickTilemap")){
+                if (!hit.collider.isTrigger && (hit.normal == downNormal)){
                     return true;
                 }
             }
@@ -2202,8 +2209,9 @@ public class Player : Character {
                 return;
             }
 
+            //3 movement abilities
             if (IsGrappling()){
-                if (dashTimer > 0f){
+                if ((dashTimer > 0f) && !CheckForCeiling()){
                     dashTimer -= Time.deltaTime;
                     
                     //returning instead of giving the player midair control makes it feel more like a Celeste-style dash
@@ -2215,7 +2223,7 @@ public class Player : Character {
             }
 
             if (IsDashing()){
-                if (dashTimer > 0f){
+                if ((dashTimer > 0f) && !CheckForCeiling()){
                     dashTimer -= Time.deltaTime;
                     
                     //returning instead of giving the player midair control makes it feel more like a Celeste-style dash
@@ -2230,7 +2238,6 @@ public class Player : Character {
                 if (dashTimer > 0f){
                     //hit wall while dashing horizontally
                     if ((verticalVelocity <= 0f) && CheckForWalls()){
-                        //play crashing sfx
                         Vector2 dashVelocity;
 
                         //flip velocities but retain x velocity a little
