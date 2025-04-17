@@ -2088,7 +2088,7 @@ public class Player : Character {
                 
                 if (ropeJumpPressed && canRopeJump){
                     currentRope.BoostPlayer(this);
-                    transform.SetParent(null);
+                    //transform.SetParent(null);
                     //SendUpdate("UNPARENT", "");
 
                     this.gameObject.layer = normalLayer;
@@ -2105,8 +2105,8 @@ public class Player : Character {
                     SendUpdate("ENABLE_COLLIDERS", "GoodMorning");                    
                 }else{
                     //don't worry about horizontal movement cause it's already taken care of in the rope script
-                    //rigidbody.velocity = (swingPos.position - transform.position) * currentRope.swingSnapMult;
-                    rigidbody.velocity = Vector2.zero;
+                    rigidbody.velocity = (swingPos.position - transform.position) * currentRope.swingSnapMult;
+                    //rigidbody.velocity = Vector2.zero;
                 }
 
                 return;
