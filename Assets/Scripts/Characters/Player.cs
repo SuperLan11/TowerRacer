@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
-using Unity.VisualScripting;
+//using Unity.VisualScripting;
 using UnityEngine.UI;
 using UnityEngine.Tilemaps;
 
@@ -110,10 +110,14 @@ public class Player : Character {
     [SerializeField] private AudioSource jumpSfx;
     [SerializeField] private AudioSource doubleJumpSfx;
     [SerializeField] private AudioSource stunSfx;
+    [SerializeField] private AudioSource lungeSfx;
+    [SerializeField] private AudioSource lungeHitSfx;
+    [SerializeField] private AudioSource attackSfx;
+    [SerializeField] private AudioSource movementRechargeSfx;
 
     //not const anymore cause we want to change it for speed boost powerup
-    [System.NonSerialized] public float MAX_WALK_SPEED = 12.5f;
-    [SerializeField] private float GROUND_ACCELERATION = 5f, GROUND_DECELERATION = 20f;
+    [System.NonSerialized] public float MAX_WALK_SPEED = 18f;
+    [SerializeField] private float GROUND_ACCELERATION = 1f, GROUND_DECELERATION = 20f;
 
     private float AIR_ACCELERATION = 5f, AIR_DECELERATION = 5f;
     private float WALL_JUMP_ACCELERATION;
@@ -216,6 +220,9 @@ public class Player : Character {
     public bool isStunned = false;
     private float STUN_TIME = 1f;
     private bool clientCollidersEnabled = true;
+    
+    //this is probably terrible, but we have 2 days left
+    private bool jankGroundGravity = false;
 
     private Vector2 lastAimDir;
     private GameObject aimArrow;
@@ -421,6 +428,22 @@ public class Player : Character {
                 doubleJumpSfx.Play();
             }
         }
+        else if(flag == "LUNGE_SFX"){
+            if (IsClient){
+                lungeSfx.Play();
+            }
+        }
+        else if (flag == "LUNGE_HIT_SFX"){
+            if (IsClient){
+                lungeSfx.Stop();
+                lungeHitSfx.Play();
+            }
+        }
+        else if (flag == "ATTACK_SFX"){
+            if (IsClient){
+                attackSfx.Play();
+            }
+        }
         else if (flag == "AIM_STICK")
         {
             if (IsServer)
@@ -489,7 +512,7 @@ public class Player : Character {
                 bomb.currentPlayer = this;
                 bomb.launchVec = lastAimDir * bomb.launchSpeed;
             }
-        } else if (flag == "USE_ITEM") {
+        }else if (flag == "USE_ITEM") {
             if (IsServer) {
                 useItemSfx.Play();
                 if (hasChicken) {
@@ -499,6 +522,23 @@ public class Player : Character {
                 }
             }
         }
+        else if(flag == "PARENT_TO_ROPE"){
+            if(IsClient){
+                Vector2 pos = Vector2FromString(value);
+                Rope closestRope = ClosestRopeToPos(pos);
+                Debug.Log("parenting to " + closestRope.transform.parent);
+                transform.SetParent(closestRope.pivotRig.transform);
+
+                rigidbody.freezeRotation = false;
+            }
+        }
+        else if (flag == "UNPARENT"){
+            if (IsClient){
+                transform.SetParent(null);
+                transform.eulerAngles = Vector3.zero;
+                rigidbody.freezeRotation = true;
+            }
+        }
         else if (flag == "DISMOUNT")
         {
             if (IsClient)
@@ -506,9 +546,14 @@ public class Player : Character {
                 Vector2 dismountPos = Vector2FromString(value);
                 transform.position = dismountPos;
             }
-        } else if (flag == "SWING_POS_TELEPORT") {    //not necessary, but here to smooth out client teleportation just in case
+        } else if (flag == "TELEPORT") {    //not necessary, but here to smooth out client teleportation just in case
             if (IsClient) {
                 transform.position = Vector2FromString(value);
+            }
+        }
+        else if(flag == "LOCAL_POS"){
+            if(IsClient){
+                transform.localPosition = Vector2FromString(value);
             }
         }
         else if (flag == "JUMP_ANIM")
@@ -537,6 +582,12 @@ public class Player : Character {
             {
                 if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Climb"))
                     anim.Play("Climb", -1, 0f);
+            }
+        }
+        else if(flag == "LUNGE_ANIM"){
+            if(IsClient){
+                if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Lunge"))
+                    anim.Play("Lunge", -1, 0f);
             }
         }
         else if (flag == "TURN")
@@ -649,6 +700,22 @@ public class Player : Character {
             if(IsClient){
                 stunSfx.Stop();
             }
+        }else if (flag == "MOVEMENT_RECHARGE_SFX"){
+            if (IsLocalPlayer){
+                movementRechargeSfx.Play();
+            }
+        }else if (flag == "SET_GROUND_POS"){
+            if (IsClient){
+                this.transform.position = Vector2FromString(value);
+            }
+        }else if (flag == "ENABLE_CLIENT_GRAVITY"){
+            if (IsClient){
+                rigidbody.gravityScale = 15f;
+            }
+        }else if (flag == "DISABLE_CLIENT_GRAVITY"){
+            if (IsClient){
+                rigidbody.gravityScale = 0f;
+            }
         }
         else if (flag == "SELECTED_CHARACTER_CLASS")
         {
@@ -743,7 +810,8 @@ public class Player : Character {
     private float DirToDegrees(Vector2 dir){
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
         //return -(angle + 360) % 360;
-        return angle + 180;
+        //return angle + 180;
+        return angle + 90;
     }
 
     //this assumes 0 degrees means the arrow is facing left
@@ -785,7 +853,7 @@ public class Player : Character {
             Debug.LogError("Thine rigidbody is missing, good sir!");
         }
 
-        floorLayer = LayerMask.GetMask("Floor");
+        floorLayer = LayerMask.GetMask("Floor", "JumpThru");
         bool invalidFloor = (floorLayer == 0);
         if (invalidFloor){
             Debug.LogError("Thine floor layer is missing, good sir!");
@@ -796,6 +864,11 @@ public class Player : Character {
         regularMaterial = spriteRender.material;
         anim = GetComponent<Animator>();
         cam = Camera.main;
+
+        Cursor.visible = false;
+
+        if(GameObject.FindGameObjectWithTag("QUIT") != null)
+            GameObject.FindGameObjectWithTag("QUIT").SetActive(false);
 
         if (GetComponent<NetworkRB2D>() != null)
             OTHER_FLAGS = GetComponent<NetworkRB2D>().FLAGS;
@@ -978,13 +1051,14 @@ public class Player : Character {
 
     
     #region COLLISION
+    //previously using COLLISION_RAYCAST_LENGTH * 2
     private bool CheckForGround(){
         if (IsServer){
             bool jumpingThroughTilemap = false;
 
             Vector2 tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y - COLLISION_RAYCAST_LENGTH);
 
-            RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, ~0);
+            RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
 
             foreach (RaycastHit2D hit in hits){
                 if (hit.collider.GetComponent<TilemapCollider2D>() != null){
@@ -1004,12 +1078,12 @@ public class Player : Character {
                 }
             }
 
-            DrawDebugNormal(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, false);
+            DrawDebugNormal(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, false);
 
 
             //shoot left and right raycast only if middle raycast didn't detect anything
             tempPos.x = feetCollider.bounds.min.x;
-            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, ~0);
+            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
 
             foreach (RaycastHit2D hit in hits){
                 if (hit.collider.GetComponent<TilemapCollider2D>() != null) { 
@@ -1030,7 +1104,7 @@ public class Player : Character {
             }
 
             tempPos.x = feetCollider.bounds.max.x;
-            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, ~0);
+            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
 
             foreach (RaycastHit2D hit in hits){
                 if (hit.collider.GetComponent<TilemapCollider2D>() != null) { 
@@ -1053,6 +1127,35 @@ public class Player : Character {
 
         return false;
     }
+
+    private IEnumerator GroundCollisionGravity(){
+        yield return new WaitForSecondsRealtime(0.1f);
+
+        SendUpdate("DISABLE_CLIENT_GRAVITY", "GoodMorning");
+    }
+
+     private bool TryToTeleportToGround(){
+        if (IsServer){
+            Vector2 tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y - COLLISION_RAYCAST_LENGTH);
+
+            RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+
+            foreach (RaycastHit2D hit in hits){
+                if (hit.collider.GetComponent<TilemapCollider2D>() != null){
+                    tilemap = hit.collider.GetComponent<Tilemap>();
+                    float tileUpperY = GetTileUpperY(hit);
+                    float tempY = 0.01f + tileUpperY + (PlayerHeight() / 2f);
+                    
+                    Vector2 tempGroundVec = new Vector2(this.transform.position.x, tempY);
+                    SendUpdate("SET_GROUND_POS", tempGroundVec.ToString());
+
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+     }
 
     float GetTileUpperY(RaycastHit2D hit){
         if (tilemap != null){
@@ -1402,17 +1505,21 @@ public class Player : Character {
 
                 //do this only on local player
                 aimArrow.GetComponent<SpriteRenderer>().enabled = true;
-                Vector3 aimDir = new Vector3(lastAimDir.x, lastAimDir.y, 0);
+                Vector3 aimDir = new Vector3(lastAimDir.x, lastAimDir.y, 0);                
+                
                 Vector3 newRot = arrowPivot.transform.eulerAngles;
                 newRot.z = DirToDegrees(aimDir);
-                arrowPivot.transform.eulerAngles = newRot;
+                if (newRot.z < 0)
+                    newRot.z += 360f;
+
+                if (newRot.z > 45 && newRot.z < 315)
+                    arrowPivot.transform.eulerAngles = newRot;   
             }
             else if (aim.canceled)
             {                
                 SendCommand("SHOOT_BOMB", "");
                 hasBomb = false;
-                SendCommand("HAS_BOMB", hasBomb.ToString());
-                //Destroy(itemUI.transform.GetChild(0).gameObject);                
+                SendCommand("HAS_BOMB", hasBomb.ToString());                            
                 HideItem();
 
                 lastAimDir = Vector2.zero;
@@ -1714,6 +1821,36 @@ public class Player : Character {
         gamepad = Gamepad.current;
     }
 
+    private float PlayerHeight()
+    {
+        float height = bodyCollider.bounds.max.y;
+        height -= feetCollider.bounds.min.y;
+        return height;
+    }
+
+    private Rope ClosestRopeToPos(Vector2 pos)
+    {
+        Rope[] ropes = FindObjectsOfType<Rope>();
+        float minDist = Mathf.Infinity;
+        Rope closestRope = null;
+
+        foreach(Rope rope in ropes)
+        {
+            float distToRope = Vector2.Distance(transform.position, rope.transform.position);
+            if (distToRope < minDist)
+            {
+                minDist = distToRope;
+                closestRope = rope;
+            }
+        }
+        if (closestRope == null)
+            Debug.LogWarning("closest rope is null!");
+        else
+            Debug.Log("closest rope is " + closestRope.name);
+
+        return closestRope;
+    }
+
     protected override void Attack(){
         if (inAttackCooldown || isStunned){
             return;
@@ -1724,6 +1861,7 @@ public class Player : Character {
         
         //!don't forget to actually put this in handle message!
         //SendUpdate("ATTACK_ANIM", "GoodMorning");
+        SendUpdate("ATTACK_SFX", "");
 
 
         Vector2 direction = (isFacingRight ? Vector2.right : Vector2.left);
@@ -1810,7 +1948,7 @@ public class Player : Character {
                 newCamPos.y = winningPlayer.transform.position.y;
                 
                 Camera.main.transform.position = newCamPos;
-                Camera.main.orthographicSize = 7f;
+                Camera.main.orthographicSize = 3f;
             }
             else if (!camFrozen){                
                 Vector3 newCamPos = new Vector3(0, 0, cam.transform.position.z);
@@ -1843,7 +1981,14 @@ public class Player : Character {
             {                
                 this.gameObject.layer = normalLayer;
                 SendUpdate("ENABLE_JUMP_THRU_COLLISION", "");
-            }            
+            }          
+
+            
+            if (jankGroundGravity){
+                StartCoroutine(GroundCollisionGravity());
+                SendUpdate("ENABLE_CLIENT_GRAVITY", "GoodMorning");
+                jankGroundGravity = false;
+            }
 
             //Debug.Log("CurrentMovementState: " + currentMovementState);
             //Debug.Log("Move input" + moveInput);
@@ -1857,6 +2002,10 @@ public class Player : Character {
                 }else{
                     movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN;
                     inMovementAbilityCooldown = false;
+
+                    if (selectedCharacterClass != characterClass.BANDIT){
+                        SendUpdate("MOVEMENT_RECHARGE_SFX", "");
+                    }
                 }
             }
 
@@ -1929,13 +2078,14 @@ public class Player : Character {
                     //bypassing both gravity and horizontal velocity code
                     inMovementAbilityCooldown = true;
                     return;
-                }else if (selectedCharacterClass == characterClass.KNIGHT){
-                    SendUpdate("DASH_SFX", "");
+                }else if (selectedCharacterClass == characterClass.KNIGHT){                    
                     currentMovementState = movementState.KNIGHT_DASHING;
+                    SendUpdate("LUNGE_SFX", "");
                     //make these different variables if we want it to be different for the knight
                     dashTimer = MAX_DASH_TIME;
-                    SendUpdate("START_KNIGHT_DASH_EFFECT", "GoodMorning");
+                    //SendUpdate("START_KNIGHT_DASH_EFFECT", "GoodMorning");
                     SendUpdate("RUMBLE", "GoodMorning");
+                    SendUpdate("LUNGE_ANIM", "");
                     
                     Vector2 dashVelocity;
 
@@ -1966,9 +2116,13 @@ public class Player : Character {
             //can't bypass jumping code cause we need gravity to work to be bypassed by special movement states
             if (canGrabRope && CheckForTriggers("Rope")/*CheckForRopes()*/){
                 if (currentRope != null){
+                    /*SendUpdate("PARENT_TO_ROPE", currentRope.transform.position.ToString());
+                    transform.SetParent(currentRope.pivotRig.transform);
+                    rigidbody.velocity = Vector2.zero;*/
+
                     canGrabRope = false;
-                    currentRope.GrabRope(this);
-                    
+                    currentRope.GrabRope(this);                    
+
                     this.gameObject.layer = noJumpThruLayer;
                     SendUpdate("DISABLE_JUMP_THRU_COLLISION", "");
 
@@ -2002,7 +2156,9 @@ public class Player : Character {
                 
                 if (ropeJumpPressed && canRopeJump){
                     currentRope.BoostPlayer(this);
-                    
+                    //transform.SetParent(null);
+                    //SendUpdate("UNPARENT", "");
+
                     this.gameObject.layer = normalLayer;
                     SendUpdate("ENABLE_JUMP_THRU_COLLISION", "");
 
@@ -2018,6 +2174,7 @@ public class Player : Character {
                 }else{
                     //don't worry about horizontal movement cause it's already taken care of in the rope script
                     rigidbody.velocity = (swingPos.position - transform.position) * currentRope.swingSnapMult;
+                    //rigidbody.velocity = Vector2.zero;
                 }
 
                 return;
@@ -2083,6 +2240,8 @@ public class Player : Character {
                         dashVelocity = new Vector2(xVelocity, yVelocity);
                         verticalVelocity = dashVelocity.y;
                         rigidbody.velocity = dashVelocity;
+                        SendUpdate("JUMP_ANIM", "");
+                        SendUpdate("LUNGE_HIT_SFX", "");
                         //dashTimer = MAX_DASH_TIME;
                         //inMovementAbilityCooldown = true;
                     }
@@ -2094,6 +2253,7 @@ public class Player : Character {
                 }else{
                     dashTimer = MAX_DASH_TIME;
                     currentMovementState = movementState.FALLING;
+                    SendUpdate("IDLE_ANIM", "");
                 }
             }
 
@@ -2103,25 +2263,29 @@ public class Player : Character {
 
 
             if (IsClimbing()){
+                if (currentLadder == null){
+                    Debug.LogError("Thou art trying to climbeth a ladder that existeth not?");
+                    return;
+                }
+                
                 //ik this is copy paste from the jumping code, but idk a different way to do this that doesn't involve returning out of Update()
                 //at specific points
                 bool ladderJump = (jumpPressed && IsClimbing());
                 if (ladderJump){
                     InitiateJump(1);
                     SendUpdate("JUMP_ANIM", "");
+                    //currentLadder.SendUpdate("STOP_LADDER_SFX", "GoodMorning");
+                    currentLadder.attachedPlayer = null;
                     currentLadder = null;
 
                     if (jumpReleasedDuringBuffer){
                         currentMovementState = movementState.FAST_FALLING;
                         fastFallReleaseSpeed = verticalVelocity;
                     }
-                }
-                
-                if (currentLadder == null){
-                    Debug.LogError("Thou art trying to climbeth a ladder that existeth not?");
+
                     return;
                 }
-
+                
                 if (moveInput.y > 0f){
                     rigidbody.velocity = new Vector2(0, currentLadder.ladderSpeed);                    
                 }
@@ -2130,8 +2294,12 @@ public class Player : Character {
                         //need this cause we only want to SendUpdate() when the game state has changed
                         if (!IsGrounded()){
                             currentMovementState = movementState.GROUND;
-                            currentLadder = null;
                             SendUpdate("IDLE_ANIM", "GoodMorning");
+                            //currentLadder.SendUpdate("STOP_LADDER_SFX", "GoodMorning");
+                            currentLadder.attachedPlayer = null;
+                            currentLadder = null;
+
+                            return;
                         }
                     }else{
                         rigidbody.velocity = new Vector2(0, -currentLadder.ladderSpeed);
@@ -2149,6 +2317,7 @@ public class Player : Character {
                     }                  
                     
                     rigidbody.velocity = Vector2.zero;
+                    //currentLadder.SendUpdate("STOP_LADDER_SFX", "GoodMorning");
                     currentLadder.attachedPlayer = null;
                     currentLadder = null;                    
                     verticalVelocity = 0f;
@@ -2166,8 +2335,6 @@ public class Player : Character {
                     */
                     Vector2 dismountPos = new Vector2(this.transform.position.x, this.transform.position.y + yOffset);
                     transform.position = dismountPos;
-
-                    currentLadder = null;
 
                     SendUpdate("DISMOUNT", dismountPos.ToString());
                 }
@@ -2265,12 +2432,14 @@ public class Player : Character {
                 clientCollidersEnabled = true;
                 SendUpdate("ENABLE_COLLIDERS", "GoodMorning");
                 JumpVariableCleanup();
-                RopeVariableCleanup();
+                RopeVariableCleanup();                
                 
                 //force it to reset cause Unity's input system is a piece of dogcrap, and otherwise it'll infintely jump
                 jumpPressed = false;
                 jumpReleased = true;
                 SendUpdate("JUMP_RELEASED", "GoodMorning");
+                
+                jankGroundGravity = true;
             }
             #endregion
 
@@ -2380,7 +2549,10 @@ public class Player : Character {
             if (onGround && !IsJumping() && !InSpecialMovementState()){
                 if (!IsGrounded()){
                     currentMovementState = movementState.GROUND;
+                    
                     SendUpdate("IDLE_ANIM", "GoodMorning");
+
+                    jankGroundGravity = true;
                 }
                 
                 JumpVariableCleanup();

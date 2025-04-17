@@ -237,17 +237,22 @@ MonoBehaviour:
   m_GameObject: {fileID: 1905081651418222142}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6fd4ed268ba55e04385596fdff0f596b, type: 3}
+  m_Script: {fileID: 11500000, guid: 864299abc0ddb3a4b9bf51ee814cffc0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  swingPos: {fileID: 4216778973624229162}
-  playerPresent: 0
-  rope: {fileID: 4419812542326389598}
-  slowdownMult: 2
-  deadzoneLength: 1
-  fallStrength: 0.005
-  playerTorque: 0.8
-  heightFallInfluence: 0.015
+  swingPos: {fileID: 0}
+  rope: {fileID: 0}
+  slowdownMult: 0
+  deadzoneLength: 10
+  fallStrength: 0.5
+  playerTorque: 1
+  heightFallInfluence: 1
+  initialTorqueMult: 12
+  xJumpForce: 0.07
+  extraYJumpForce: 0.02
+  baseYJumpForce: 4
+  swingSnapMult: 1
+  dirChangeTorque: 2
 --- !u!1 &3859887289474162826
 GameObject:
   m_ObjectHideFlags: 0

@@ -33,6 +33,13 @@ public class Skeleton : Enemy
                 shootArrowSfx.Play();
             }
         }
+        else if(flag == "SHOOT_ANIM")
+        {
+            if(IsClient)
+            {
+                anim.Play("Shoot", -1, 0f);
+            }
+        }
         else if (flag == "HIDE_HP")
         {
             int health = int.Parse(value);
@@ -65,8 +72,6 @@ public class Skeleton : Enemy
 
     public override void NetworkedStart()
     {
-        health = 2;        
-
         Vector2 belowFeet = transform.position;
         belowFeet.y -= GetComponent<Collider2D>().bounds.size.y;
 
@@ -177,14 +182,16 @@ public class Skeleton : Enemy
     {
         canShoot = false;
         StartCoroutine(ShootCooldown(shootTime));
-        Vector2 arrowPos = transform.position;
-        arrowPos.x += dir * GetComponent<Collider2D>().bounds.size.x;    
-        Quaternion arrowDirection = (dir == 1 ? Quaternion.Euler(0f, 0f, 0f) : Quaternion.Euler(0f, 0f, 180f));     
+        Vector2 bonePos = transform.position;
+        bonePos.x += dir * GetComponent<Collider2D>().bounds.size.x;    
+        Quaternion boneDirection = (dir == 1 ? Quaternion.Euler(0f, 0f, 0f) : Quaternion.Euler(0f, 0f, 180f));     
 
-        GameObject arrow = MyCore.NetCreateObject(Idx.SKELETON_ARROW, Owner, arrowPos, arrowDirection);
-        arrow.GetComponent<Arrow>().dir = dir;
-        arrow.GetComponent<Arrow>().SendUpdate("SPAWN", "");
-        SendUpdate("SHOOT_SFX", "");        
+        GameObject bone = MyCore.NetCreateObject(Idx.BONE, Owner, bonePos, boneDirection);
+        bone.GetComponent<Bone>().dir = dir;
+        //rotate 180 degrees per second
+        bone.GetComponent<Rigidbody2D>().angularVelocity = 180f;
+        SendUpdate("SHOOT_SFX", "");
+        SendUpdate("SHOOT_ANIM", "");
     }
 
     public override IEnumerator SlowUpdate()

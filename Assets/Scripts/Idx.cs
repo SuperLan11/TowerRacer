@@ -12,7 +12,7 @@ public class Idx : MonoBehaviour
     public const int FIRST_LEVEL_PIECE_IDX = 2;
     public const int END_LEVEL_PIECE = 5;
 
-    public const int SKELETON_ARROW = 6;
+    public const int BONE = 6;
     public const int ROPE = 7;
     public const int LADDER = 8;
     public const int SKELETON = 9;

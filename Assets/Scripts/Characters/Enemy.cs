@@ -20,6 +20,7 @@ public abstract class Enemy : Character
     // Start is called before the first frame update
     private void Start()
     {
+        health = 1;
         myRig = GetComponent<Rigidbody2D>();
         
         //serialize this in the prefab for each enemy to prevent null reference exceptions
@@ -93,14 +94,11 @@ public abstract class Enemy : Character
     }
 
     public override void TakeDamage(int damage){
-        health -= damage;
-        
-        this.transform.GetChild(health).GetComponent<SpriteRenderer>().enabled = false;
-        Debug.Log("disabling " + this.transform.GetChild(health));
-        SendUpdate("HIDE_HP", health.ToString());
+        health -= damage;        
 
-        if (health <= 0){
-            Debug.Log("enemy is dead");
+        if (health <= 0){            
+            //enemy drops item box on death
+            MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, this.transform.position, Quaternion.identity);
             MyCore.NetDestroyObject(this.NetId);
         }else{
             SendUpdate("START_HIT_EFFECT", "GoodMorning");
@@ -115,6 +113,7 @@ public abstract class Enemy : Character
             bool hitPlayer = collider.gameObject.GetComponentInParent<Player>() != null;
             bool hitWall = collider.gameObject.tag == "WALL";
             bool hitEnemy = collider.gameObject.GetComponent<Enemy>() != null;
+            ItemBox itemHit = collider.gameObject.GetComponent<ItemBox>();
 
             /*if(hitTilemap)
             {
@@ -133,6 +132,12 @@ public abstract class Enemy : Character
                 spriteRender.flipX = !spriteRender.flipX;
                 SendUpdate("FLIP", spriteRender.flipX.ToString());
                 StartCoroutine(PauseRaycasting(0.3f));
+            }
+
+            if(itemHit != null)
+            {
+                //sometimes chests don't turn into triggers on hitting ground, so fix when enemy collides with it
+                itemHit.GetComponent<Collider2D>().isTrigger = true;
             }
         }
     }

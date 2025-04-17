@@ -18,10 +18,10 @@ public class Rope : NetworkComponent
     //!is too complicated for just one speed
     
     private GameObject pivot;
-    public Rigidbody2D pivotRig;
-    public Transform swingPos;    
+    [System.NonSerialized] public Rigidbody2D pivotRig;
+    public Transform swingPos;
     private Player player;
-    public bool playerPresent = false;
+    [System.NonSerialized] public bool playerPresent = false;
     [System.NonSerialized] public Vector2 lastPlayerInput;
 
     [SerializeField] private GameObject rope;
@@ -66,51 +66,26 @@ public class Rope : NetworkComponent
 
     
     public void GrabRope(Player player)
-    {                
-        //player.currentRope = this;
+    {                        
         this.player = player;
-        player.swingPos = ClosestSwingPos(player);
-        Vector2 teleportPos = new Vector2(player.swingPos.position.x, player.swingPos.position.y);
-        player.SendUpdate("SWING_POS_TELEPORT", teleportPos.ToString());        
+        player.swingPos = swingPos;
         playerPresent = true;
+
+        player.transform.position = swingPos.position;
+        player.SendUpdate("TELEPORT", swingPos.position.ToString());
+
+        //use local position when childed so you don't need to worry about world space
+        //Debug.Log("setting localPosition: " + transform.localPosition);
+        /*player.transform.localPosition = swingPos.localPosition;        
+        player.SendUpdate("LOCAL_POS", transform.localPosition.ToString());    */    
 
         //calculate initial torque using player speed variables. don't use player rigidbody velocity since that's used to connect to rope
         float playerTorque = Mathf.Max(Player.MAX_SWING_SPEED, Mathf.Abs(player.ropeLaunchVec.x));
         if (player.rigidbody.velocity.x < 0)
             playerTorque *= -1;
         
-        pivotRig.angularVelocity += playerTorque * initialTorqueMult;
-        if(pivotRig.angularVelocity>Mathf.PI/2)
-        {
-            pivotRig.angularVelocity= Mathf.PI/2;
-        }
-        if(pivotRig.angularVelocity < -Mathf.PI/2)
-        {
-            pivotRig.angularVelocity = -Mathf.PI/2;
-        }
-    
-    }
-    
-
-    private Transform ClosestSwingPos(Player player)
-    {
-        float minDist = Mathf.Infinity;
-        int minDistIdx = -1;                
-
-        //assuming rope is at idx 0
-        for (int i = 1; i < pivot.transform.childCount; i++)
-        {
-            float distToPos = Vector2.Distance(player.transform.position, pivot.transform.GetChild(i).position);
-            if (distToPos < minDist)
-            {
-                minDist = distToPos;
-                minDistIdx = i;
-            }
-        }
-        //to make player have less velocity the higher they are on the rope, use the index of the swingPos as a multiplier
-        player.swingPosHeight = minDistIdx;
-        return pivot.transform.GetChild(minDistIdx);
-    }
+        pivotRig.angularVelocity += playerTorque * initialTorqueMult;            
+    }       
     
     public void BoostPlayer(Player player)
     {
@@ -159,12 +134,14 @@ public class Rope : NetworkComponent
                 bool nowMovingRight = ((newInput.x > 0f) && (lastPlayerInput.x <= 0f));
                 
                 if (nowMovingLeft){
-                    //Debug.Log("adding left torque");
-                    pivotRig.AddTorque(-dirChangeTorque);
+                    //Debug.Log("adding left torque");                    
+                    //pivotRig.AddTorque(-dirChangeTorque);                    
+                    pivotRig.angularVelocity += -dirChangeTorque;
                 }else if (nowMovingRight){
                     //Debug.Log("adding right torque");
-                    pivotRig.AddTorque(dirChangeTorque);
-                }
+                    //pivotRig.AddTorque(dirChangeTorque);
+                    pivotRig.angularVelocity += dirChangeTorque;
+                }                
 
                 lastPlayerInput = newInput;
             }
@@ -190,13 +167,9 @@ public class Rope : NetworkComponent
 
             
             float minThreshold = -0.01f;
-            float maxThreshold = 0.01f;
-
-            //Debug.Log("good morn");
+            float maxThreshold = 0.01f;            
             
-            if (!playerPresent || (player.moveInput.x >= minThreshold && player.moveInput.x <= maxThreshold)){            
-                //MyCore.NetDestroyObject(this.NetId);
-                //Debug.Log("Slowing down rope");
+            if (!playerPresent || (player.moveInput.x >= minThreshold && player.moveInput.x <= maxThreshold)){                
                 pivotRig.angularVelocity *= (1 - (Time.deltaTime * slowdownMult));            
             }
 
@@ -207,7 +180,7 @@ public class Rope : NetworkComponent
             else if ((player.moveInput.x > 0f) && playerPresent)
             {                
                 pivotRig.angularVelocity += playerTorque;
-            }            
+            }
         }        
     }            
 }

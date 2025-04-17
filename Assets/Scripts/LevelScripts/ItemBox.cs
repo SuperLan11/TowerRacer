@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using NETWORK_ENGINE;
+using UnityEngine.Tilemaps;
 
 public class ItemBox : NetworkComponent
 {
@@ -23,10 +24,19 @@ public class ItemBox : NetworkComponent
 			if (IsClient)
 			{				
 				getItemSfx.Play();
-				GetComponent<Collider2D>().enabled = false;
+				GetComponent<Collider2D>().enabled = false;				
 				spriteRender.enabled = false;
 			}
-		}				
+		}		
+		else if(flag == "TRIGGER")
+        {
+			if(IsClient)
+            {
+				GetComponent<Collider2D>().isTrigger = true;
+				GetComponent<Rigidbody2D>().gravityScale = 0f;
+				GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+			}
+        }
 		else if (flag == "DEBUG")
 		{
 			Debug.Log(value);
@@ -67,7 +77,7 @@ public class ItemBox : NetworkComponent
 		itemUI = GameObject.FindGameObjectWithTag("ITEM_UI");
 	}	
 
-	private void OnTriggerEnter2D(Collider2D collision)
+	private void OnCollisionEnter2D(Collision2D collision)
     {		
 		if (IsServer)
 		{
@@ -77,7 +87,17 @@ public class ItemBox : NetworkComponent
 				return;
 			}
 
-			Player playerHit = collision.GetComponentInParent<Player>();
+			//make chest a trigger when it hits the ground so it doesn't block the player
+			bool hitTilemap = collision.gameObject.GetComponent<TilemapCollider2D>() != null;
+			if (hitTilemap)
+			{
+				Debug.Log("making chest a trigger");
+				GetComponent<Collider2D>().isTrigger = true;
+				GetComponent<Rigidbody2D>().gravityScale = 0f;
+				SendUpdate("TRIGGER", "");
+			}
+
+			Player playerHit = collision.gameObject.GetComponentInParent<Player>();
 			if (playerHit == null)
 				return;
 			
@@ -98,7 +118,33 @@ public class ItemBox : NetworkComponent
 		}
 	}
 
-	private IEnumerator DestroyAfterSfx()
+	//need two collision functions for chest since it changes to a trigger when it hits the ground
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+		if (IsServer)
+		{			
+			Player playerHit = collision.gameObject.GetComponentInParent<Player>();
+			if (playerHit == null)
+				return;
+
+			bool hasItem = playerHit.hasBomb || playerHit.hasChicken || playerHit.hasSpeedBoost;
+			if (!hasItem)
+			{
+				//items are in the following order: 0-chicken, 1-speedbost, 2-bomb
+				int randIdx = Random.Range(0, itemPrefabs.Length);
+				playerHit.SendUpdate("ITEM", randIdx.ToString());
+
+				//wait to destroy item box so that sfx can play, so need to play sfx on server
+				getItemSfx.Play();
+				GetComponent<Collider2D>().enabled = false;
+				spriteRender.enabled = false;
+				SendUpdate("GET_BOX", "");
+				StartCoroutine(DestroyAfterSfx());
+			}
+		}
+	}
+
+    private IEnumerator DestroyAfterSfx()
     {
 		while (getItemSfx.isPlaying)
 		{

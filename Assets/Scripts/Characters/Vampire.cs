@@ -103,8 +103,6 @@ public class Vampire : Enemy
 
 	public override void NetworkedStart()
 	{
-		health = 3;
-		
 		Vector2 belowFeet = transform.position;
 		belowFeet.y -= GetComponent<Collider2D>().bounds.size.y;
 
@@ -123,10 +121,10 @@ public class Vampire : Enemy
 		if (IsServer)
 		{
             base.OnCollisionEnter2D(collision);
-			
+
 			//the index of the layer on the layers list			
-			bool hitFloor = collision.gameObject.layer == 6;	
-			
+			bool hitFloor = collision.gameObject.layer == 6 || collision.gameObject.layer == 7;
+
 			if (hitFloor && state == STATE.LADDER_DOWN)
 			{
 				if (phasingThroughFloor)
@@ -142,8 +140,8 @@ public class Vampire : Enemy
 					SendUpdate("WALK_ANIM", "GoodMorning");
 					myRig.gravityScale = 1f;
 				}
-			}
-		}
+			}			
+		}		
 	}
 
 	private IEnumerator PhaseThroughFloor(float seconds)
@@ -153,9 +151,9 @@ public class Vampire : Enemy
 		SendUpdate("COLLIDER", "false");
 		yield return new WaitForSeconds(seconds);
 		
-		GetComponent<Collider2D>().enabled = true;
-		phasingThroughFloor = false;
+		GetComponent<Collider2D>().enabled = true;		
 		SendUpdate("COLLIDER", "true");
+		phasingThroughFloor = false;
 	}
 
 	private void OnTriggerEnter2D(Collider2D collision)
@@ -237,20 +235,17 @@ public class Vampire : Enemy
 			switch (state)
 			{
 				case STATE.MOVING:
-				{
-					Debug.Log("vampire moving");
+				{					
 					Move();
 					break;
 				}
 				case STATE.LADDER_UP:
-				{
-					Debug.Log("vampire moving up");
+				{					
 					myRig.velocity = new Vector2(0, ladderSpeed);
 					break;
 				}
 				case STATE.LADDER_DOWN:
-				{
-					Debug.Log("vampire moving down");
+				{					
 					myRig.velocity = new Vector2(0, -ladderSpeed);				
 					break;
 				}

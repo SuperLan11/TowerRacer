@@ -47,8 +47,7 @@ public class Slime : Enemy
 
     public override void NetworkedStart()
     {        
-        spriteRender.flipX = true;
-        health = 1;
+        spriteRender.flipX = true;        
 
         Vector2 belowFeet = transform.position;
         belowFeet.y -= GetComponent<Collider2D>().bounds.size.y;

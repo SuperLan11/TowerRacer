@@ -35,6 +35,10 @@ Assets Used:
 
 	Spawn Rope: https://pixabay.com/sound-effects/poof-80161/
 
+	Sword Swing SFX: https://pixabay.com/sound-effects/sword-sound-260274/
+
+	Blip (Movement Ability Recharched): https://pixabay.com/sound-effects/blip-131856/
+
 
 	Round Music: https://opengameart.org/content/game847-soundloops
 
@@ -45,3 +49,7 @@ Assets Used:
 	Paper Background: https://www.rawpixel.com/image/6129082/paper-texture-background-old-yellow-design
 
 	Floral Panel: https://www.flickr.com/photos/pareeerica/35005506222
+
+	Knight Lunge: https://pixabay.com/sound-effects/whoosh-build-up-245866/
+
+	Lunge Hit: https://pixabay.com/sound-effects/flash-speed-zoom-sound-effect-322955/
