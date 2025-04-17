@@ -106,7 +106,7 @@ public class Skeleton : Enemy
             //Debug.Log("was player hit: " + (playerHit != null));
             if (playerHit != null && !playersInRange.Contains(playerHit))
             {
-                if (playersInRange.Count == 0)
+                if (playersInRange.Count == 0 && !playerHit.playerFrozen)
                 {
                     state = STATE.SHOOTING;
                     FacePlayer(playerHit);

@@ -116,10 +116,10 @@ public class Player : Character {
     [SerializeField] private AudioSource movementRechargeSfx;
 
     //not const anymore cause we want to change it for speed boost powerup
-    [System.NonSerialized] public float MAX_WALK_SPEED = 18f;
-    [SerializeField] private float GROUND_ACCELERATION = 1f, GROUND_DECELERATION = 20f;
+    public float MAX_WALK_SPEED = 18f;
+    private const float GROUND_ACCELERATION = 15f, GROUND_DECELERATION = 12f;
 
-    private float AIR_ACCELERATION = 5f, AIR_DECELERATION = 5f;
+    private const float AIR_ACCELERATION = 10f, AIR_DECELERATION = 2f;
     private float WALL_JUMP_ACCELERATION;
 
     private float MAX_RUN_SPEED = 20f;
@@ -131,7 +131,7 @@ public class Player : Character {
     private const float ATTACK_RAYCAST_LENGTH = 2f;
 
 
-    private float JUMP_HEIGHT = 6.5f;
+    private float JUMP_HEIGHT = 7f;
     private float JUMP_HEIGHT_COMPENSATION_FACTOR = 1.054f;
     //apex = max height of jump
     private float TIME_TILL_JUMP_APEX = 0.35f;
@@ -178,7 +178,7 @@ public class Player : Character {
     [SerializeField] private float APEX_THRESHOLD = 0.97f, APEX_HANG_TIME = 0.075f;
     [SerializeField] private float MAX_JUMP_BUFFER_TIME = 0.125f;
     [SerializeField] private float MAX_JUMP_COYOTE_TIME = 0.1f;
-    [SerializeField] private float MAX_WALL_JUMP_TIME = 0.2f;
+    [SerializeField] private float MAX_WALL_JUMP_TIME = 0.05f;
     [SerializeField] private float MAX_WALL_STICK_TIME = 3f;
 
     private const float TILEMAP_PLATFORM_OFFSET = 2f;
@@ -1906,7 +1906,7 @@ public class Player : Character {
     }
 
     public override void TakeDamage(int damage){
-        if (!isInvincible && !isStunned){
+        if (!isInvincible && !isStunned && !playerFrozen){
             Debug.Log("taking damage");
             health -= damage;
 
@@ -2413,9 +2413,11 @@ public class Player : Character {
 
             //no need to check for isJumpPressed since that's what jumpBufferTimer is doing
             bool normalJump = (jumpBufferTimer > 0f && !IsJumping() && (onGround || coyoteTimer > 0f));
-            bool wallJump = (wallsTimer > 0f && onWall && wallJumpPressed && CanWallJump());
+            //make sure x input isn't 0
+            bool wallJump = (wallsTimer > 0f && onWall && wallJumpPressed && CanWallJump() && (moveInput.x != 0f));
             bool extraJump = (jumpPressed && IsFastFalling() && (numJumpsUsed < MAX_JUMPS));
             bool airJump = (jumpPressed && IsFallingInTheAir() && (numJumpsUsed < MAX_JUMPS - 1));
+            
 
             if (normalJump){
                 Debug.Log("normal jump");
