@@ -538,6 +538,11 @@ public class GameManager : NetworkComponent
         }
     }
 
+    public void BackBtnClick()
+    {
+        SceneManager.LoadScene(0);
+    }
+
     private void UpdatePlaces()
     {        
         Player[] players = FindObjectsOfType<Player>();

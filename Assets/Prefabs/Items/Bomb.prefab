@@ -105,7 +105,7 @@ Rigidbody2D:
   m_Mass: 1
   m_LinearDrag: 0
   m_AngularDrag: 0.05
-  m_GravityScale: 1.3
+  m_GravityScale: 1.5
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -198,7 +198,7 @@ MonoBehaviour:
   MyId: {fileID: 0}
   IsDirty: 0
   launchVec: {x: 0, y: 0}
-  launchSpeed: 15
+  launchSpeed: 18
   currentPlayer: {fileID: 0}
 --- !u!114 &1997612952401915354
 MonoBehaviour:
