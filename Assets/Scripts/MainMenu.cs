@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
+using UnityEngine.EventSystems;
 
 public class MainMenu : MonoBehaviour
 {
@@ -16,6 +17,8 @@ public class MainMenu : MonoBehaviour
 
     //would be in game manager, but we don't want to create a game manager in this scene just for one variable
     private bool fullScreen = false;
+
+    public GameObject mainMenuFirst, optionsMenuFirst;
 
     // Start is called before the first frame update
     void Start()
@@ -31,6 +34,8 @@ public class MainMenu : MonoBehaviour
         // Set the main menu active and options menu inactive
         mainMenuCanvas.SetActive(true);
         optionsMenuCanvas.SetActive(false);
+
+        EventSystem.current.SetSelectedGameObject(mainMenuFirst);
 
         Screen.fullScreen = fullScreen;
     }
