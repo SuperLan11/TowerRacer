@@ -218,6 +218,9 @@ public class Player : Character {
     public bool isStunned = false;
     private float STUN_TIME = 1f;
     private bool clientCollidersEnabled = true;
+    
+    //this is probably terrible, but we have 2 days left
+    private bool jankGroundGravity = false;
 
     private Vector2 lastAimDir;
     private GameObject aimArrow;
@@ -686,6 +689,18 @@ public class Player : Character {
             if(IsClient){
                 stunSfx.Stop();
             }
+        }else if (flag == "SET_GROUND_POS"){
+            if (IsClient){
+                this.transform.position = Vector2FromString(value);
+            }
+        }else if (flag == "ENABLE_CLIENT_GRAVITY"){
+            if (IsClient){
+                rigidbody.gravityScale = 15f;
+            }
+        }else if (flag == "DISABLE_CLIENT_GRAVITY"){
+            if (IsClient){
+                rigidbody.gravityScale = 0f;
+            }
         }
         else if (flag == "SELECTED_CHARACTER_CLASS")
         {
@@ -1017,13 +1032,14 @@ public class Player : Character {
 
     
     #region COLLISION
+    //previously using COLLISION_RAYCAST_LENGTH * 2
     private bool CheckForGround(){
         if (IsServer){
             bool jumpingThroughTilemap = false;
 
             Vector2 tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y - COLLISION_RAYCAST_LENGTH);
 
-            RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, ~0);
+            RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
 
             foreach (RaycastHit2D hit in hits){
                 if (hit.collider.GetComponent<TilemapCollider2D>() != null){
@@ -1043,12 +1059,12 @@ public class Player : Character {
                 }
             }
 
-            DrawDebugNormal(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, false);
+            DrawDebugNormal(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, false);
 
 
             //shoot left and right raycast only if middle raycast didn't detect anything
             tempPos.x = feetCollider.bounds.min.x;
-            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, ~0);
+            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
 
             foreach (RaycastHit2D hit in hits){
                 if (hit.collider.GetComponent<TilemapCollider2D>() != null) { 
@@ -1069,7 +1085,7 @@ public class Player : Character {
             }
 
             tempPos.x = feetCollider.bounds.max.x;
-            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH*2f, ~0);
+            hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
 
             foreach (RaycastHit2D hit in hits){
                 if (hit.collider.GetComponent<TilemapCollider2D>() != null) { 
@@ -1092,6 +1108,35 @@ public class Player : Character {
 
         return false;
     }
+
+    private IEnumerator GroundCollisionGravity(){
+        yield return new WaitForSecondsRealtime(0.1f);
+
+        SendUpdate("DISABLE_CLIENT_GRAVITY", "GoodMorning");
+    }
+
+     private bool TryToTeleportToGround(){
+        if (IsServer){
+            Vector2 tempPos = new Vector2(feetCollider.bounds.center.x, feetCollider.bounds.min.y - COLLISION_RAYCAST_LENGTH);
+
+            RaycastHit2D[] hits = Physics2D.RaycastAll(tempPos, Vector2.down, COLLISION_RAYCAST_LENGTH, ~0);
+
+            foreach (RaycastHit2D hit in hits){
+                if (hit.collider.GetComponent<TilemapCollider2D>() != null){
+                    tilemap = hit.collider.GetComponent<Tilemap>();
+                    float tileUpperY = GetTileUpperY(hit);
+                    float tempY = 0.01f + tileUpperY + (PlayerHeight() / 2f);
+                    
+                    Vector2 tempGroundVec = new Vector2(this.transform.position.x, tempY);
+                    SendUpdate("SET_GROUND_POS", tempGroundVec.ToString());
+
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+     }
 
     float GetTileUpperY(RaycastHit2D hit){
         if (tilemap != null){
@@ -1912,7 +1957,14 @@ public class Player : Character {
             {                
                 this.gameObject.layer = normalLayer;
                 SendUpdate("ENABLE_JUMP_THRU_COLLISION", "");
-            }            
+            }          
+
+            
+            if (jankGroundGravity){
+                StartCoroutine(GroundCollisionGravity());
+                SendUpdate("ENABLE_CLIENT_GRAVITY", "GoodMorning");
+                jankGroundGravity = false;
+            }
 
             //Debug.Log("CurrentMovementState: " + currentMovementState);
             //Debug.Log("Move input" + moveInput);
@@ -2347,6 +2399,8 @@ public class Player : Character {
                 jumpPressed = false;
                 jumpReleased = true;
                 SendUpdate("JUMP_RELEASED", "GoodMorning");
+                
+                jankGroundGravity = true;
             }
             #endregion
 
@@ -2456,7 +2510,10 @@ public class Player : Character {
             if (onGround && !IsJumping() && !InSpecialMovementState()){
                 if (!IsGrounded()){
                     currentMovementState = movementState.GROUND;
+                    
                     SendUpdate("IDLE_ANIM", "GoodMorning");
+
+                    jankGroundGravity = true;
                 }
                 
                 JumpVariableCleanup();
