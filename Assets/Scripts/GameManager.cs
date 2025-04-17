@@ -362,7 +362,7 @@ public class GameManager : NetworkComponent
                 GameObject startPiece = MyCore.NetCreateObject(Idx.START_LEVEL_PIECE, this.Owner,
                     new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y, 0), Quaternion.identity);
 
-                RandomlyPlaceLadders(startPiece, 100);
+                RandomlyPlaceRopes(startPiece, 100);
                 RandomlyPlaceEnemies(startPiece, 100);
                 RandomlyPlaceItemBoxes(startPiece, 100);
                 RandomlyPlaceLadders(startPiece, 100);
@@ -383,7 +383,7 @@ public class GameManager : NetworkComponent
             GameObject piece = MyCore.NetCreateObject(Idx.FIRST_LEVEL_PIECE_IDX + randIdx, this.Owner,
                 new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);
 
-            RandomlyPlaceRope(piece, 100);
+            RandomlyPlaceRopes(piece, 100);
             RandomlyPlaceEnemies(piece, 100);
             RandomlyPlaceItemBoxes(piece, 100);
             RandomlyPlaceLadders(piece, 100);
@@ -466,7 +466,7 @@ public class GameManager : NetworkComponent
         }
     }
 
-    private void RandomlyPlaceRope(GameObject levelPiece, int chanceToPlace)
+    private void RandomlyPlaceRopes(GameObject levelPiece, int chanceToPlace)
     {        
         for(int i = 0; i < levelPiece.transform.childCount; i++)
         {
