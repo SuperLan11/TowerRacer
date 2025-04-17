@@ -267,10 +267,8 @@ MonoBehaviour:
   MyCore: {fileID: 0}
   MyId: {fileID: 0}
   IsDirty: 0
-  pivotRig: {fileID: 0}
-  swingPos: {fileID: 0}
-  playerPresent: 0
-  rope: {fileID: 0}
+  swingPos: {fileID: 4216778973624229162}
+  rope: {fileID: 4419812542326389598}
   slowdownMult: 2
   deadzoneLength: 1
   fallStrength: 0.06

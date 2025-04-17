@@ -110,6 +110,8 @@ public class Player : Character {
     [SerializeField] private AudioSource jumpSfx;
     [SerializeField] private AudioSource doubleJumpSfx;
     [SerializeField] private AudioSource stunSfx;
+    [SerializeField] private AudioSource lungeSfx;
+    [SerializeField] private AudioSource lungeHitSfx;
 
     //not const anymore cause we want to change it for speed boost powerup
     [System.NonSerialized] public float MAX_WALK_SPEED = 12.5f;
@@ -421,6 +423,17 @@ public class Player : Character {
                 doubleJumpSfx.Play();
             }
         }
+        else if(flag == "LUNGE_SFX"){
+            if (IsClient){
+                lungeSfx.Play();
+            }
+        }
+        else if (flag == "LUNGE_HIT_SFX"){
+            if (IsClient){
+                lungeSfx.Stop();
+                lungeHitSfx.Play();
+            }
+        }
         else if (flag == "AIM_STICK")
         {
             if (IsServer)
@@ -499,6 +512,19 @@ public class Player : Character {
                 }
             }
         }
+        else if(flag == "PARENT_ROPE"){
+            if(IsClient){
+                Vector2 pos = Vector2FromString(value);
+                Rope closestRope = ClosestRopeToPos(pos);
+                Debug.Log("parenting to " + closestRope.transform.parent);
+                transform.SetParent(closestRope.pivotRig.transform);
+            }
+        }
+        else if (flag == "UNPARENT"){
+            if (IsClient){
+                transform.SetParent(null);
+            }
+        }
         else if (flag == "DISMOUNT")
         {
             if (IsClient)
@@ -506,14 +532,14 @@ public class Player : Character {
                 Vector2 dismountPos = Vector2FromString(value);
                 transform.position = dismountPos;
             }
-        } else if (flag == "SWING_POS_TELEPORT") {    //not necessary, but here to smooth out client teleportation just in case
+        } else if (flag == "TELEPORT") {    //not necessary, but here to smooth out client teleportation just in case
             if (IsClient) {
                 transform.position = Vector2FromString(value);
             }
         }
-        else if(flag == "TELEPORT"){
+        else if(flag == "LOCAL_POS"){
             if(IsClient){
-                transform.position = Vector2FromString(value);
+                transform.localPosition = Vector2FromString(value);
             }
         }
         else if (flag == "JUMP_ANIM")
@@ -1734,6 +1760,29 @@ public class Player : Character {
         return height;
     }
 
+    private Rope ClosestRopeToPos(Vector2 pos)
+    {
+        Rope[] ropes = FindObjectsOfType<Rope>();
+        float minDist = Mathf.Infinity;
+        Rope closestRope = null;
+
+        foreach(Rope rope in ropes)
+        {
+            float distToRope = Vector2.Distance(transform.position, rope.transform.position);
+            if (distToRope < minDist)
+            {
+                minDist = distToRope;
+                closestRope = rope;
+            }
+        }
+        if (closestRope == null)
+            Debug.LogWarning("closest rope is null!");
+        else
+            Debug.Log("closest rope is " + closestRope.name);
+
+        return closestRope;
+    }
+
     protected override void Attack(){
         if (inAttackCooldown || isStunned){
             return;
@@ -1949,9 +1998,9 @@ public class Player : Character {
                     //bypassing both gravity and horizontal velocity code
                     inMovementAbilityCooldown = true;
                     return;
-                }else if (selectedCharacterClass == characterClass.KNIGHT){
-                    SendUpdate("DASH_SFX", "");
+                }else if (selectedCharacterClass == characterClass.KNIGHT){                    
                     currentMovementState = movementState.KNIGHT_DASHING;
+                    SendUpdate("LUNGE_SFX", "");
                     //make these different variables if we want it to be different for the knight
                     dashTimer = MAX_DASH_TIME;
                     //SendUpdate("START_KNIGHT_DASH_EFFECT", "GoodMorning");
@@ -1989,7 +2038,7 @@ public class Player : Character {
                 if (currentRope != null){
                     canGrabRope = false;
                     currentRope.GrabRope(this);
-                    
+
                     this.gameObject.layer = noJumpThruLayer;
                     SendUpdate("DISABLE_JUMP_THRU_COLLISION", "");
 
@@ -2023,7 +2072,9 @@ public class Player : Character {
                 
                 if (ropeJumpPressed && canRopeJump){
                     currentRope.BoostPlayer(this);
-                    
+                    transform.SetParent(null);
+                    //SendUpdate("UNPARENT", "");
+
                     this.gameObject.layer = normalLayer;
                     SendUpdate("ENABLE_JUMP_THRU_COLLISION", "");
 
@@ -2039,6 +2090,7 @@ public class Player : Character {
                 }else{
                     //don't worry about horizontal movement cause it's already taken care of in the rope script
                     rigidbody.velocity = (swingPos.position - transform.position) * currentRope.swingSnapMult;
+                    //rigidbody.velocity = Vector2.zero;
                 }
 
                 return;
@@ -2105,6 +2157,7 @@ public class Player : Character {
                         verticalVelocity = dashVelocity.y;
                         rigidbody.velocity = dashVelocity;
                         SendUpdate("JUMP_ANIM", "");
+                        SendUpdate("LUNGE_HIT_SFX", "");
                         //dashTimer = MAX_DASH_TIME;
                         //inMovementAbilityCooldown = true;
                     }
