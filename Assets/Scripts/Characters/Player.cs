@@ -511,7 +511,7 @@ public class Player : Character {
                 bomb.currentPlayer = this;
                 bomb.launchVec = lastAimDir * bomb.launchSpeed;
             }
-        } else if (flag == "USE_ITEM") {
+        }else if (flag == "USE_ITEM") {
             if (IsServer) {
                 useItemSfx.Play();
                 if (hasChicken) {
@@ -2254,25 +2254,29 @@ public class Player : Character {
 
 
             if (IsClimbing()){
+                if (currentLadder == null){
+                    Debug.LogError("Thou art trying to climbeth a ladder that existeth not?");
+                    return;
+                }
+                
                 //ik this is copy paste from the jumping code, but idk a different way to do this that doesn't involve returning out of Update()
                 //at specific points
                 bool ladderJump = (jumpPressed && IsClimbing());
                 if (ladderJump){
                     InitiateJump(1);
                     SendUpdate("JUMP_ANIM", "");
+                    //currentLadder.SendUpdate("STOP_LADDER_SFX", "GoodMorning");
+                    currentLadder.attachedPlayer = null;
                     currentLadder = null;
 
                     if (jumpReleasedDuringBuffer){
                         currentMovementState = movementState.FAST_FALLING;
                         fastFallReleaseSpeed = verticalVelocity;
                     }
-                }
-                
-                if (currentLadder == null){
-                    Debug.LogError("Thou art trying to climbeth a ladder that existeth not?");
+
                     return;
                 }
-
+                
                 if (moveInput.y > 0f){
                     rigidbody.velocity = new Vector2(0, currentLadder.ladderSpeed);                    
                 }
@@ -2281,8 +2285,12 @@ public class Player : Character {
                         //need this cause we only want to SendUpdate() when the game state has changed
                         if (!IsGrounded()){
                             currentMovementState = movementState.GROUND;
-                            currentLadder = null;
                             SendUpdate("IDLE_ANIM", "GoodMorning");
+                            //currentLadder.SendUpdate("STOP_LADDER_SFX", "GoodMorning");
+                            currentLadder.attachedPlayer = null;
+                            currentLadder = null;
+
+                            return;
                         }
                     }else{
                         rigidbody.velocity = new Vector2(0, -currentLadder.ladderSpeed);
@@ -2300,6 +2308,7 @@ public class Player : Character {
                     }                  
                     
                     rigidbody.velocity = Vector2.zero;
+                    //currentLadder.SendUpdate("STOP_LADDER_SFX", "GoodMorning");
                     currentLadder.attachedPlayer = null;
                     currentLadder = null;                    
                     verticalVelocity = 0f;
@@ -2317,8 +2326,6 @@ public class Player : Character {
                     */
                     Vector2 dismountPos = new Vector2(this.transform.position.x, this.transform.position.y + yOffset);
                     transform.position = dismountPos;
-
-                    currentLadder = null;
 
                     SendUpdate("DISMOUNT", dismountPos.ToString());
                 }
