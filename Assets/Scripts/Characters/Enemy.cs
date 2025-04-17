@@ -113,6 +113,7 @@ public abstract class Enemy : Character
             bool hitPlayer = collider.gameObject.GetComponentInParent<Player>() != null;
             bool hitWall = collider.gameObject.tag == "WALL";
             bool hitEnemy = collider.gameObject.GetComponent<Enemy>() != null;
+            ItemBox itemHit = collider.gameObject.GetComponent<ItemBox>();
 
             /*if(hitTilemap)
             {
@@ -131,6 +132,12 @@ public abstract class Enemy : Character
                 spriteRender.flipX = !spriteRender.flipX;
                 SendUpdate("FLIP", spriteRender.flipX.ToString());
                 StartCoroutine(PauseRaycasting(0.3f));
+            }
+
+            if(itemHit != null)
+            {
+                //sometimes chests don't turn into triggers on hitting ground, so fix when enemy collides with it
+                itemHit.GetComponent<Collider2D>().isTrigger = true;
             }
         }
     }
