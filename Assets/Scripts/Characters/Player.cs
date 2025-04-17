@@ -1786,8 +1786,7 @@ public class Player : Character {
     }
 
     private IEnumerator AttackCooldown(){
-        yield return new WaitForSecondsRealtime(ATTACK_COOLDOWN_DURATION);
-        //SendUpdate("IDLE_ANIM", "");
+        yield return new WaitForSecondsRealtime(ATTACK_COOLDOWN_DURATION);        
         inAttackCooldown = false;
     }
 
