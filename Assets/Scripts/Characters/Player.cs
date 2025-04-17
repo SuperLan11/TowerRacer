@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
-using Unity.VisualScripting;
+//using Unity.VisualScripting;
 using UnityEngine.UI;
 using UnityEngine.Tilemaps;
 
@@ -114,8 +114,8 @@ public class Player : Character {
     [SerializeField] private AudioSource lungeHitSfx;
 
     //not const anymore cause we want to change it for speed boost powerup
-    [System.NonSerialized] public float MAX_WALK_SPEED = 12.5f;
-    [SerializeField] private float GROUND_ACCELERATION = 5f, GROUND_DECELERATION = 20f;
+    [System.NonSerialized] public float MAX_WALK_SPEED = 18f;
+    [SerializeField] private float GROUND_ACCELERATION = 1f, GROUND_DECELERATION = 20f;
 
     private float AIR_ACCELERATION = 5f, AIR_DECELERATION = 5f;
     private float WALL_JUMP_ACCELERATION;
