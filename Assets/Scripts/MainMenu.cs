@@ -51,6 +51,8 @@ public class MainMenu : MonoBehaviour
     {
         mainMenuCanvas.SetActive(false);
         optionsMenuCanvas.SetActive(true);
+
+        EventSystem.current.SetSelectedGameObject(optionsMenuFirst);
     }
 
     public void QuitMe() { Application.Quit(); }
@@ -61,6 +63,8 @@ public class MainMenu : MonoBehaviour
     {
         mainMenuCanvas.SetActive(true);
         optionsMenuCanvas.SetActive(false);
+
+        EventSystem.current.SetSelectedGameObject(mainMenuFirst);
     }
 
     public void MusicVolume(float f)

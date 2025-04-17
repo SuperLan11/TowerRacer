@@ -3386,7 +3386,7 @@ MonoBehaviour:
   optionsMenuCanvas: {fileID: 1742371215}
   mixer: {fileID: 24100000, guid: 29a4c8fdc5050934e814cf064f3ef9fd, type: 2}
   mainMenuFirst: {fileID: 1146574908}
-  optionsMenuFirst: {fileID: 0}
+  optionsMenuFirst: {fileID: 307790497}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
