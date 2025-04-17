@@ -87,22 +87,18 @@ public class ItemBox : NetworkComponent
 				return;
 			}
 
-			//make chest a trigger when it hits the ground so it doesn't block the player
-			bool hitTilemap = collision.gameObject.GetComponent<TilemapCollider2D>() != null;
-			if (hitTilemap)
+			Player playerHit = collision.gameObject.GetComponentInParent<Player>();
+			bool enemyHit = collision.gameObject.GetComponent<Enemy>() != null;
+
+			if (playerHit != null || enemyHit)
 			{
-				Debug.Log("making chest a trigger");
 				GetComponent<Collider2D>().isTrigger = true;
 				GetComponent<Rigidbody2D>().gravityScale = 0f;
 				SendUpdate("TRIGGER", "");
 			}
 
-			Player playerHit = collision.gameObject.GetComponentInParent<Player>();
-			if (playerHit == null)
-				return;
-			
 			bool hasItem = playerHit.hasBomb || playerHit.hasChicken || playerHit.hasSpeedBoost;
-			if (!hasItem)
+			if (playerHit != null && !hasItem)
 			{
 				//items are in the following order: 0-chicken, 1-speedbost, 2-bomb
 				int randIdx = Random.Range(0, itemPrefabs.Length);
@@ -123,12 +119,10 @@ public class ItemBox : NetworkComponent
     {
 		if (IsServer)
 		{			
-			Player playerHit = collision.gameObject.GetComponentInParent<Player>();
-			if (playerHit == null)
-				return;
+			Player playerHit = collision.gameObject.GetComponentInParent<Player>();			
 
 			bool hasItem = playerHit.hasBomb || playerHit.hasChicken || playerHit.hasSpeedBoost;
-			if (!hasItem)
+			if (playerHit != null && !hasItem)
 			{
 				//items are in the following order: 0-chicken, 1-speedbost, 2-bomb
 				int randIdx = Random.Range(0, itemPrefabs.Length);

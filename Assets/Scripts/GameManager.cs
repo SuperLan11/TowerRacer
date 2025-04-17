@@ -493,8 +493,8 @@ public class GameManager : NetworkComponent
             if (child.tag == "ENEMY_POS" && gotChance)
             {                                
                 int randEnemy = Random.Range(Idx.FIRST_ENEMY_IDX, Idx.FIRST_ENEMY_IDX + Idx.NUM_ENEMIES);
-                //MyCore.NetCreateObject(randEnemy, Owner, child.transform.position, Quaternion.identity);
-                MyCore.NetCreateObject(Idx.SKELETON, Owner, child.transform.position, Quaternion.identity);
+                MyCore.NetCreateObject(randEnemy, Owner, child.transform.position, Quaternion.identity);
+                //MyCore.NetCreateObject(Idx.SKELETON, Owner, child.transform.position, Quaternion.identity);
             }
         }
     }
