@@ -26,6 +26,7 @@ TagManager:
   - SOUND_PLAYER
   - PLAYER_PANEL
   - WALL
+  - QUIT
   layers:
   - Default
   - TransparentFX

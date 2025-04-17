@@ -65,8 +65,6 @@ public class Skeleton : Enemy
 
     public override void NetworkedStart()
     {
-        health = 2;        
-
         Vector2 belowFeet = transform.position;
         belowFeet.y -= GetComponent<Collider2D>().bounds.size.y;
 

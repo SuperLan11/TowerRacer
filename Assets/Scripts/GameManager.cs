@@ -151,7 +151,7 @@ public class GameManager : NetworkComponent
         else if (flag == "COUNTDOWN")
         {
             if (IsClient)
-            {                
+            {
                 countdownLbl.enabled = true;
                 countdownLbl.text = value;
             }
@@ -163,9 +163,9 @@ public class GameManager : NetworkComponent
                 countdownLbl.enabled = false;
             }
         }
-        else if(flag == "COUNTDOWN_SFX")
+        else if (flag == "COUNTDOWN_SFX")
         {
-            if(IsClient)
+            if (IsClient)
             {
                 countdownSfx.Play();
             }
@@ -205,11 +205,11 @@ public class GameManager : NetworkComponent
                 npmPanel.SetActive(false);
             }
         }
-        else if(flag == "HIDE_ITEM")
+        else if (flag == "HIDE_ITEM")
         {
-            if(IsClient)
+            if (IsClient)
             {
-                Color hiddenColor = itemSquare.GetComponent<Image>().color;                
+                Color hiddenColor = itemSquare.GetComponent<Image>().color;
                 hiddenColor.a = 0;
                 itemSquare.GetComponent<Image>().color = hiddenColor;
                 itemSquare.transform.GetChild(0).GetComponent<Image>().color = hiddenColor;
@@ -219,7 +219,7 @@ public class GameManager : NetworkComponent
         {
             if (IsClient)
             {
-                Color visibleColor = itemSquare.GetComponent<Image>().color;                
+                Color visibleColor = itemSquare.GetComponent<Image>().color;
                 Color fullItemColor = itemSquare.transform.GetChild(0).GetComponent<Image>().color;
                 Color invisibleItemColor = itemSquare.transform.GetChild(0).GetComponent<Image>().color;
 
@@ -233,14 +233,15 @@ public class GameManager : NetworkComponent
                 foreach (Player player in FindObjectsOfType<Player>())
                 {
                     bool hasItem = player.hasBomb || player.hasChicken || player.hasSpeedBoost;
-                    if (player.IsLocalPlayer && !hasItem)                    
-                        itemSquare.transform.GetChild(0).GetComponent<Image>().color = invisibleItemColor;                    
+                    if (player.IsLocalPlayer && !hasItem)
+                        itemSquare.transform.GetChild(0).GetComponent<Image>().color = invisibleItemColor;
                 }
             }
         }
         else if (flag == "PLAY_THEME")
         {
-            if (IsClient){
+            if (IsClient)
+            {
                 theme.Play();
             }
         }
@@ -266,16 +267,23 @@ public class GameManager : NetworkComponent
                 menuTheme.Stop();
             }
         }
-        else if(flag == "CLEAR_ITEM")
+        else if (flag == "CLEAR_ITEM")
         {
-            if(IsClient)
+            if (IsClient)
             {
                 if (itemSquare.transform.childCount > 0)
-                {                    
+                {
                     Color invisibleColor = itemSquare.transform.GetChild(0).GetComponent<Image>().color;
                     invisibleColor.a = 0;
                     itemSquare.transform.GetChild(0).GetComponent<Image>().color = invisibleColor;
                 }
+            }
+        }
+        else if (flag == "CURSOR_VISIBLE")
+        {
+            if (IsClient)
+            {
+                Cursor.visible = bool.Parse(value);
             }
         }
         //for objects in scene before clients connect, can't use SendCommand because
@@ -344,6 +352,7 @@ public class GameManager : NetworkComponent
         }
     }
     
+    //chance to place is from 0 to 1 and represents the chance a tagged object will have that object placed
     private void RandomizeLevel(int numPieces)
     {        
         for (int i = 0; i < numPieces; i++)
@@ -353,10 +362,10 @@ public class GameManager : NetworkComponent
                 GameObject startPiece = MyCore.NetCreateObject(Idx.START_LEVEL_PIECE, this.Owner,
                     new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y, 0), Quaternion.identity);
 
-                RandomlyPlaceLadders(startPiece);
-                RandomlyPlaceEnemies(startPiece);
-                RandomlyPlaceItemBoxes(startPiece);
-                RandomlyPlaceLadders(startPiece);
+                RandomlyPlaceLadders(startPiece, 100);
+                RandomlyPlaceEnemies(startPiece, 100);
+                RandomlyPlaceItemBoxes(startPiece, 100);
+                RandomlyPlaceLadders(startPiece, 100);
                 continue;
             }
 
@@ -364,9 +373,7 @@ public class GameManager : NetworkComponent
             if (i == numPieces - 1)
             {
                 GameObject endPiece = MyCore.NetCreateObject(Idx.END_LEVEL_PIECE, this.Owner,
-                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);
-                /*GameObject endPiece = MyCore.NetCreateObject(Idx.END_LEVEL_PIECE, this.Owner,
-                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y - 10, 0), Quaternion.identity);*/
+                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);                
                 PlaceDoor(endPiece);
 
                 camEndY = endPiece.transform.position.y;                
@@ -376,10 +383,10 @@ public class GameManager : NetworkComponent
             GameObject piece = MyCore.NetCreateObject(Idx.FIRST_LEVEL_PIECE_IDX + randIdx, this.Owner,
                 new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);
 
-            RandomlyPlaceRope(piece);
-            RandomlyPlaceEnemies(piece);
-            RandomlyPlaceItemBoxes(piece);
-            RandomlyPlaceLadders(piece);            
+            RandomlyPlaceRope(piece, 100);
+            RandomlyPlaceEnemies(piece, 100);
+            RandomlyPlaceItemBoxes(piece, 100);
+            RandomlyPlaceLadders(piece, 100);
         }        
     }
 
@@ -451,95 +458,74 @@ public class GameManager : NetworkComponent
     }
 
     private void PlaceDoor(GameObject endPiece)
-    {
+    {        
         for(int i = 0; i < endPiece.transform.childCount; i++)
         {
-            if(endPiece.transform.GetChild(i).tag == "END_DOOR_POS")
-            {
+            if(endPiece.transform.GetChild(i).tag == "END_DOOR_POS")            
                 MyCore.NetCreateObject(Idx.END_DOOR, Owner, endPiece.transform.GetChild(i).transform.position, Quaternion.identity);
+        }
+    }
+
+    private void RandomlyPlaceRope(GameObject levelPiece, int chanceToPlace)
+    {        
+        for(int i = 0; i < levelPiece.transform.childCount; i++)
+        {
+            int randomizedChance = Random.Range(0, 101);
+            bool gotChance = randomizedChance <= chanceToPlace;
+            GameObject child = levelPiece.transform.GetChild(i).gameObject;
+
+            if (child.tag == "ROPE_POS" && gotChance)
+                MyCore.NetCreateObject(Idx.ROPE, Owner, child.transform.position, Quaternion.identity);
+        }   
+    }
+
+    private void RandomlyPlaceEnemies(GameObject levelPiece, int chanceToPlace)
+    {        
+        for (int i = 0; i < levelPiece.transform.childCount; i++)
+        {
+            int randomizedChance = Random.Range(0, 101);
+            bool gotChance = randomizedChance <= chanceToPlace;
+            GameObject child = levelPiece.transform.GetChild(i).gameObject;
+
+            if (child.tag == "ENEMY_POS" && gotChance)
+            {                                
+                int randEnemy = Random.Range(Idx.FIRST_ENEMY_IDX, Idx.FIRST_ENEMY_IDX + Idx.NUM_ENEMIES);
+                MyCore.NetCreateObject(randEnemy, Owner, child.transform.position, Quaternion.identity);
             }
         }
     }
 
-    private void RandomlyPlaceRope(GameObject levelPiece)
-    {
-        List<Vector3> ropePlaces = new List<Vector3>();
-        for(int i = 0; i < levelPiece.transform.childCount; i++)
-        {
-            if (levelPiece.transform.GetChild(i).tag == "ROPE_POS")
-                ropePlaces.Add(levelPiece.transform.GetChild(i).position);
-        }
-
-        if (ropePlaces.Count == 0)
-        {            
-            return;
-        }
-        
-        int randPos = Random.Range(0, ropePlaces.Count);        
-        MyCore.NetCreateObject(Idx.ROPE, Owner, ropePlaces[randPos], Quaternion.identity);       
-    }
-
-    private void RandomlyPlaceEnemies(GameObject levelPiece)
-    {
-        List<Vector3> enemyPlaces = new List<Vector3>();
+    private void RandomlyPlaceItemBoxes(GameObject levelPiece, int chanceToPlace)
+    {       
         for (int i = 0; i < levelPiece.transform.childCount; i++)
         {
-            if (levelPiece.transform.GetChild(i).tag == "ENEMY_POS")
-                enemyPlaces.Add(levelPiece.transform.GetChild(i).position);
-        }
+            int randomizedChance = Random.Range(0, 101);
+            bool gotChance = randomizedChance <= chanceToPlace;
+            GameObject child = levelPiece.transform.GetChild(i).gameObject;
 
-        if (enemyPlaces.Count == 0)
-        {                        
-            return;
+            if (child.tag == "ITEM_POS" && gotChance)
+                MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, child.transform.position, Quaternion.identity);
         }
-
-        int randPos = Random.Range(0, enemyPlaces.Count);
-        int lastEnemyIdx = Idx.FIRST_ENEMY_IDX + Idx.NUM_ENEMIES;
-        //this is end exclusive
-        int randEnemy = Random.Range(Idx.FIRST_ENEMY_IDX, lastEnemyIdx);
-        MyCore.NetCreateObject(randEnemy, Owner, enemyPlaces[randPos], Quaternion.identity);        
     }
 
-    private void RandomlyPlaceItemBoxes(GameObject levelPiece)
+    private void RandomlyPlaceLadders(GameObject levelPiece, float chanceToPlace)
     {
-        List<Vector3> itemPlaces = new List<Vector3>();
         for (int i = 0; i < levelPiece.transform.childCount; i++)
         {
-            if (levelPiece.transform.GetChild(i).tag == "ITEM_POS")
-                itemPlaces.Add(levelPiece.transform.GetChild(i).position);
+            int randomizedChance = Random.Range(0, 101);
+            bool gotChance = randomizedChance <= chanceToPlace;
+            GameObject child = levelPiece.transform.GetChild(i).gameObject;
+
+            if (child.tag == "LADDER_POS" && gotChance)
+            {
+                GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, child.transform.position, Quaternion.identity);
+
+                Vector2 dismountPos = ladder.GetComponent<Collider2D>().bounds.max;
+                dismountPos.x = ladder.transform.position.x;
+                GameObject dismount = MyCore.NetCreateObject(Idx.DISMOUNT, Owner, dismountPos, Quaternion.identity);
+                dismount.transform.position += new Vector3(0, dismount.GetComponent<Collider2D>().bounds.size.y, 0);
+            }
         }
-
-        if (itemPlaces.Count == 0)
-        {            
-            return;
-        }
-
-        int randPos = Random.Range(0, itemPlaces.Count);
-        MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, itemPlaces[randPos], Quaternion.identity);
-    }
-
-    private void RandomlyPlaceLadders(GameObject levelPiece)
-    {
-        List<Vector3> ladderPlaces = new List<Vector3>();
-        for (int i = 0; i < levelPiece.transform.childCount; i++)
-        {
-            if (levelPiece.transform.GetChild(i).tag == "LADDER_POS")
-                ladderPlaces.Add(levelPiece.transform.GetChild(i).position);
-        }
-
-        if (ladderPlaces.Count == 0)
-        {            
-            return;
-        }
-
-        int randPos = Random.Range(0, ladderPlaces.Count);        
-        GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, ladderPlaces[randPos], Quaternion.identity);
-        Vector2 dismountPos = ladder.GetComponent<Collider2D>().bounds.max;
-        dismountPos.x = ladder.transform.position.x;        
-
-        GameObject dismount = MyCore.NetCreateObject(Idx.DISMOUNT, Owner, dismountPos, Quaternion.identity);
-        dismount.transform.position += new Vector3(0, dismount.GetComponent<Collider2D>().bounds.size.y, 0);
-
     }
 
     public Enemy[] GetAllEnemies(){
@@ -1133,7 +1119,8 @@ public class GameManager : NetworkComponent
             //make sure to reset all stats on game over!!!
             ResetVariables();
             SendUpdate("CLEAR_ITEM", "");
-            
+            SendUpdate("CURSOR_VISIBLE", true.ToString());
+
             MyId.NotifyDirty();
             MyCore.UI_Quit();
         }
