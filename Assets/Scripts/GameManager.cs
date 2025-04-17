@@ -54,6 +54,7 @@ public class GameManager : NetworkComponent
     private float curTimer;
     [System.NonSerialized] public bool timerStarted = false;    
     private float camEndY;
+    private float tilemapHeight = 48f;
 
     private float resultsTimer = 5f;
     private float alphaUpdateFreq = 0.01f;
@@ -372,8 +373,10 @@ public class GameManager : NetworkComponent
             int randIdx = Random.Range(0, Idx.NUM_LEVEL_PIECES);
             if (i == numPieces - 1)
             {
+                /*GameObject endPiece = MyCore.NetCreateObject(Idx.END_LEVEL_PIECE, this.Owner,
+                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);                */
                 GameObject endPiece = MyCore.NetCreateObject(Idx.END_LEVEL_PIECE, this.Owner,
-                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);                
+                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * tilemapHeight, 0), Quaternion.identity);
                 PlaceDoor(endPiece);
 
                 camEndY = endPiece.transform.position.y;                
@@ -381,7 +384,7 @@ public class GameManager : NetworkComponent
             }
                       
             GameObject piece = MyCore.NetCreateObject(Idx.FIRST_LEVEL_PIECE_IDX + randIdx, this.Owner,
-                new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);
+                new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * tilemapHeight, 0), Quaternion.identity);
 
             RandomlyPlaceRopes(piece, 100);
             RandomlyPlaceEnemies(piece, 100);
@@ -490,7 +493,8 @@ public class GameManager : NetworkComponent
             if (child.tag == "ENEMY_POS" && gotChance)
             {                                
                 int randEnemy = Random.Range(Idx.FIRST_ENEMY_IDX, Idx.FIRST_ENEMY_IDX + Idx.NUM_ENEMIES);
-                MyCore.NetCreateObject(randEnemy, Owner, child.transform.position, Quaternion.identity);
+                //MyCore.NetCreateObject(randEnemy, Owner, child.transform.position, Quaternion.identity);
+                MyCore.NetCreateObject(Idx.SKELETON, Owner, child.transform.position, Quaternion.identity);
             }
         }
     }

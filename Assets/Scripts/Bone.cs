@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using NETWORK_ENGINE;
 
-public class Arrow : Projectile
+public class Bone : Projectile
 {	
 	public float speed = 10f;
 	public int dir = 0;
 	private float destroyTime = 5f;
 
-	[SerializeField] private AudioSource arrowHitSfx;
+	[SerializeField] private AudioSource boneHitSfx;
 
 	public override void HandleMessage(string flag, string value)
 	{		
@@ -17,7 +17,7 @@ public class Arrow : Projectile
         {
 			if(IsClient)
             {
-				arrowHitSfx.Play();
+				boneHitSfx.Play();
 				spriteRender.enabled = false;
 				GetComponent<Collider2D>().enabled = false;
 			}
@@ -60,7 +60,7 @@ public class Arrow : Projectile
 
 	private IEnumerator DestroyAfterSfx()
     {
-		while (arrowHitSfx.isPlaying)
+		while (boneHitSfx.isPlaying)
 			yield return new WaitForSeconds(0.1f);
 
 		MyCore.NetDestroyObject(this.NetId);
