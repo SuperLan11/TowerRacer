@@ -18,6 +18,8 @@ using NETWORK_ENGINE;
 
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
+using Quaternion = UnityEngine.Quaternion;
+using System.Numerics;
 
 
 /*
@@ -647,11 +649,11 @@ public class Player : Character {
             }
         }else if (flag == "ENABLE_TRAIL"){
             if (IsClient){
-                GetComponent<TrailRenderer>().enabled = true;
+                transform.GetChild(3).GetComponent<TrailRenderer>().enabled = true;
             }
         }else if (flag == "DISABLE_TRAIL") {
             if (IsClient) {
-                GetComponent<TrailRenderer>().enabled = false;
+                transform.GetChild(3).GetComponent<TrailRenderer>().enabled = true;
             }
         }else if (flag == "INIT_SCORE_PANEL") {
             if (IsClient) {
@@ -923,9 +925,9 @@ public class Player : Character {
     public override void NetworkedStart()
     {
         CalculateInitialConditions();
-        dashSpeed = initialJumpVelocity * 2f;
-        knightDashSpeed = dashSpeed * 1.5f;
-        archerGrappleSpeed = dashSpeed * 1f;
+        dashSpeed = initialJumpVelocity;
+        knightDashSpeed = dashSpeed * 0.75f;
+        archerGrappleSpeed = dashSpeed / 2f;
         MAX_LAUNCH_SPEED = MAX_WALK_SPEED * 20f;
 
         startPos = this.transform.position;
@@ -957,33 +959,36 @@ public class Player : Character {
         
         
 
+        TrailRenderer trailRenderer = transform.GetChild(3).GetComponent<TrailRenderer>();
         switch (selectedCharacterClass){
             case characterClass.ARCHER:
                 movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 2f;
-                GetComponent<TrailRenderer>().startColor = Color.green;
-                GetComponent<TrailRenderer>().endColor = new Color(0f, 255f, 0f, 0f);
+                trailRenderer.startColor = Color.green;
+                trailRenderer.endColor = new Color(0f, 255f, 0f, 0f);
                 break;
             case characterClass.MAGE:
                 movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 5f;
-                GetComponent<TrailRenderer>().startColor = Color.yellow;
-                GetComponent<TrailRenderer>().endColor = new Color(255f, 255f, 0f, 0f);
+                trailRenderer.startColor = Color.yellow;
+                trailRenderer.endColor = new Color(255f, 255f, 0f, 0f);
                 break;
             case characterClass.BANDIT:
-                MAX_JUMPS = 4;
+                MAX_JUMPS = 2;
                 movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 0.0001f;
-                GetComponent<TrailRenderer>().startColor = Color.blue;
-                GetComponent<TrailRenderer>().endColor = new Color(0f, 0f, 255f, 0f);
+                Vector2 adjustedTrailPos = new Vector2(trailRenderer.transform.localPosition.x, trailRenderer.transform.localPosition.y - 0.5f);
+                trailRenderer.transform.localPosition = adjustedTrailPos;
+                trailRenderer.startColor = Color.blue;
+                trailRenderer.endColor = new Color(0f, 0f, 255f, 0f);
                 //maybe increase movement speed as well?
                 break;
             case characterClass.KNIGHT:
                 movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 7f;
-                GetComponent<TrailRenderer>().startColor = Color.red;
-                GetComponent<TrailRenderer>().endColor = new Color(255f, 0f, 0f, 0f);
+                trailRenderer.startColor = Color.red;
+                trailRenderer.endColor = new Color(255f, 0f, 0f, 0f);
                 break;
         }
 
         if (IsServer){
-            GetComponent<TrailRenderer>().enabled = false;
+            trailRenderer.enabled = false;
         }
 
         if (!GameManager.debugMode)
@@ -2417,7 +2422,7 @@ public class Player : Character {
             bool wallJump = (wallsTimer > 0f && onWall && wallJumpPressed && CanWallJump() && (moveInput.x != 0f));
             bool extraJump = (jumpPressed && IsFastFalling() && (numJumpsUsed < MAX_JUMPS));
             bool airJump = (jumpPressed && IsFallingInTheAir() && (numJumpsUsed < MAX_JUMPS - 1));
-            
+
 
             if (normalJump){
                 Debug.Log("normal jump");
