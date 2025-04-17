@@ -112,6 +112,7 @@ public class Player : Character {
     [SerializeField] private AudioSource stunSfx;
     [SerializeField] private AudioSource lungeSfx;
     [SerializeField] private AudioSource lungeHitSfx;
+    [SerializeField] private AudioSource attackSfx;
 
     //not const anymore cause we want to change it for speed boost powerup
     [System.NonSerialized] public float MAX_WALK_SPEED = 18f;
@@ -435,6 +436,11 @@ public class Player : Character {
             if (IsClient){
                 lungeSfx.Stop();
                 lungeHitSfx.Play();
+            }
+        }
+        else if (flag == "ATTACK_SFX"){
+            if (IsClient){
+                attackSfx.Play();
             }
         }
         else if (flag == "AIM_STICK")
@@ -1850,6 +1856,7 @@ public class Player : Character {
         
         //!don't forget to actually put this in handle message!
         //SendUpdate("ATTACK_ANIM", "GoodMorning");
+        SendUpdate("ATTACK_SFX", "");
 
 
         Vector2 direction = (isFacingRight ? Vector2.right : Vector2.left);
