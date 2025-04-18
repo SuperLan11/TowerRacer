@@ -565,6 +565,10 @@ public class GameManager : NetworkComponent
                 dismount.transform.position += new Vector3(0, dismount.GetComponent<Collider2D>().bounds.size.y, 0);
                 //dismount.transform.SetParent(ladder.transform);
             }
+            else if (child.tag == "NO_DISMOUNT_LADDER_POS" && gotChance)
+            {
+                GameObject ladder = MyCore.NetCreateObject(Idx.LADDER, Owner, child.transform.position, Quaternion.identity);
+            }
         }
     }
 

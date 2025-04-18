@@ -9091,7 +9091,7 @@ GameObject:
   - component: {fileID: 3887594458298623973}
   m_Layer: 7
   m_Name: Ladder
-  m_TagString: LADDER_POS
+  m_TagString: NO_DISMOUNT_LADDER_POS
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -11731,7 +11731,7 @@ GameObject:
   - component: {fileID: 4611659581814827925}
   m_Layer: 7
   m_Name: Ladder
-  m_TagString: LADDER_POS
+  m_TagString: NO_DISMOUNT_LADDER_POS
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

@@ -27,6 +27,7 @@ TagManager:
   - PLAYER_PANEL
   - WALL
   - QUIT
+  - NO_DISMOUNT_LADDER_POS
   layers:
   - Default
   - TransparentFX

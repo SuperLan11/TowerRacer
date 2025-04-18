@@ -88,7 +88,6 @@ public class ItemBox : NetworkComponent
 			}
 
 			Player playerHit = collision.gameObject.GetComponentInParent<Player>();
-
 			bool enemyHit = collision.gameObject.GetComponent<Enemy>() != null;
 
 			if (playerHit != null || enemyHit)
@@ -99,11 +98,15 @@ public class ItemBox : NetworkComponent
 			}
 
 			if (playerHit == null)
+			{
+				Debug.Log("player hit was null");
 				return;
+			}
 
 			bool hasItem = playerHit.hasBomb || playerHit.hasChicken || playerHit.hasSpeedBoost;
 			if (playerHit != null && !hasItem)
 			{
+				Debug.Log("player hit without item!");
 				//items are in the following order: 0-chicken, 1-speedbost, 2-bomb
 				int randIdx = Random.Range(0, itemPrefabs.Length);
 				playerHit.SendUpdate("ITEM", randIdx.ToString());
@@ -114,6 +117,11 @@ public class ItemBox : NetworkComponent
 				spriteRender.enabled = false;
 				SendUpdate("GET_BOX", "");
 				StartCoroutine(DestroyAfterSfx());
+			}
+			else
+            {
+				Debug.Log("playerHit: " + (playerHit != null));
+				Debug.Log("hasItem: " + hasItem);
 			}
 		}
 	}
@@ -179,12 +187,6 @@ public class ItemBox : NetworkComponent
 
 		return bombs[closestIdx];
 	}
-
-	private IEnumerator WaitToDestroyBox(float seconds)
-    {
-		yield return new WaitForSeconds(seconds);
-		MyCore.NetDestroyObject(this.NetId);
-    }
 
     public override IEnumerator SlowUpdate()
 	{

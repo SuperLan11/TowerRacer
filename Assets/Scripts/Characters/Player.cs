@@ -961,8 +961,8 @@ public class Player : Character {
        
         
         
-        TrailRenderer trailRenderer = GetComponent<TrailRenderer>();
-        //TrailRenderer trailRenderer = transform.GetChild(3).GetComponent<TrailRenderer>();
+        //TrailRenderer trailRenderer = GetComponent<TrailRenderer>();
+        TrailRenderer trailRenderer = transform.GetChild(3).GetComponent<TrailRenderer>();
         switch (selectedCharacterClass){
             case characterClass.ARCHER:
                 movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 2f;
@@ -1753,7 +1753,7 @@ public class Player : Character {
     }
 
     public void ResetTimers(){
-        movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN;
+        movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN;        
         inMovementAbilityCooldown = false;
         inAttackCooldown = false;
     }
