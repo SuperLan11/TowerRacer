@@ -309,6 +309,17 @@ public class Player : Character {
                 }
                 int place = (int)char.GetNumericValue(value[0]);
                 placeLbl.color = placeColors[place - 1];
+
+                //don't keep changing player's score background after they have finished
+                if (!playerFrozen)
+                {
+                    Image playerScorePanel = scorePanel.transform.GetChild(Owner).GetComponent<Image>();
+                    Color placeColor = playerScorePanel.color;                    
+                    placeColor = placeColors[place - 1];
+                    
+                    placeColor.a = 0;
+                    playerScorePanel.color = placeColor;
+                }
             }
         }else if (flag == "ITEM"){
             if (IsLocalPlayer){
@@ -2398,7 +2409,7 @@ public class Player : Character {
                     verticalVelocity = 0f;
 
                     
-                    float yOffset = 0.1f;
+                    float yOffset = 0.05f;
                     //
                     /*
                     float height = bodyCollider.bounds.size.y + feetCollider.bounds.size.y + yOffset;
