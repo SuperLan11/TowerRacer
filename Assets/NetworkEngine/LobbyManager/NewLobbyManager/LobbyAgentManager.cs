@@ -157,8 +157,8 @@ public class LobbyAgentManager : NetworkComponent
         SendCommand("GSTARTED", true.ToString());
         SendCommand("GAMEOVER", "1");
         yield return new WaitForSeconds(1);
-        gameCore.DisconnectServer();
         MyCore.UI_Quit();
+        StartCoroutine(slowProcessKill());
         Application.Quit();
     }
 
@@ -173,7 +173,7 @@ public class LobbyAgentManager : NetworkComponent
                 currentNumPlayers =  gameCore.Connections.Count;
                 SendCommand("PLAYERS", currentNumPlayers.ToString());
 
-                gameStarted = !gameCore.IsListening  && gameCore.Connections.Count>0;
+                gameStarted = !gameCore.IsListening && gameCore.Connections.Count>1;
                 SendCommand("GSTARTED",gameStarted.ToString());
 
                 
@@ -235,7 +235,6 @@ public class LobbyAgentManager : NetworkComponent
 
     public IEnumerator slowProcessKill()
     {
-
         yield return new WaitUntil(() => gameCore.Connections.Count == 0);
         MyCore.Disconnect(0);
         Application.Quit();

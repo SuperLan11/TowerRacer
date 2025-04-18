@@ -12,6 +12,8 @@ public class MainMenu : MonoBehaviour
     public GameObject optionsMenuCanvas;
     public AudioMixer mixer;
 
+    [SerializeField] private AudioSource testSound;
+
     private int oldWidth;
     private int oldHeight;
 
@@ -75,6 +77,11 @@ public class MainMenu : MonoBehaviour
     public void SFXVolume(float f)
     {
         mixer.SetFloat("SFX", Mathf.Log10(f) * 20);
+    }
+
+    public void TestSFX()
+    {
+        testSound.Play();
     }
 
     public void FullscreenToggle(bool b)

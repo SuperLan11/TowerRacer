@@ -119,7 +119,7 @@ public class EndDoor : NetworkComponent
                 playerHit.SendUpdate("CAM_FREEZE", "");
                 playerHit.transform.position = playerHit.startPos;
                 //playerHit.SendUpdate("HIT_DOOR", GameManager.playersFinished.Count.ToString());
-                playerHit.SendUpdate("HIT_DOOR", GameManager.playersFinished.Count.ToString() + ";" + playerHit.Owner);                
+                playerHit.SendUpdate("HIT_DOOR", GameManager.playersFinished.Count.ToString() + ";" + playerHit.Owner);
 
                 Player[] players = FindObjectsOfType<Player>();
                 if (GameManager.playersFinished.Count == players.Length)
@@ -130,7 +130,7 @@ public class EndDoor : NetworkComponent
                 }
                 else if (!gm.timerStarted)
                 {
-                    gm.timerStarted = true;                    
+                    gm.timerStarted = true;
                     StartCoroutine(gm.StartTimer());
                 }                
             }
