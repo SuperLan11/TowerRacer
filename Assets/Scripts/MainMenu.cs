@@ -16,7 +16,7 @@ public class MainMenu : MonoBehaviour
     private int oldHeight;
 
     //would be in game manager, but we don't want to create a game manager in this scene just for one variable
-    private bool fullScreen = false;
+    //private bool fullScreen = true;
 
     public GameObject mainMenuFirst, optionsMenuFirst;
 
@@ -37,7 +37,7 @@ public class MainMenu : MonoBehaviour
 
         EventSystem.current.SetSelectedGameObject(mainMenuFirst);
 
-        Screen.fullScreen = fullScreen;
+        //Screen.fullScreen = fullScreen;
     }
 
     // Update is called once per frame
