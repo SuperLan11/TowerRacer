@@ -165,6 +165,7 @@ public class Player : Character {
     private bool justStartedWallJump = false;
     private bool onWallWithoutJumpPressed = false;
     private bool wallJumpPressed = false;
+    private bool jumpHeldWhileJumpingDown = false;
 
     private bool canGrabRope = true;
     private bool canRopeJump = false;
@@ -178,8 +179,8 @@ public class Player : Character {
 
     [SerializeField] private float TIME_FOR_UP_CANCEL = 0.027f;
     [SerializeField] private float APEX_THRESHOLD = 0.97f, APEX_HANG_TIME = 0.075f;
-    //[SerializeField] private float MAX_JUMP_BUFFER_TIME = 0.125f;
-    [SerializeField] private float MAX_JUMP_BUFFER_TIME = 0.01f;
+    private const float MAX_JUMP_BUFFER_TIME = 0.125f;
+    //[SerializeField] private float MAX_JUMP_BUFFER_TIME = 0.0f;
     [SerializeField] private float MAX_JUMP_COYOTE_TIME = 0.1f;
     [SerializeField] private float MAX_WALL_JUMP_TIME = 0.05f;
     [SerializeField] private float MAX_WALL_STICK_TIME = 3f;
@@ -309,6 +310,17 @@ public class Player : Character {
                 }
                 int place = (int)char.GetNumericValue(value[0]);
                 placeLbl.color = placeColors[place - 1];
+
+                //don't keep changing player's score background after they have finished
+                if (!playerFrozen)
+                {
+                    Image playerScorePanel = scorePanel.transform.GetChild(Owner).GetComponent<Image>();
+                    Color placeColor = playerScorePanel.color;                    
+                    placeColor = placeColors[place - 1];
+                    
+                    placeColor.a = 0;
+                    playerScorePanel.color = placeColor;
+                }
             }
         }else if (flag == "ITEM"){
             if (IsLocalPlayer){
@@ -748,6 +760,43 @@ public class Player : Character {
                     break;
                 case "KNIGHT":
                     selectedCharacterClass = characterClass.KNIGHT;
+                    break;
+            }
+        }
+        else if (flag == "CURRENT_MOVEMENT_STATE")
+        {
+            //doing this for performance reasons since Enum.Parse<>() is apparently performance-intensive
+            switch (value)
+            {
+                case "GROUND":
+                    currentMovementState = movementState.GROUND;
+                    break;
+                case "JUMPING":
+                    currentMovementState = movementState.JUMPING;
+                    break;
+                case "FALLING":
+                    currentMovementState = movementState.FALLING;
+                    break;
+                case "FAST_FALLING":
+                    currentMovementState = movementState.FAST_FALLING;
+                    break;
+                case "SWINGING":
+                    currentMovementState = movementState.SWINGING;
+                    break;
+                case "LAUNCHING":
+                    currentMovementState = movementState.LAUNCHING;
+                    break;
+                case "CLIMBING":
+                    currentMovementState = movementState.CLIMBING;
+                    break;
+                case "DASHING":
+                    currentMovementState = movementState.DASHING;
+                    break;
+                case "KNIGHT_DASHING":
+                    currentMovementState = movementState.KNIGHT_DASHING;
+                    break;
+                case "GRAPPLING":
+                    currentMovementState = movementState.GRAPPLING;
                     break;
             }
         }
@@ -1452,8 +1501,13 @@ public class Player : Character {
         return (IsFalling() || IsFastFalling());
     }
 
+    //!you probably need to make this a variable
+    public bool JumpHeldWhileJumpingDown(){
+        return (IsFallingInTheAir() && jumpPressed && verticalVelocity <= 0f);
+    }
+
     public bool InTheAir(){
-        return (IsJumping() || IsFallingInTheAir() || IsLaunching() || (IsDashing() && verticalVelocity > 0f));
+        return (IsJumping() || IsFallingInTheAir() || IsLaunching() || ((IsDashing() || IsKnightDashing()) && verticalVelocity > 0f));
     }
 
     public bool IsClimbing(){
@@ -1725,7 +1779,7 @@ public class Player : Character {
             currentMovementState = movementState.JUMPING;
         }
 
-        jumpBufferTimer = 0;
+        //jumpBufferTimer = 0;
         numJumpsUsed += jumps;
         verticalVelocity = initialJumpVelocity;
     }
@@ -2398,7 +2452,7 @@ public class Player : Character {
                     verticalVelocity = 0f;
 
                     
-                    float yOffset = 0.1f;
+                    float yOffset = 0.05f;
                     //
                     /*
                     float height = bodyCollider.bounds.size.y + feetCollider.bounds.size.y + yOffset;
@@ -2471,6 +2525,7 @@ public class Player : Character {
             bool normalJump = (jumpBufferTimer > 0f && !IsJumping() && (onGround || coyoteTimer > 0f));
             //make sure x input isn't 0
             bool wallJump = (wallsTimer > 0f && onWall && wallJumpPressed && CanWallJump() && (moveInput.x != 0f));
+            //change these two as well to jumpBufferTimer > 0 if doesn't work
             bool extraJump = (jumpPressed && IsFastFalling() && (numJumpsUsed < MAX_JUMPS));
             bool airJump = (jumpPressed && IsFallingInTheAir() && (numJumpsUsed < MAX_JUMPS - 1));
 
