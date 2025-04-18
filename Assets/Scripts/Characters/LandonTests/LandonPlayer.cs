@@ -73,6 +73,7 @@ public class LandonPlayer : Character
         else if (flag == "MOVE")
         {
             lastMoveInput = Vector2FromString(value);
+            Debug.Log("lastMoveInput: " + lastMoveInput);
 
             if (lastMoveInput.x > 0)
             {
@@ -331,6 +332,7 @@ public class LandonPlayer : Character
             if (mv.started || mv.performed)
             {
                 lastMoveInput = mv.ReadValue<Vector2>();
+                Debug.Log("client lastmove input" + lastMoveInput);
                 SendCommand("MOVE", lastMoveInput.ToString());
             }
             else if (mv.canceled)

@@ -867,6 +867,8 @@ public class GameManager : NetworkComponent
 
             DestroyAllEnemies();
             DestroyAllItemBoxes();
+            DestroyAllRopes();
+            DestroyAllLadders();
 
             //yield return prevents the following lines from running until the coroutine is done
             yield return FadeScorePanelIn(1f, 0.5f);
@@ -986,6 +988,24 @@ public class GameManager : NetworkComponent
         for(int i = itemBoxes.Length-1; i >= 0; i--)
         {
             MyCore.NetDestroyObject(itemBoxes[i].NetId);
+        }
+    }
+
+    private void DestroyAllRopes()
+    {
+        Rope[] ropes = FindObjectsOfType<Rope>();
+        for (int i = ropes.Length - 1; i >= 0; i--)
+        {
+            MyCore.NetDestroyObject(ropes[i].NetId);
+        }
+    }
+
+    private void DestroyAllLadders()
+    {
+        LadderObj[] ladders = FindObjectsOfType<LadderObj>();
+        for (int i = ladders.Length - 1; i >= 0; i--)
+        {
+            MyCore.NetDestroyObject(ladders[i].NetId);
         }
     }
 

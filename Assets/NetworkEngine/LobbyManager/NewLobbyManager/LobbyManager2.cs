@@ -41,11 +41,14 @@ public class LobbyManager2 : NetworkCore
         string[] args = System.Environment.GetCommandLineArgs();
         foreach (string a in args)
         {
+            
             try
             {
                 //Starting a Game Server....
                 if (a.StartsWith("PORT_"))
                 {
+                    ScreenConsole("Starting Server with: " + a);
+
                     isGameServer = true;
                     string[] temp = a.Split('_');
                     int port = int.Parse(temp[1]);
@@ -61,6 +64,7 @@ public class LobbyManager2 : NetworkCore
             catch (System.Exception e)
             {
                 Debug.Log("Exception caught starting the server: " + e.ToString());
+                ScreenConsole(e.ToString());
             }
             //Starting the Master Game Server
             if (a.Contains("MASTER"))
@@ -84,9 +88,13 @@ public class LobbyManager2 : NetworkCore
 
     public IEnumerator SlowStart()
     {
+        ScreenConsole("A - SLow Start");
         yield return new WaitForSeconds(1);
         yield return new WaitUntil(() => LocalConnectionID >= 0);
+        ScreenConsole("B - SLow Start");
+    
         gameCore.UI_StartServer();
+        ScreenConsole("C - SLow Start");
         yield return new WaitUntil(() => gameCore.IsServer);
         isGameServer = true;
     }
@@ -129,12 +137,12 @@ public class LobbyManager2 : NetworkCore
                 
 #if UNITY_EDITOR
                 //You will need to change this to your executable name if you want to run a server in the editor.
-                proc.StartInfo.FileName = "C:\\LobbyManager2\\My project\\WindowsBuild\\NewLobbyManager.exe";
+                proc.StartInfo.FileName = "C:\\Users\\btowle\\Desktop\\Game2ProjectFolder\\BasicNetworking\\WinBuilds\\BasicNetworking.exe";
 #else
                 proc.StartInfo.FileName = args[0];
 #endif
                 proc.StartInfo.Arguments = "PORT_" + gameCounter + "_GAMEID_" + s + " -batchmode -nographics >GameServer" + gameCounter + "Log.txt";
-
+                Debug.Log(proc.StartInfo.Arguments);
                 gameServers.Add(gameCounter, proc);
                 gameCounter++;
                 proc.Start();
@@ -189,7 +197,6 @@ public class LobbyManager2 : NetworkCore
     {
         if(!gameCore.IsConnected && !IsServer && !isGameServer)
         {
-            Debug.Log("load scene1");
             SceneManager.LoadScene(0);
         }
     }

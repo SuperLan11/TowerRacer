@@ -118,10 +118,10 @@ public class Player : Character {
     [SerializeField] private AudioSource movementRechargeSfx;
 
     //not const anymore cause we want to change it for speed boost powerup
-    public float MAX_WALK_SPEED = 18f;
-    private const float GROUND_ACCELERATION = 15f, GROUND_DECELERATION = 12f;
-
-    private const float AIR_ACCELERATION = 10f, AIR_DECELERATION = 2f;
+    public float MAX_WALK_SPEED = 11f;
+    private const float GROUND_ACCELERATION = 15f, GROUND_DECELERATION = 20f;    
+    
+    private const float AIR_ACCELERATION = 10f, AIR_DECELERATION = 5f;
     private float WALL_JUMP_ACCELERATION;
 
     private float MAX_RUN_SPEED = 20f;
@@ -367,22 +367,19 @@ public class Player : Character {
         }
         else if (flag == "HIT_DOOR") {
             if (IsClient) {
+                GetComponent<TrailRenderer>().enabled = false;
+
                 this.transform.position = startPos;
                 SendCommand("IDLE_ANIM", "");
 
                 int place = int.Parse(value.Split(";")[0]);
                 int owner = int.Parse(value.Split(";")[1]);
-                
-                GetComponent<TrailRenderer>().enabled = false;
+                                
                 Color32 placeColor = placeColors[place - 1];
                 placeColor.a = 0;
                 //make score panel color correct for player's place
                 //scorePanel.GetComponent<Image>().color = placeColor;
                 scorePanel.transform.GetChild(owner).GetComponent<Image>().color = placeColor;
-
-                //only change the color of the local player's score background
-                if (IsLocalPlayer) {                    
-                }
             }
         }
         else if (flag == "TIMED_OUT") {
@@ -396,6 +393,7 @@ public class Player : Character {
             {
                 //not a sync var, but still needs to be set on the server
                 moveInput = Player.Vector2FromString(value);
+                Debug.Log("server move input: " + moveInput);
             }
         }
         else if (flag == "JUMP_PRESSED")
@@ -1501,6 +1499,7 @@ public class Player : Character {
         if (IsLocalPlayer){
             if (context.started || context.performed){
                 moveInput = context.ReadValue<Vector2>();
+                Debug.Log("client move input: " + moveInput);
                 SendCommand("MOVE", moveInput.ToString());
             }else if (context.canceled){
                 moveInput = Vector2.zero;
@@ -2400,6 +2399,7 @@ public class Player : Character {
 
                     
                     float yOffset = 0.1f;
+                    //
                     /*
                     float height = bodyCollider.bounds.size.y + feetCollider.bounds.size.y + yOffset;
 					//raycast to floor instead
