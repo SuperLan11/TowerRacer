@@ -1704,7 +1704,8 @@ public class Player : Character {
     }
 
     private void UseSpeedBoostItem(){
-        MAX_WALK_SPEED *= 2;
+        //MAX_WALK_SPEED *= 2;
+        initialJumpVelocity *= 1.5f;
         StartCoroutine(SpeedBoostCooldown(SPEED_BOOST_TIME));
     }
 
@@ -1786,7 +1787,8 @@ public class Player : Character {
     private IEnumerator SpeedBoostCooldown(float cooldown){
         yield return new WaitForSecondsRealtime(cooldown);
 
-        MAX_WALK_SPEED /= 2;
+        //MAX_WALK_SPEED /= 2;
+        initialJumpVelocity /= 1.5f;
     }
 
     private IEnumerator StunCooldown(){
