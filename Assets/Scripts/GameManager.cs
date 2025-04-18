@@ -351,8 +351,12 @@ public class GameManager : NetworkComponent
     // where we change the variable
     public static void AdjustReady(int change)
     {
-        playersReady += change;
+        playersReady += change;        
         int numPlayers = FindObjectsOfType<NPM>().Length;
+        
+        Debug.Log("players ready: " + playersReady);
+        Debug.Log("num players needed: " + numPlayers + '\n');
+
         // change to numPlayers > 1 later
         if (playersReady >= numPlayers && numPlayers >= 1)
         {
@@ -381,14 +385,17 @@ public class GameManager : NetworkComponent
             }
             
             if (i == numPieces - 1)
-            {
-                /*GameObject endPiece = MyCore.NetCreateObject(Idx.END_LEVEL_PIECE, this.Owner,
-                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);                */
+            {                
+                //might need to use this later
+                float endPieceY = (startPieceHeight/2) + ((i-1) * middlePieceHeight) + (endPieceHeight/2);
 
-                float endPieceY = startPieceHeight + ((i-1) * middlePieceHeight) + endPieceHeight;
+                int lastPieceIdx = Idx.LAST_END_PIECE + 1;
+                int randEndPiece = Random.Range(Idx.FIRST_END_PIECE, lastPieceIdx);
 
-                GameObject endPiece = MyCore.NetCreateObject(Idx.END_LEVEL_PIECE, this.Owner,
-                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * endPieceHeight, 0), Quaternion.identity);
+                /*GameObject endPiece = MyCore.NetCreateObject(randEndPiece, this.Owner,
+                    new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * endPieceHeight, 0), Quaternion.identity);*/
+                GameObject endPiece = MyCore.NetCreateObject(randEndPiece, this.Owner,
+                    new Vector3(CENTER_PIECE_X, endPieceY, 0), Quaternion.identity);
 
                 RandomlyPlaceRopes(endPiece, 100);
                 RandomlyPlaceEnemies(endPiece, 100);
@@ -1112,7 +1119,7 @@ public class GameManager : NetworkComponent
             GameObject startPiece = RandomizeLevel(3);
             AssignStarts(startPiece);
             //CreateTutorials();            
-
+            MyCore.NotifyGameStart();
             NPM[] players = GameObject.FindObjectsOfType<NPM>();
             foreach (NPM n in players)
             {                           

@@ -14,7 +14,25 @@ public class LadderObj : NetworkComponent
 
 	public override void HandleMessage(string flag, string value)
 	{
-		if (flag == "DEBUG")
+		if (flag == "ATTACH_PLAYER")
+		{
+			Vector2 playerPos = Player.Vector2FromString(value);
+			if (IsClient)			
+				attachedPlayer = Player.ClosestPlayerToPos(playerPos);			
+		}
+		else if (flag == "DETACH_PLAYER")
+		{
+			if (IsClient)
+				attachedPlayer = null;
+		}
+		else if (flag == "CHECK_PLAYER")
+		{
+			if (IsClient)
+			{
+
+			}
+		}
+		else if (flag == "DEBUG")
 		{
 			Debug.Log(value);
 			if (IsClient)
@@ -53,18 +71,21 @@ public class LadderObj : NetworkComponent
 	}
 
 	public void InitializeLadderVariables(Player p){
-		if (IsServer){
+		if (IsServer)
+		{
 			Player player = p;
 			bool touchingPlayer = (player != null);
-			
-			if (touchingPlayer){
+
+			if (touchingPlayer)
+			{
 				Vector2 grabPos = new Vector2(GetComponent<BoxCollider2D>().bounds.center.x, player.transform.position.y);
 				player.currentLadder = this;
 				attachedPlayer = player;
 
 				player.transform.position = grabPos;
+				SendUpdate("ATTACH_PLAYER", player.transform.position.ToString());
 			}
-		}
+		}		
 	}
     
     public override IEnumerator SlowUpdate()
@@ -79,33 +100,38 @@ public class LadderObj : NetworkComponent
 		}
 	}
 
+	private IEnumerator CheckForPlayer(float seconds)
+    {
+		yield return new WaitForSeconds(seconds);
+		SendCommand("CHECK_PLAYER", "");
+    }
+
 	// Update is called once per frame
 	void Update()
-    {
+    {		
 		//!Removing ladder SFX code I just spent 2 hours trying to debug why ladder SFX still plays when player hits up or down while they ARE NOT
 		//!on a ladder, and I don't want to waste more time on this.
-		
-		/*
-		if (!IsLocalPlayer)
-			return;
-
-		//cut sound when player not moving, only do on local player
-		if (attachedPlayer == null)
+		if (IsClient)
 		{
-			ladderSfx.Pause();
-			return;
-		}		
+			Debug.Log("ladder's attachedPlayer == null: " + (attachedPlayer == null));
+			if (attachedPlayer == null)
+			{
+				ladderSfx.Pause();
+				return;
+			}
 
-		Vector2 playerInput = attachedPlayer.moveInput;
-		if (Mathf.Abs(playerInput.y) > 0.01f)
-		{
-			if (!ladderSfx.isPlaying)
-				ladderSfx.Play();
+			Vector2 playerInput = attachedPlayer.moveInput;
+			if (Mathf.Abs(playerInput.y) > 0.01f)
+			{
+				Debug.Log("play ladder sfx");
+				if (!ladderSfx.isPlaying)
+					ladderSfx.Play();
+			}
+			else
+			{
+				Debug.Log("player is stopped");
+				ladderSfx.Pause();
+			}
 		}
-		else
-        {
-			ladderSfx.Pause();
-        }    
-		*/    
     }
 }

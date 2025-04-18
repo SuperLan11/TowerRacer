@@ -9,8 +9,7 @@ public class Idx : MonoBehaviour
     public const int NPM = 1;
     
     public const int START_LEVEL_PIECE = 23;
-    public const int FIRST_LEVEL_PIECE_IDX = 2;
-    public const int END_LEVEL_PIECE = 5;
+    public const int FIRST_LEVEL_PIECE_IDX = 2;    
 
     public const int BONE = 6;
     public const int ROPE = 7;
@@ -37,7 +36,10 @@ public class Idx : MonoBehaviour
     public const int ARCHER_TUTORIAL = 26;
     public const int BANDIT_TUTORIAL = 27;
     public const int MAGE_TUTORIAL = 28;
-    public const int KNIGHT_TUTORIAL = 29;    
+    public const int KNIGHT_TUTORIAL = 29;
+
+    public const int FIRST_END_PIECE = 30;
+    public const int LAST_END_PIECE = 31;
 
     public const int FIRST_ENEMY_IDX = 9;
     public const int NUM_LEVEL_PIECES = 3;

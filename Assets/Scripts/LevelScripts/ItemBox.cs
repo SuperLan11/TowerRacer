@@ -83,8 +83,7 @@ public class ItemBox : NetworkComponent
 		if (IsServer)
 		{
 			if (itemUI == null)
-			{
-				Debug.Log("item box collided before setting item ui!");
+			{				
 				return;
 			}
 

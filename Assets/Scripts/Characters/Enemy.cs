@@ -104,29 +104,21 @@ public abstract class Enemy : Character
             SendUpdate("START_HIT_EFFECT", "GoodMorning");
             //StartHitEffect(hitColor);
         }
-    }
+    }    
 
     protected virtual void OnCollisionEnter2D(Collision2D collider){
         if (IsServer)
-        {
+        {            
             //consider doing for loop for collision contacts here
             bool hitPlayer = collider.gameObject.GetComponentInParent<Player>() != null;
             bool hitWall = collider.gameObject.tag == "WALL";
             bool hitEnemy = collider.gameObject.GetComponent<Enemy>() != null;
             ItemBox itemHit = collider.gameObject.GetComponent<ItemBox>();
 
-            /*if(hitTilemap)
-            {
-                minX = MinPlatformX(collider.collider.GetComponent<Tilemap>());
-                maxX = MaxPlatformX(collider.collider.GetComponent<Tilemap>());
-                Debug.Log("minX for " + name + " is " + minX);
-                Debug.Log("maxX for " + name + " is " + maxX);
-            }*/
+            if (hitPlayer)
+                collider.gameObject.GetComponentInParent<Player>().TakeDamage(1);
 
-            if (hitPlayer)            
-                collider.gameObject.GetComponentInParent<Player>().TakeDamage(1);            
-
-            if(hitPlayer || hitWall || hitEnemy)
+            if (hitPlayer || hitWall || hitEnemy)
             {
                 dir *= -1;
                 spriteRender.flipX = !spriteRender.flipX;
@@ -134,7 +126,7 @@ public abstract class Enemy : Character
                 StartCoroutine(PauseRaycasting(0.3f));
             }
 
-            if(itemHit != null)
+            if (itemHit != null)
             {
                 //sometimes chests don't turn into triggers on hitting ground, so fix when enemy collides with it
                 itemHit.GetComponent<Collider2D>().isTrigger = true;
