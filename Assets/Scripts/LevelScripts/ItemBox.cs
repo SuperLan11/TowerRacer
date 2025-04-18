@@ -98,10 +98,6 @@ public class ItemBox : NetworkComponent
 				SendUpdate("TRIGGER", "");
 			}
 
-			if (playerHit == null){
-				return;
-			}
-
 			bool hasItem = playerHit.hasBomb || playerHit.hasChicken || playerHit.hasSpeedBoost;
 			if (playerHit != null && !hasItem)
 			{
@@ -125,10 +121,6 @@ public class ItemBox : NetworkComponent
 		if (IsServer)
 		{			
 			Player playerHit = collision.gameObject.GetComponentInParent<Player>();			
-
-			if (playerHit == null){
-				return;
-			}
 
 			bool hasItem = playerHit.hasBomb || playerHit.hasChicken || playerHit.hasSpeedBoost;
 			if (playerHit != null && !hasItem)

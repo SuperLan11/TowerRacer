@@ -59,9 +59,9 @@ public class GameManager : NetworkComponent
     private float curTimer;
     [System.NonSerialized] public bool timerStarted = false;    
     private float camEndY;
-    private float startPieceHeight = 48f;
+    private float startPieceHeight = 49f;
     private float middlePieceHeight = 40f;
-    private float endPieceHeight = 48f;
+    private float endPieceHeight = 40f;
 
     private float resultsTimer = 5f;
     private float alphaUpdateFreq = 0.01f;
@@ -390,9 +390,13 @@ public class GameManager : NetworkComponent
                 GameObject endPiece = MyCore.NetCreateObject(Idx.END_LEVEL_PIECE, this.Owner,
                     new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * endPieceHeight, 0), Quaternion.identity);
 
-                PlaceDoor(endPiece);
+                RandomlyPlaceRopes(endPiece, 100);
+                RandomlyPlaceEnemies(endPiece, 100);
+                RandomlyPlaceItemBoxes(endPiece, 100);
+                RandomlyPlaceLadders(endPiece, 100);
 
-                camEndY = endPiece.transform.position.y;    
+                GameObject door = PlaceDoor(endPiece);
+                camEndY = door.transform.position.y;
                 break;
             }
 
@@ -478,16 +482,18 @@ public class GameManager : NetworkComponent
         }
     }
 
-    private void PlaceDoor(GameObject endPiece)
+    private GameObject PlaceDoor(GameObject endPiece)
     {        
         for(int i = 0; i < endPiece.transform.childCount; i++)
         {
             if (endPiece.transform.GetChild(i).tag == "END_DOOR_POS")
             {
                 GameObject door = MyCore.NetCreateObject(Idx.END_DOOR, Owner, endPiece.transform.GetChild(i).transform.position, Quaternion.identity);
+                return door;
                 //door.transform.SetParent(endPiece.transform);
             }
         }
+        return null;
     }
 
     private void RandomlyPlaceRopes(GameObject levelPiece, int chanceToPlace)
@@ -501,6 +507,7 @@ public class GameManager : NetworkComponent
             if (child.tag == "ROPE_POS" && gotChance)
             {
                 GameObject rope = MyCore.NetCreateObject(Idx.ROPE, Owner, child.transform.position, Quaternion.identity);
+                Debug.Log("spawning rope at " + child.transform.position);
                 //rope.transform.SetParent(levelPiece.transform);
             }
         }   
@@ -864,7 +871,7 @@ public class GameManager : NetworkComponent
             {
                 MyCore.NetDestroyObject(piece.GetComponentInParent<NetworkID>().NetId);
             }
-            RandomizeLevel(5);
+            RandomizeLevel(3);
 
             Player[] players = FindObjectsOfType<Player>();
             foreach (Player player in players)
@@ -1054,7 +1061,7 @@ public class GameManager : NetworkComponent
                 yield return new WaitForSeconds(0.5f);
             }
 
-            GameObject startPiece = RandomizeLevel(5);
+            GameObject startPiece = RandomizeLevel(3);
             AssignStarts(startPiece);
             //CreateTutorials();            
 
@@ -1098,11 +1105,11 @@ public class GameManager : NetworkComponent
             int maxOwner = GetMaxOwner();
             SendUpdate("HIDE_CHAR_IMAGES", maxOwner.ToString());
 
-            MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(0f, 0f, 0f), Quaternion.identity);
+            /*MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(0f, 0f, 0f), Quaternion.identity);
             MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(-3f, 0f, 0f), Quaternion.identity);
             MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(3, 0f, 0f), Quaternion.identity);
             MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(5f, 0f, 0f), Quaternion.identity);
-            MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(-5f, 0f, 0f), Quaternion.identity);
+            MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(-5f, 0f, 0f), Quaternion.identity);*/
 
             SendUpdate("GAMESTART", "1");
             //stops server from listening, so nobody new can join.
