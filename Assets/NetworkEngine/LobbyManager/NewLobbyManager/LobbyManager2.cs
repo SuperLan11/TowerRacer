@@ -215,7 +215,7 @@ public class LobbyManager2 : NetworkCore
     }
 
     public override void UI_Quit()
-    {
+    {        
         base.UI_Quit();
         if (gameCore.IsConnected && gameCore.IsClient)
         {

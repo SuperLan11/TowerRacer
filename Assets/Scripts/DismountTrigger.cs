@@ -58,7 +58,18 @@ public class DismountTrigger : NetworkComponent
 		}
     }
 
-	private void OnTriggerExit2D(Collider2D collision)
+    private void OnTriggerStay2D(Collider2D collision)
+    {
+        if(IsServer)
+        {
+			Player playerStaying = collision.GetComponentInParent<Player>();
+			//override in case the lower player collider exits the dismount trigger
+			if(playerStaying != null)
+				playerStaying.inDismountTrigger = true;            
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D collision)
 	{
 		if (IsServer)
 		{

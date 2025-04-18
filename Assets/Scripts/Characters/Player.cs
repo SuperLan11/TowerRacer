@@ -407,8 +407,7 @@ public class Player : Character {
             if (IsServer)
             {
                 //not a sync var, but still needs to be set on the server
-                moveInput = Player.Vector2FromString(value);
-                Debug.Log("server move input: " + moveInput);
+                moveInput = Player.Vector2FromString(value);                
             }
         }
         else if (flag == "JUMP_PRESSED")
@@ -515,8 +514,7 @@ public class Player : Character {
         }else if (flag == "ATTACK_PRESSED"){
             attackPressed = bool.Parse(value);
 
-            if (IsServer){
-                Debug.Log("attack has been presssed");
+            if (IsServer){                
                 SendUpdate("ATTACK_PRESSED", value);
             }
         }
@@ -1554,8 +1552,7 @@ public class Player : Character {
     public void MoveAction(InputAction.CallbackContext context){
         if (IsLocalPlayer){
             if (context.started || context.performed){
-                moveInput = context.ReadValue<Vector2>();
-                Debug.Log("client move input: " + moveInput);
+                moveInput = context.ReadValue<Vector2>();                
                 SendCommand("MOVE", moveInput.ToString());
             }else if (context.canceled){
                 moveInput = Vector2.zero;
@@ -2011,7 +2008,7 @@ public class Player : Character {
 
     public override void TakeDamage(int damage){
         if (!isInvincible && !isStunned && !playerFrozen){
-            Debug.Log("taking damage");
+            //Debug.Log("taking damage");
             health -= damage;
 
             if (health <= 0){
@@ -2062,7 +2059,8 @@ public class Player : Character {
 
 
         //smooth movement
-        if (IsLocalPlayer){      
+        if (IsLocalPlayer){
+            //Debug.Log("currentLadder == null: " + (currentLadder == null));
             bool regularMovementState = (IsGrounded() || IsFallingInTheAir());
             if (regularMovementState){
                 float currentAcceleration = (IsGrounded() ? GROUND_ACCELERATION : AIR_ACCELERATION);
@@ -2292,6 +2290,7 @@ public class Player : Character {
             if (CheckForTriggers("Ladder")/*CheckForLadders()*/){
                 bool pressingUpOrDown = (moveInput.y > 0f || moveInput.y < 0f);
                 if ((currentLadder != null) && pressingUpOrDown && !IsClimbing() && !inDismountTrigger){
+                    Debug.Log("set to ladder state");
                     currentLadder.InitializeLadderVariables(this);
                     currentMovementState = movementState.CLIMBING;
                     SendUpdate("LADDER_ANIM", "");
@@ -2426,6 +2425,7 @@ public class Player : Character {
                     InitiateJump(1);
                     SendUpdate("JUMP_ANIM", "");
                     //currentLadder.SendUpdate("STOP_LADDER_SFX", "GoodMorning");
+                    //currentLadder.SendUpdate("DETACH_PLAYER", "");
                     currentLadder.attachedPlayer = null;
                     currentLadder = null;
 
@@ -2436,9 +2436,13 @@ public class Player : Character {
 
                     return;
                 }
-                
-                if (moveInput.y > 0f){
-                    rigidbody.velocity = new Vector2(0, currentLadder.ladderSpeed);                    
+
+                //don't allow player to climb on ladder if they have dismounted above the ladder
+                if (currentMovementState != movementState.CLIMBING && inDismountTrigger)
+                    return;
+
+                if (moveInput.y > 0f){                    
+                    rigidbody.velocity = new Vector2(0, currentLadder.ladderSpeed);    
                 }
                 else if (moveInput.y < 0f){
                     if (onGround){
@@ -2448,11 +2452,12 @@ public class Player : Character {
                             SendUpdate("IDLE_ANIM", "GoodMorning");
                             //currentLadder.SendUpdate("STOP_LADDER_SFX", "GoodMorning");
                             currentLadder.attachedPlayer = null;
+                            //currentLadder.SendUpdate("DETACH_PLAYER", "");
                             currentLadder = null;
 
                             return;
                         }
-                    }else{
+                    }else{                        
                         rigidbody.velocity = new Vector2(0, -currentLadder.ladderSpeed);
                     }
                 }
@@ -2465,8 +2470,9 @@ public class Player : Character {
                     if (!IsGrounded()){
                         currentMovementState = movementState.GROUND;
                         SendUpdate("IDLE_ANIM", "GoodMorning");
-                    }                  
+                    }
                     
+                    //currentLadder.SendUpdate("DETACH_PLAYER", "");
                     rigidbody.velocity = Vector2.zero;
                     //currentLadder.SendUpdate("STOP_LADDER_SFX", "GoodMorning");
                     currentLadder.attachedPlayer = null;
