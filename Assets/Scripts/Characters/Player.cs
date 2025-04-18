@@ -2399,7 +2399,7 @@ public class Player : Character {
                     verticalVelocity = 0f;
 
                     
-                    float yOffset = 0.2f;
+                    float yOffset = 0.1f;
                     /*
                     float height = bodyCollider.bounds.size.y + feetCollider.bounds.size.y + yOffset;
 					//raycast to floor instead

@@ -35,6 +35,7 @@ public class ItemBox : NetworkComponent
 				GetComponent<Collider2D>().isTrigger = true;
 				GetComponent<Rigidbody2D>().gravityScale = 0f;
 				GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+				GetComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Static;
 			}
         }
 		else if (flag == "DEBUG")
@@ -94,6 +95,8 @@ public class ItemBox : NetworkComponent
 			{
 				GetComponent<Collider2D>().isTrigger = true;
 				GetComponent<Rigidbody2D>().gravityScale = 0f;
+				GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+				GetComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Static;
 				SendUpdate("TRIGGER", "");
 			}
 

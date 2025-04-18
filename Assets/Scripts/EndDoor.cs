@@ -130,8 +130,7 @@ public class EndDoor : NetworkComponent
                 }
                 else if (!gm.timerStarted)
                 {
-                    gm.timerStarted = true;
-                    Debug.Log("START TIMER");
+                    gm.timerStarted = true;                    
                     StartCoroutine(gm.StartTimer());
                 }                
             }
