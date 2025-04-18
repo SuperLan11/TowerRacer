@@ -178,7 +178,8 @@ public class Player : Character {
 
     [SerializeField] private float TIME_FOR_UP_CANCEL = 0.027f;
     [SerializeField] private float APEX_THRESHOLD = 0.97f, APEX_HANG_TIME = 0.075f;
-    [SerializeField] private float MAX_JUMP_BUFFER_TIME = 0.125f;
+    //[SerializeField] private float MAX_JUMP_BUFFER_TIME = 0.125f;
+    [SerializeField] private float MAX_JUMP_BUFFER_TIME = 0.01f;
     [SerializeField] private float MAX_JUMP_COYOTE_TIME = 0.1f;
     [SerializeField] private float MAX_WALL_JUMP_TIME = 0.05f;
     [SerializeField] private float MAX_WALL_STICK_TIME = 3f;
@@ -897,7 +898,7 @@ public class Player : Character {
         placeColors[0] = new Color32(255, 220, 0, 255); //gold for first
         placeColors[1] = new Color32(148, 148, 148, 255); //silver for second
         placeColors[2] = new Color32(196, 132, 0, 255); //bronze for third
-        placeColors[3] = new Color32(255, 255, 255, 255); //white for fourth
+        placeColors[3] = new Color32(129, 135, 255, 255); //blue for fourth
 
         arrowPivot = transform.GetChild(0).gameObject;
         aimArrow = arrowPivot.transform.GetChild(0).gameObject;
