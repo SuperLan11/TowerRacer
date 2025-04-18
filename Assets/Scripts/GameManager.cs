@@ -862,6 +862,7 @@ public class GameManager : NetworkComponent
             SendUpdate("STOP_THEME", "GoodMorning");
 
             DestroyAllEnemies();
+            DestroyAllItemBoxes();
 
             //yield return prevents the following lines from running until the coroutine is done
             yield return FadeScorePanelIn(1f, 0.5f);
@@ -892,6 +893,20 @@ public class GameManager : NetworkComponent
             foreach(Player player in players)
             {
                 player.SendUpdate("CAM_UNFREEZE", "");
+                
+                player.hasBomb = false;
+                player.hasChicken = false;
+                player.hasSpeedBoost = false;
+                SendCommand("HAS_BOMB", false.ToString());
+                SendCommand("HAS_CHICKEN", false.ToString());
+                SendCommand("HAS_SPEED_BOOST", false.ToString());
+                
+                player.currentRope = null;
+                player.currentLadder = null;
+
+                player.isStunned = false;
+
+                player.ResetTimers();
             }
             
             foreach (Player player in players)
@@ -958,6 +973,15 @@ public class GameManager : NetworkComponent
         for(int i = enemies.Length-1; i >= 0; i--)
         {
             MyCore.NetDestroyObject(enemies[i].NetId);
+        }
+    }
+
+    private void DestroyAllItemBoxes()
+    {
+        ItemBox[] itemBoxes = FindObjectsOfType<ItemBox>();
+        for(int i = itemBoxes.Length-1; i >= 0; i--)
+        {
+            MyCore.NetDestroyObject(itemBoxes[i].NetId);
         }
     }
 
