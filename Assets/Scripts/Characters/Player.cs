@@ -266,6 +266,7 @@ public class Player : Character {
     };
 
     [SerializeField] private movementState currentMovementState;
+    private movementState lastMovementState;
 
     private enum characterClass
     {
@@ -631,6 +632,7 @@ public class Player : Character {
             }
         }else if (flag == "START_STUN_EFFECT"){
             if (IsClient){
+                isStunned = true;
                 StartStunEffect(stunColor);
             }  
         }else if (flag == "RUMBLE"){
@@ -959,8 +961,8 @@ public class Player : Character {
        
         
         
-
-        TrailRenderer trailRenderer = transform.GetChild(3).GetComponent<TrailRenderer>();
+        TrailRenderer trailRenderer = GetComponent<TrailRenderer>();
+        //TrailRenderer trailRenderer = transform.GetChild(3).GetComponent<TrailRenderer>();
         switch (selectedCharacterClass){
             case characterClass.ARCHER:
                 movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 2f;
@@ -990,6 +992,7 @@ public class Player : Character {
 
         if (IsServer){
             trailRenderer.enabled = false;
+            StartCoroutine(ChangeMovementState());
         }
 
         if (!GameManager.debugMode)
@@ -999,6 +1002,7 @@ public class Player : Character {
         }
 
         currentMovementState = movementState.FALLING;
+        
     }
 
     #region PHYSICS
@@ -1820,6 +1824,15 @@ public class Player : Character {
         dashCoroutine = StartCoroutine(DashRoutine(color));
     }
 
+    private IEnumerator ChangeMovementState(){
+        while (IsConnected){
+            yield return new WaitUntil(() => currentMovementState != lastMovementState);
+
+            lastMovementState = currentMovementState;
+            SendUpdate("CURRENT_MOVEMENT_STATE", MovementStateToString(currentMovementState));
+        }
+    }
+
     private IEnumerator DashRoutine(Color color){
         spriteRender.material = dashMaterial;
         dashMaterial.color = color;
@@ -1847,6 +1860,8 @@ public class Player : Character {
 
         spriteRender.material = regularMaterial;
         stunCoroutine = null;
+
+        isStunned = false;
     }
 
     private void GetCurrentGamepad(){
@@ -1970,7 +1985,34 @@ public class Player : Character {
             return;
         }
 
+
+        //smooth movement
         if (IsLocalPlayer){      
+            bool regularMovementState = (IsGrounded() || IsFallingInTheAir());
+            if (regularMovementState){
+                float currentAcceleration = (IsGrounded() ? GROUND_ACCELERATION : AIR_ACCELERATION);
+                float currentDeceleration = (IsGrounded() ? GROUND_DECELERATION : AIR_DECELERATION);
+            
+                if (moveInput != Vector2.zero){     //accelerate
+                    if (isStunned){
+                        return;
+                    }
+                
+                    //TurnCheck();
+                
+                    Vector2 targetVelocity = new Vector2(moveInput.x, 0);
+                    targetVelocity *= (holdingRun ? MAX_RUN_SPEED : MAX_WALK_SPEED);
+
+                    moveVelocity = Vector2.Lerp(moveVelocity, targetVelocity, currentAcceleration * Time.deltaTime);
+                    rigidbody.velocity = new Vector2(moveVelocity.x, rigidbody.velocity.y);
+                }else{      //decelerate
+                    moveVelocity = Vector2.Lerp(moveVelocity, Vector2.zero, currentDeceleration * Time.deltaTime);
+                    rigidbody.velocity = new Vector2(moveVelocity.x, rigidbody.velocity.y);
+                }    
+            }
+            
+            
+            
             //synchronized variable
             if (winningPlayer != null){
                 //win game sfx played in game manager
