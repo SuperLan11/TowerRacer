@@ -12,11 +12,13 @@ public class MainMenu : MonoBehaviour
     public GameObject optionsMenuCanvas;
     public AudioMixer mixer;
 
+    [SerializeField] private AudioSource testSound;
+
     private int oldWidth;
     private int oldHeight;
 
     //would be in game manager, but we don't want to create a game manager in this scene just for one variable
-    private bool fullScreen = false;
+    //private bool fullScreen = true;
 
     public GameObject mainMenuFirst, optionsMenuFirst;
 
@@ -37,7 +39,7 @@ public class MainMenu : MonoBehaviour
 
         EventSystem.current.SetSelectedGameObject(mainMenuFirst);
 
-        Screen.fullScreen = fullScreen;
+        //Screen.fullScreen = fullScreen;
     }
 
     // Update is called once per frame
@@ -75,6 +77,11 @@ public class MainMenu : MonoBehaviour
     public void SFXVolume(float f)
     {
         mixer.SetFloat("SFX", Mathf.Log10(f) * 20);
+    }
+
+    public void TestSFX()
+    {
+        testSound.Play();
     }
 
     public void FullscreenToggle(bool b)
