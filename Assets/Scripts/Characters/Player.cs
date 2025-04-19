@@ -2346,6 +2346,14 @@ public class Player : Character
         isStunned = false;
     }
 
+    private IEnumerator EnsureEnabledColliders(){
+        yield return new WaitForSeconds(0.3f);
+
+        if (!IsSwinging()){
+            SendUpdate("ENABLE_COLLIDERS", "GoodMorning");
+        }
+    }
+
     private void GetCurrentGamepad()
     {
         gamepad = Gamepad.current;
@@ -2794,6 +2802,8 @@ public class Player : Character
                     feetCollider.enabled = true;
                     bodyCollider.enabled = true;
                     SendUpdate("ENABLE_COLLIDERS", "GoodMorning");
+                    //hopefully fixes weird issue with colliders being permanently disabled
+                    StartCoroutine(EnsureEnabledColliders());
                 }
                 else
                 {
