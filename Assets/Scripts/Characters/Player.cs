@@ -156,7 +156,7 @@ public class Player : Character {
 
     private Coroutine dashCoroutine;
     private Coroutine stunCoroutine;   
-    private Coroutine rumbleCoroutine;   
+    private Coroutine rumbleCoroutine;
 
 
     private uint numWallJumpsUsed = 0;
@@ -165,7 +165,10 @@ public class Player : Character {
     private bool justStartedWallJump = false;
     private bool onWallWithoutJumpPressed = false;
     private bool wallJumpPressed = false;
-    private bool jumpHeldWhileJumpingDown = false;
+    //just a heads up, these three variables are the epitome of jank. Touch them at your own
+    private bool beenInAirLongEnough = false;
+    private bool jumpReleasedDuringJump = false;
+    private bool held = false;
 
     private bool canGrabRope = true;
     private bool canRopeJump = false;
@@ -1499,9 +1502,8 @@ public class Player : Character {
         return (IsFalling() || IsFastFalling());
     }
 
-    //!you probably need to make this a variable
-    public bool JumpHeldWhileJumpingDown(){
-        return (IsFallingInTheAir() && jumpPressed && verticalVelocity <= 0f);
+    public bool JumpPressedAgainWhileFalling(){
+        return (jumpPressed && jumpReleasedDuringJump);
     }
 
     public bool InTheAir(){
@@ -1713,9 +1715,11 @@ public class Player : Character {
     private void JumpVariableCleanup(){
         fastFallTimer = 0f;
         isPastApexThreshold = false;
+        //beenInAirLongEnough = false;
         verticalVelocity = 0f;
         numJumpsUsed = 0;
         numWallJumpsUsed = 0;
+        held = false;
     }
 
     private void WallVariableCleanup(){
@@ -1779,6 +1783,9 @@ public class Player : Character {
         //jumpBufferTimer = 0;
         numJumpsUsed += jumps;
         verticalVelocity = initialJumpVelocity;
+        
+        beenInAirLongEnough = false;
+        StartCoroutine(AirRoutine());
     }
 
     private void InitiateWallJump(){
@@ -1798,6 +1805,9 @@ public class Player : Character {
         inWallJump = true;
         justStartedWallJump = true;
         verticalVelocity = initialJumpVelocity;
+
+        beenInAirLongEnough = false;
+        StartCoroutine(AirRoutine());
 
         rigidbody.velocity = new Vector2(rigidbody.velocity.x, verticalVelocity);
     }
@@ -1874,6 +1884,16 @@ public class Player : Character {
         dashCoroutine = StartCoroutine(DashRoutine(color));
     }
 
+    private IEnumerator DashRoutine(Color color){
+        spriteRender.material = dashMaterial;
+        dashMaterial.color = color;
+
+        yield return new WaitForSeconds(DASH_EFFECT_DURATION);
+
+        spriteRender.material = regularMaterial;
+        dashCoroutine = null;
+    }
+
     private IEnumerator ChangeMovementState(){
         while (IsConnected){
             yield return new WaitUntil(() => currentMovementState != lastMovementState);
@@ -1883,14 +1903,16 @@ public class Player : Character {
         }
     }
 
-    private IEnumerator DashRoutine(Color color){
-        spriteRender.material = dashMaterial;
-        dashMaterial.color = color;
+    private IEnumerator AirRoutine(){
+        yield return new WaitForSecondsRealtime(0.1f);
 
-        yield return new WaitForSeconds(DASH_EFFECT_DURATION);
+        beenInAirLongEnough = true;
+    }
 
-        spriteRender.material = regularMaterial;
-        dashCoroutine = null;
+    private IEnumerator TestForHeld(){
+        yield return new WaitForSeconds(0.1f);
+
+        held = true;
     }
 
     protected void StartStunEffect(Color color){
@@ -2482,6 +2504,29 @@ public class Player : Character {
             #region JUMPING
             jumpBufferTimer -= Time.deltaTime;
 
+            if (IsJumping()){
+                if (beenInAirLongEnough && jumpReleased){
+                    jumpReleasedDuringJump = true;
+                    held = false;
+                }
+            }
+
+            if (InTheAir()){
+                if (jumpReleasedDuringJump && jumpPressed){
+                    //Debug.Log("held is happening");
+                    StartCoroutine(TestForHeld());
+                }
+
+                
+                /*
+                //maybe commment this out
+                if (held && jumpReleasedDuringJump){
+                    held = false;
+                }
+                */
+            }
+
+
             if (!onGround){
                 coyoteTimer -= Time.deltaTime;
             }else{
@@ -2528,15 +2573,22 @@ public class Player : Character {
             }
 
             //no need to check for isJumpPressed since that's what jumpBufferTimer is doing
-            bool normalJump = (jumpBufferTimer > 0f && !IsJumping() && (onGround || coyoteTimer > 0f));
+            bool jumpFromGround = (jumpPressed && IsGrounded() && !held);
+            //bool normalJump = (jumpBufferTimer > 0f && !IsJumping() && (onGround || ((coyoteTimer > 0f) && JumpPressedAgainWhileFalling())));
+            bool normalJump = (!held && jumpBufferTimer > 0f && IsFallingInTheAir() && (onGround || ((coyoteTimer > 0f) && JumpPressedAgainWhileFalling())));
+
             //make sure x input isn't 0
             bool wallJump = (wallsTimer > 0f && onWall && wallJumpPressed && CanWallJump() && (moveInput.x != 0f));
             //change these two as well to jumpBufferTimer > 0 if doesn't work
-            bool extraJump = (jumpPressed && IsFastFalling() && (numJumpsUsed < MAX_JUMPS));
+            bool extraJump = (jumpPressed && IsFastFalling() && (numJumpsUsed < MAX_JUMPS) && JumpPressedAgainWhileFalling());
             bool airJump = (jumpPressed && IsFallingInTheAir() && (numJumpsUsed < MAX_JUMPS - 1));
 
+            if (jumpFromGround){
+                Debug.Log("jumping from ground");
+            }
 
-            if (normalJump){
+
+            if (jumpFromGround || normalJump){
                 Debug.Log("normal jump");
                 InitiateJump(1);
                 SendUpdate("JUMP_ANIM", "");
@@ -2570,6 +2622,8 @@ public class Player : Character {
                 SendUpdate("IDLE_ANIM", "GoodMorning");
                 clientCollidersEnabled = true;
                 SendUpdate("ENABLE_COLLIDERS", "GoodMorning");
+                jumpReleasedDuringJump = false;
+                //held = false;
                 JumpVariableCleanup();
                 RopeVariableCleanup();                
                 
@@ -2694,6 +2748,7 @@ public class Player : Character {
                     jankGroundGravity = true;
                 }
                 
+                //beenInAirLongEnough = false;
                 JumpVariableCleanup();
             }
 
