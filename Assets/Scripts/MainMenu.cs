@@ -39,6 +39,9 @@ public class MainMenu : MonoBehaviour
 
         EventSystem.current.SetSelectedGameObject(mainMenuFirst);
 
+        //hopefully it will get reset every time player gets booted back to main menu
+        Cursor.visible = true;
+
         //Screen.fullScreen = fullScreen;
     }
 
