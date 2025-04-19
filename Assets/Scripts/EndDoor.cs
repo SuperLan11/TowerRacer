@@ -57,6 +57,7 @@ public class EndDoor : NetworkComponent
             
         gm = FindObjectOfType<GameManager>();
         playerEnterSfx = GetComponent<AudioSource>();
+        //
     }
 
     public override void NetworkedStart()
@@ -87,38 +88,25 @@ public class EndDoor : NetworkComponent
         {
             Player playerHit = other.gameObject.GetComponentInParent<Player>();            
 
-            /*if(playerHit != null && !GameManager.tutorialFinished && !GameManager.playersFinished.Contains(playerHit))
-            {
-                GameManager.playersFinished.Add(playerHit);
-                if (GameManager.playersFinished.Count == FindObjectsOfType<Player>().Length)
-                    GameManager.tutorialFinished = true;
-
-                SendUpdate("ENTER_SFX", "");
-                playerHit.SendUpdate("CAM_FREEZE", "");
-                playerHit.SendUpdate("HIT_DOOR", GameManager.playersFinished.Count.ToString());
-            }
-            //make sure player hit is not frozen in case of weird double collisions when teleporting
-            else */if (playerHit != null && !GameManager.playersFinished.Contains(playerHit) && !playerHit.playerFrozen)
+            if (playerHit != null && !GameManager.playersFinished.Contains(playerHit) && !playerHit.playerFrozen)
             {                
                 GameManager.playersFinished.Add(playerHit);
-
                 SendUpdate("ENTER_SFX", "");
-                
+
+                playerHit.playerFrozen = true;
                 //need to finalize place since place labels aren't always accurate                
                 playerHit.SendUpdate("PLACE", GameManager.playersFinished.Count.ToString());                
-                                
-                playerHit.playerFrozen = true;  
+                                                
                 playerHit.rigidbody.velocity = Vector2.zero;
 
                 if (GameManager.playersFinished.Count == 1)
                 {
                     playerHit.wins++;
-                    playerHit.isRoundWinner = true;                    
+                    playerHit.isRoundWinner = true;
                 }                
 
                 playerHit.SendUpdate("CAM_FREEZE", "");
-                playerHit.transform.position = playerHit.startPos;
-                //playerHit.SendUpdate("HIT_DOOR", GameManager.playersFinished.Count.ToString());
+                playerHit.transform.position = playerHit.startPos;                
                 playerHit.SendUpdate("HIT_DOOR", GameManager.playersFinished.Count.ToString() + ";" + playerHit.Owner);
 
                 Player[] players = FindObjectsOfType<Player>();

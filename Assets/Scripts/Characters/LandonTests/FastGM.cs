@@ -31,7 +31,7 @@ public class FastGM : NetworkComponent
     //these aren't serialized as they could break the game if accidentally changed in the inspector        
 
     public static double levelTime;
-    public static bool debugMode = true;    
+    public static bool debugMode = false;
 
     public enum gameState {
         LOBBY,
@@ -98,10 +98,10 @@ public class FastGM : NetworkComponent
         {
             levelTime = 0;
 
-            if (debugMode){
+            /*if (debugMode){
                 Enemy[] enemies = GetAllEnemies();
                 DestroyAllEnemies(enemies);
-            }
+            }*/
             //RandomizeLevel();
         }        
     }

@@ -566,6 +566,7 @@ public class PlayerController : Character
         {
             Vector3 newCamPos = new Vector3(0, 0, cam.transform.position.z);
             newCamPos.x = GameManager.CENTER_PIECE_X;
+            //
             //Mathf.infinity is not bad on performance at all since it is stored as some sort of constant
             newCamPos.y = Mathf.Clamp(this.transform.position.y + 5, -Mathf.Infinity, highestCamY);
 

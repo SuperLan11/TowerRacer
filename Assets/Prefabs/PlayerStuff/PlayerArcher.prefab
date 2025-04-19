@@ -648,7 +648,7 @@ MonoBehaviour:
   useItemSfx: {fileID: 7417652645165263525}
   dashSfx: {fileID: 0}
   jumpSfx: {fileID: 7739312954016352942}
-  doubleJumpSfx: {fileID: 0}
+  doubleJumpSfx: {fileID: 6369653690877951918}
   stunSfx: {fileID: 958471198380452924}
   lungeSfx: {fileID: 0}
   lungeHitSfx: {fileID: 0}

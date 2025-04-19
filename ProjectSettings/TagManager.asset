@@ -28,6 +28,7 @@ TagManager:
   - WALL
   - QUIT
   - NO_DISMOUNT_LADDER_POS
+  - BACKGROUND
   layers:
   - Default
   - TransparentFX

@@ -1,4 +1,4 @@
-﻿/*
+﻿/*working round mover
 @Authors - Landon, Patrick
 @Description - General game management, and also potentially level generation
 */
@@ -12,15 +12,17 @@ using UnityEngine.Tilemaps;
 using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.SceneManagement;
 
+//old one
 public class GameManager : NetworkComponent
-{    
+{
     //sync vars
     public static bool gameOver;
     private static bool gameStarted = false;
-    public static int playersReady = 0;    
+    public static int playersReady = 0;
     private List<GameObject> createdTutorials = new List<GameObject>();
     public static bool inCountdown = false;
     private Color32[] playerPanelColors;
+    
 
     //non-sync vars
     private Vector3[] starts = new Vector3[4];
@@ -37,6 +39,9 @@ public class GameManager : NetworkComponent
     private Text countdownLbl;
     private GameObject npmPanel;
     private GameObject itemSquare;
+
+    private GameObject previousDoor = null;
+
     //making these serializable cause it's multiple components on the same obj
     [SerializeField] private AudioSource theme;
     [SerializeField] public AudioSource menuTheme;      //AKA professor morning song    
@@ -57,7 +62,7 @@ public class GameManager : NetworkComponent
     //the timer ends the round so players don't have to wait on the last player forever    
     private int roundEndTime = 30;
     private float curTimer;
-    [System.NonSerialized] public bool timerStarted = false;    
+    [System.NonSerialized] public bool timerStarted = false;
     private float camEndY;
     private float startPieceHeight = 49f;
     private float middlePieceHeight = 40f;
@@ -309,7 +314,7 @@ public class GameManager : NetworkComponent
             Debug.LogWarning(flag + " is not a valid flag in GameManager.cs!");
         }
     }
-    
+
 
     // Start is called before the first frame update
     void Start()
@@ -318,7 +323,7 @@ public class GameManager : NetworkComponent
         GameObject start2 = GameObject.Find("P2Start");
         GameObject start3 = GameObject.Find("P3Start");
         GameObject start4 = GameObject.Find("P4Start");*/
-        
+
         curTimer = roundEndTime;
 
         /*starts[0] = start1.transform.position;
@@ -331,19 +336,20 @@ public class GameManager : NetworkComponent
         playerPanelColors[1] = new Color32(148, 148, 148, 255); //silver for second
         playerPanelColors[2] = new Color32(196, 132, 0, 255); //bronze for third
         playerPanelColors[3] = new Color32(255, 255, 255, 255); //white for fourth
-    }    
+    }
 
     public override void NetworkedStart()
     {
-        if(IsServer)
+        if (IsServer)
         {
             levelTime = 0;
 
-            if (debugMode){
+            if (debugMode)
+            {
                 //Enemy[] enemies = GetAllEnemies();
                 //DestroyAllEnemies(enemies);
-            }            
-        }        
+            }
+        }
     }
 
     // nice to have this as a wrapper function
@@ -351,19 +357,15 @@ public class GameManager : NetworkComponent
     // where we change the variable
     public static void AdjustReady(int change)
     {
-        playersReady += change;        
+        playersReady += change;
         int numPlayers = FindObjectsOfType<NPM>().Length;
-        
-        Debug.Log("players ready: " + playersReady);
-        Debug.Log("num players needed: " + numPlayers + '\n');
-
         // change to numPlayers > 1 later
         if (playersReady >= numPlayers && numPlayers >= 1)
         {
             gameStarted = true;
         }
     }
-    
+
     //chance to place is from 0 to 1 and represents the chance a tagged object will have that object placed
     //returns the starting piece so the start positions can be retrieved
     private GameObject RandomizeLevel(int numPieces)
@@ -372,13 +374,13 @@ public class GameManager : NetworkComponent
 
         for (int i = 0; i < numPieces; i++)
         {
-            if(i == 0)
+            if (i == 0)
             {
                 int lastPieceIdx = Idx.LAST_START_PIECE + 1;
                 int randStartPiece = Random.Range(Idx.FIRST_START_PIECE, lastPieceIdx);
 
                 startPiece = MyCore.NetCreateObject(randStartPiece, this.Owner,
-                    new Vector3(CENTER_PIECE_X, 0, 0), Quaternion.identity);             
+                    new Vector3(CENTER_PIECE_X, 0, 0), Quaternion.identity);
 
                 RandomlyPlaceRopes(startPiece, 100);
                 RandomlyPlaceEnemies(startPiece, 100);
@@ -386,11 +388,11 @@ public class GameManager : NetworkComponent
                 RandomlyPlaceLadders(startPiece, 100);
                 continue;
             }
-            
+
             if (i == numPieces - 1)
-            {                
+            {
                 //might need to use this later
-                float endPieceY = (startPieceHeight/2) + ((i-1) * middlePieceHeight) + (endPieceHeight/2);
+                float endPieceY = (startPieceHeight / 2) + ((i - 1) * middlePieceHeight) + (endPieceHeight / 2);
 
                 int lastPieceIdx = Idx.LAST_END_PIECE + 1;
                 int randEndPiece = Random.Range(Idx.FIRST_END_PIECE, lastPieceIdx);
@@ -405,13 +407,13 @@ public class GameManager : NetworkComponent
                 RandomlyPlaceItemBoxes(endPiece, 100);
                 RandomlyPlaceLadders(endPiece, 100);
 
-                GameObject door = PlaceDoor(endPiece);
-                camEndY = door.transform.position.y;
+                previousDoor = PlaceDoor(endPiece);
+                camEndY = previousDoor.transform.position.y;
                 break;
             }
-            
+
             int randIdx = Random.Range(Idx.FIRST_MIDDLE_PIECE, Idx.LAST_MIDDLE_PIECE + 1);
-            float pieceY = startPieceHeight / 2 + (middlePieceHeight / 2) + middlePieceHeight * (i-1);
+            float pieceY = startPieceHeight / 2 + (middlePieceHeight / 2) + middlePieceHeight * (i - 1);
 
             GameObject piece = MyCore.NetCreateObject(randIdx, this.Owner,
                 new Vector3(CENTER_PIECE_X, pieceY, 0), Quaternion.identity);
@@ -426,7 +428,7 @@ public class GameManager : NetworkComponent
 
     private GameObject GetFloorPiece(GameObject piece)
     {
-        for(int i = 0; i < piece.transform.childCount; i++)
+        for (int i = 0; i < piece.transform.childCount; i++)
         {
             if (piece.transform.GetChild(i).tag == "FLOOR")
                 return piece.transform.GetChild(i).gameObject;
@@ -441,9 +443,9 @@ public class GameManager : NetworkComponent
         int minOwner = 0;
         int tutorialsPlaced = 0;
 
-        for(int i = 0; i < npms.Length; i++)
-        { 
-            for(int j = 0; j < npms.Length; j++)
+        for (int i = 0; i < npms.Length; i++)
+        {
+            for (int j = 0; j < npms.Length; j++)
             {
                 //create tutorial prefabs in order of connection count
                 if (npmList[j].Owner == minOwner)
@@ -452,9 +454,9 @@ public class GameManager : NetworkComponent
 
                     if (createdTutorials.Count > 0)
                     {
-                        GameObject prevPiece = createdTutorials[createdTutorials.Count - 1];                                                
+                        GameObject prevPiece = createdTutorials[createdTutorials.Count - 1];
                         pos = new Vector2(prevPiece.transform.position.x + 23f, 0);
-                    }                    
+                    }
 
                     //create appropriate tutorial for character chosen
                     GameObject tutorial = MyCore.NetCreateObject(Idx.ARCHER_TUTORIAL + npms[j].CharSelected, Owner, pos, Quaternion.identity);
@@ -463,37 +465,16 @@ public class GameManager : NetworkComponent
                     PlaceDoor(tutorial);
 
                     tutorialsPlaced++;
-                    minOwner++;                    
-                    //don't remove player from list or you get concurrency error
-                }
-            }                   
-        }                
-    }
-
-    private void MovePlayersToTutorial()
-    {
-        Player[] players = FindObjectsOfType<Player>();
-        int minOwner = 0;
-        for (int i = 0; i < players.Length; i++)
-        {
-            for (int j = 0; j < players.Length; j++)
-            {
-                //create tutorial prefabs in order of connection count
-                if (players[j].Owner == minOwner)
-                {
-                    //startPos needs to be first child of tutorial prefab for this to work
-                    Vector2 startPos = createdTutorials[minOwner].transform.GetChild(0).transform.position;
-                    players[j].transform.position = startPos;
-                    Debug.Log("moved " + players[j].name + " to " + startPos);
                     minOwner++;
+                    //don't remove player from list or you get concurrency error
                 }
             }
         }
     }
 
     private GameObject PlaceDoor(GameObject endPiece)
-    {        
-        for(int i = 0; i < endPiece.transform.childCount; i++)
+    {
+        for (int i = 0; i < endPiece.transform.childCount; i++)
         {
             if (endPiece.transform.GetChild(i).tag == "END_DOOR_POS")
             {
@@ -506,8 +487,8 @@ public class GameManager : NetworkComponent
     }
 
     private void RandomlyPlaceRopes(GameObject levelPiece, int chanceToPlace)
-    {        
-        for(int i = 0; i < levelPiece.transform.childCount; i++)
+    {
+        for (int i = 0; i < levelPiece.transform.childCount; i++)
         {
             int randomizedChance = Random.Range(0, 101);
             bool gotChance = randomizedChance <= chanceToPlace;
@@ -519,11 +500,11 @@ public class GameManager : NetworkComponent
                 Debug.Log("spawning rope at " + child.transform.position);
                 //rope.transform.SetParent(levelPiece.transform);
             }
-        }   
+        }
     }
 
     private void RandomlyPlaceEnemies(GameObject levelPiece, int chanceToPlace)
-    {        
+    {
         for (int i = 0; i < levelPiece.transform.childCount; i++)
         {
             int randomizedChance = Random.Range(0, 101);
@@ -531,7 +512,7 @@ public class GameManager : NetworkComponent
             GameObject child = levelPiece.transform.GetChild(i).gameObject;
 
             if (child.tag == "ENEMY_POS" && gotChance)
-            {                                
+            {
                 int randEnemy = Random.Range(Idx.FIRST_ENEMY_IDX, Idx.FIRST_ENEMY_IDX + Idx.NUM_ENEMIES);
                 MyCore.NetCreateObject(randEnemy, Owner, child.transform.position, Quaternion.identity);
                 //MyCore.NetCreateObject(Idx.SKELETON, Owner, child.transform.position, Quaternion.identity);
@@ -540,7 +521,7 @@ public class GameManager : NetworkComponent
     }
 
     private void RandomlyPlaceItemBoxes(GameObject levelPiece, int chanceToPlace)
-    {       
+    {
         for (int i = 0; i < levelPiece.transform.childCount; i++)
         {
             int randomizedChance = Random.Range(0, 101);
@@ -581,12 +562,15 @@ public class GameManager : NetworkComponent
         }
     }
 
-    public Enemy[] GetAllEnemies(){
+    public Enemy[] GetAllEnemies()
+    {
         return GameObject.FindObjectsOfType<Enemy>();
     }
 
-    public void DestroyAllEnemies(Enemy[] enemies){
-        foreach (Enemy enemy in enemies){
+    public void DestroyAllEnemies(Enemy[] enemies)
+    {
+        foreach (Enemy enemy in enemies)
+        {
             MyCore.NetDestroyObject(enemy.NetId);
         }
     }
@@ -597,31 +581,31 @@ public class GameManager : NetworkComponent
     }
 
     private void UpdatePlaces()
-    {        
+    {
         Player[] players = FindObjectsOfType<Player>();
         List<Player> unfinishedPlayers = new List<Player>();
 
         //only update places for unfinished players
-        foreach(Player player in players)
+        foreach (Player player in players)
         {
             if (!playersFinished.Contains(player))
                 unfinishedPlayers.Add(player);
         }
         int[] playerIdxsByHeight = new int[unfinishedPlayers.Count];
 
-        for(int i = 0; i < unfinishedPlayers.Count; i++)
+        for (int i = 0; i < unfinishedPlayers.Count; i++)
         {
             playerIdxsByHeight[i] = i;
-        }        
+        }
 
         //selection sort to rank players by height descending
-        for(int i = 0; i < playerIdxsByHeight.Length; i++)
+        for (int i = 0; i < playerIdxsByHeight.Length; i++)
         {
             float playerY1 = unfinishedPlayers[i].transform.position.y;
             for (int j = i + 1; j < unfinishedPlayers.Count; j++)
             {
                 float playerY2 = unfinishedPlayers[j].transform.position.y;
-                if(playerY2 > playerY1)
+                if (playerY2 > playerY1)
                 {
                     int tempIdx = playerIdxsByHeight[i];
                     playerIdxsByHeight[i] = playerIdxsByHeight[j];
@@ -630,7 +614,7 @@ public class GameManager : NetworkComponent
             }
         }
 
-        for(int i = 0; i < playerIdxsByHeight.Length; i++)
+        for (int i = 0; i < playerIdxsByHeight.Length; i++)
         {
             int playerIdx = playerIdxsByHeight[i];
             //now that players are ranked, send each an update with their placement (i+1)
@@ -645,27 +629,27 @@ public class GameManager : NetworkComponent
     public IEnumerator StartTimer()
     {
         timerLbl.enabled = true;
-        SendUpdate("SHOW_TIMER", "");        
-        timerStarted = true;        
-        
+        SendUpdate("SHOW_TIMER", "");
+        timerStarted = true;
+
         while (curTimer > 0 && !everyoneFinished)
-        {            
+        {
             SendUpdate("TIMER", curTimer.ToString());
             //be careful of this 1 second timer. will not check if everyoneFinished for 1 second intervals
             yield return new WaitForSeconds(1f);
             curTimer -= 1;
-            timerLbl.text = curTimer + "s";                                                        
+            timerLbl.text = curTimer + "s";
         }
 
         //reset timer for next round        
         timerStarted = false;
-        curTimer = roundEndTime;        
+        curTimer = roundEndTime;
 
         if (everyoneFinished)
             yield break;
 
         //means timer ended and will claim some victims
-        foreach(Player player in FindObjectsOfType<Player>())
+        foreach (Player player in FindObjectsOfType<Player>())
         {
             if (playersFinished.Contains(player))
                 continue;
@@ -673,23 +657,23 @@ public class GameManager : NetworkComponent
             //only need to run this code for unfinished players
             player.transform.position = player.startPos;
             player.playerFrozen = true;
-            player.camFrozen = true;                
-                                
+            player.camFrozen = true;
+
             player.SendUpdate("TIMED_OUT", "");
             player.SendUpdate("CAM_FREEZE", "");
         }
-        StartCoroutine(ResetRound());        
+        StartCoroutine(ResetRound());
     }
 
     private int GetPlayerPlace(Player player)
     {
-        Player[] sortedPlayers = FindObjectsOfType<Player>();        
-        for(int i = 0; i < sortedPlayers.Length; i++)
+        Player[] sortedPlayers = FindObjectsOfType<Player>();
+        for (int i = 0; i < sortedPlayers.Length; i++)
         {
-            for(int j = i+1; j < sortedPlayers.Length; j++)
+            for (int j = i + 1; j < sortedPlayers.Length; j++)
             {
-                if(sortedPlayers[j].transform.position.y > sortedPlayers[i].transform.position.y)
-                { 
+                if (sortedPlayers[j].transform.position.y > sortedPlayers[i].transform.position.y)
+                {
                     Player temp = sortedPlayers[i];
                     sortedPlayers[i] = sortedPlayers[j];
                     sortedPlayers[j] = temp;
@@ -706,8 +690,8 @@ public class GameManager : NetworkComponent
         if (player == null)
             Debug.LogWarning("Player was null!!");
         else
-            Debug.LogWarning("Player place for " + player.name + " was not found");   
-        
+            Debug.LogWarning("Player place for " + player.name + " was not found");
+
         return -1;
     }
 
@@ -722,13 +706,13 @@ public class GameManager : NetworkComponent
         {
             SendUpdate("FADE_IN", seconds.ToString());
         }
-        
+
         //set background color based on place later
         Image scoreBackground = scorePanel.GetComponent<Image>();
 
         Image[] images = scorePanel.GetComponentsInChildren<Image>();
         Text[] labels = scorePanel.GetComponentsInChildren<Text>();
-        
+
         while (images[0].color.a < 1)
         {
             //using yield return with another coroutine pauses this coroutine until the other one finishes
@@ -741,9 +725,9 @@ public class GameManager : NetworkComponent
             foreach (Image image in images)
             {
                 Color newColor = image.color;
-                
-                if (image.tag == "PLAYER_PANEL")                
-                    newColor.a += (finalPanelOpacity)*alphaUpdateFreq / seconds;
+
+                if (image.tag == "PLAYER_PANEL")
+                    newColor.a += (finalPanelOpacity) * alphaUpdateFreq / seconds;
                 else
                     newColor.a += alphaUpdateFreq / seconds;
 
@@ -794,7 +778,7 @@ public class GameManager : NetworkComponent
 
         Image[] images = scorePanel.GetComponentsInChildren<Image>();
         Text[] labels = scorePanel.GetComponentsInChildren<Text>();
-        
+
         while (images[0].color.a > 0)
         {
             //using yield return with another coroutine pauses this coroutine until the other one finishes
@@ -841,34 +825,34 @@ public class GameManager : NetworkComponent
     }
 
     private IEnumerator FlashWinPoint(int roundWinOwner, int wins, int numFlashes, float flashTime)
-    {                
-        Image dotToFlash = scorePanel.transform.GetChild(roundWinOwner).GetChild(1).GetChild(wins-1).GetComponent<Image>();   
+    {
+        Image dotToFlash = scorePanel.transform.GetChild(roundWinOwner).GetChild(1).GetChild(wins - 1).GetComponent<Image>();
 
         Color32 normalColor = dotToFlash.color;
         Color32 flashColor = new Color32(255, 220, 0, 255);
 
-        for(int i = 0; i < numFlashes; i++)
-        {            
-            if(i % 2 == 0)
+        for (int i = 0; i < numFlashes; i++)
+        {
+            if (i % 2 == 0)
             {
                 dotToFlash.color = flashColor;
             }
             //make sure dot does not end on normal color
-            else if(i % 2 == 1 && (i != numFlashes-1))
+            else if (i % 2 == 1 && (i != numFlashes - 1))
             {
                 dotToFlash.color = normalColor;
             }
             yield return Wait(flashTime);
-        }        
+        }
     }
 
     public IEnumerator ResetRound()
     {
-        if(IsServer)
-        {            
+        if (IsServer)
+        {
             timerLbl.enabled = false;
             timerStarted = false;
-            curTimer = roundEndTime;            
+            curTimer = roundEndTime;
             SendUpdate("HIDE_TIMER", "");
             SendUpdate("HIDE_PLACE", "");
             SendUpdate("HIDE_ITEM", "");
@@ -878,7 +862,7 @@ public class GameManager : NetworkComponent
             DestroyAllItemBoxes();
             DestroyAllRopes();
             DestroyAllLadders();
-            DestroyDoor();
+            //THIS WAS CAUSING ISSUE            
 
             //yield return prevents the following lines from running until the coroutine is done
             yield return FadeScorePanelIn(1f, 0.5f);
@@ -888,7 +872,9 @@ public class GameManager : NetworkComponent
             {
                 MyCore.NetDestroyObject(piece.GetComponentInParent<NetworkID>().NetId);
             }
-            RandomizeLevel(3);
+            GameObject startPiece = RandomizeLevel(3);
+            AssignStarts(startPiece);
+            MovePlayersToStart();
 
             Player[] players = FindObjectsOfType<Player>();
             foreach (Player player in players)
@@ -897,26 +883,26 @@ public class GameManager : NetworkComponent
                 {
                     int owner = player.Owner;
                     int wins = player.wins;
-                    player.SendUpdate("WIN_ROUND_SFX", "");                    
+                    player.SendUpdate("WIN_ROUND_SFX", "");
                     SendUpdate("FLASH_WIN", owner + ";" + wins);
                     player.isRoundWinner = false;
-                }                
+                }
             }
 
             //time to look at results panel before fading out the panel
             yield return Wait(3.5f);
-                        
-            foreach(Player player in players)
+
+            foreach (Player player in players)
             {
                 player.SendUpdate("CAM_UNFREEZE", "");
-                
+
                 player.hasBomb = false;
                 player.hasChicken = false;
                 player.hasSpeedBoost = false;
                 SendCommand("HAS_BOMB", false.ToString());
                 SendCommand("HAS_CHICKEN", false.ToString());
                 SendCommand("HAS_SPEED_BOOST", false.ToString());
-                
+
                 player.currentRope = null;
                 player.currentLadder = null;
 
@@ -924,16 +910,16 @@ public class GameManager : NetworkComponent
 
                 player.ResetTimers();
             }
-            
+
             foreach (Player player in players)
-            {                                
-                if(player.wins >= 3)
+            {
+                if (player.wins >= 3)
                 {
                     SendUpdate("WIN_GAME_SFX", "");
-                    winningPlayer = player;                    
+                    winningPlayer = player;
                     StartCoroutine(FadeScorePanelOut(1f));
 
-                    GameManager.gameOver = true;                    
+                    GameManager.gameOver = true;
                     //cool way to exit early from a ienumerator I just learned
                     //this breaks out of the entire coroutine, not just the for loop
                     yield break;
@@ -945,12 +931,13 @@ public class GameManager : NetworkComponent
 
             yield return Countdown();
 
-            foreach (Player player in players){            
+            foreach (Player player in players)
+            {
                 player.playerFrozen = false;
                 player.SendUpdate("ENABLE_TRAIL", "GoodMorning");
-            } 
+            }
 
-            SendUpdate("PLAY_THEME", "GoodMorning");         
+            SendUpdate("PLAY_THEME", "GoodMorning");
 
             placeLbl.enabled = true;
             SendUpdate("SHOW_PLACE", "");
@@ -960,13 +947,38 @@ public class GameManager : NetworkComponent
             //and so that the timer resets correctly            
             playersFinished.Clear();
             everyoneFinished = false;
+
+            //was causing issues when put earlier in function before
+            DestroyDoor();
+        }
+    }
+
+    private void MovePlayersToStart()
+    {
+        foreach (Player player in FindObjectsOfType<Player>())
+        {
+            switch (player.Owner)
+            {
+                case 0:
+                    player.transform.position = starts[0];
+                    break;
+                case 1:
+                    player.transform.position = starts[1];
+                    break;
+                case 2:
+                    player.transform.position = starts[2];
+                    break;
+                case 3:
+                    player.transform.position = starts[3];
+                    break;
+            }
         }
     }
 
     private IEnumerator Countdown()
     {
         inCountdown = true;
-        
+
         SendUpdate("COUNTDOWN_SFX", "");
 
         SendUpdate("COUNTDOWN", "3");
@@ -986,22 +998,16 @@ public class GameManager : NetworkComponent
     private void DestroyAllEnemies()
     {
         Enemy[] enemies = FindObjectsOfType<Enemy>();
-        for(int i = enemies.Length-1; i >= 0; i--)
+        for (int i = enemies.Length - 1; i >= 0; i--)
         {
             MyCore.NetDestroyObject(enemies[i].NetId);
         }
     }
 
-    private void DestroyDoor()
-    {
-        EndDoor door = FindObjectOfType<EndDoor>();
-        MyCore.NetDestroyObject(door.NetId);
-    }
-
     private void DestroyAllItemBoxes()
     {
         ItemBox[] itemBoxes = FindObjectsOfType<ItemBox>();
-        for(int i = itemBoxes.Length-1; i >= 0; i--)
+        for (int i = itemBoxes.Length - 1; i >= 0; i--)
         {
             MyCore.NetDestroyObject(itemBoxes[i].NetId);
         }
@@ -1025,30 +1031,18 @@ public class GameManager : NetworkComponent
         }
     }
 
-    private void MovePlayersToRound()
+    private void DestroyDoor()
     {
-        foreach (Player player in FindObjectsOfType<Player>())
+        EndDoor[] doors = FindObjectsOfType<EndDoor>();
+        for (int i = doors.Length - 1; i >= 0; i--)
         {
-            switch (player.Owner)
-            {
-                case 0:
-                    player.transform.position = starts[0];
-                    break;
-                case 1:
-                    player.transform.position = starts[1];
-                    break;
-                case 2:
-                    player.transform.position = starts[2];
-                    break;
-                case 3:
-                    player.transform.position = starts[3];
-                    break;
-            }
+            if(doors[i] == previousDoor)
+                MyCore.NetDestroyObject(doors[i].NetId);
         }
     }
 
     private void InitUI()
-    {        
+    {
         gameUI = GameObject.FindGameObjectWithTag("GAME_UI");
         scorePanel = GameObject.FindGameObjectWithTag("SCORE");
         placeLbl = GameObject.FindGameObjectWithTag("PLACE").GetComponent<Text>();
@@ -1068,12 +1062,12 @@ public class GameManager : NetworkComponent
     {
         NPM[] npms = FindObjectsOfType<NPM>();
         int maxOwner = -1;
-        for(int i = 0; i < npms.Length; i++)
+        for (int i = 0; i < npms.Length; i++)
         {
-            if(npms[i].Owner > maxOwner)
+            if (npms[i].Owner > maxOwner)
             {
                 maxOwner = npms[i].Owner;
-            }    
+            }
         }
         return maxOwner;
     }
@@ -1092,8 +1086,9 @@ public class GameManager : NetworkComponent
         playersFinished.Clear();
     }
 
-    public IEnumerator GameUpdate(){  
-        UpdatePlaces();        
+    public IEnumerator GameUpdate()
+    {
+        UpdatePlaces();
         //don't make this timer too fast as UpdatePlaces is somewhat high on performance
         yield return new WaitForSeconds(0.5f);
     }
@@ -1128,10 +1123,10 @@ public class GameManager : NetworkComponent
             GameObject startPiece = RandomizeLevel(3);
             AssignStarts(startPiece);
             //CreateTutorials();            
-            MyCore.NotifyGameStart();
+
             NPM[] players = GameObject.FindObjectsOfType<NPM>();
             foreach (NPM n in players)
-            {                           
+            {
                 Vector3 spawnPos = Vector3.zero;
                 switch (n.Owner)
                 {
@@ -1149,7 +1144,7 @@ public class GameManager : NetworkComponent
                         break;
                 }
 
-                GameObject temp = MyCore.NetCreateObject(Idx.ARCHER + n.CharSelected, n.Owner, spawnPos, Quaternion.identity);                
+                GameObject temp = MyCore.NetCreateObject(Idx.ARCHER + n.CharSelected, n.Owner, spawnPos, Quaternion.identity);
                 Player player = temp.GetComponent<Player>();
                 player.playerName = n.PName;
 
@@ -1160,49 +1155,19 @@ public class GameManager : NetworkComponent
                     camEndY = Mathf.Infinity;
 
                 player.SendUpdate("CAM_END", camEndY.ToString());
-                player.SendUpdate("INIT_SCORE_PANEL", "");                
-            }
-            //MovePlayersToTutorial();            
+                player.SendUpdate("INIT_SCORE_PANEL", "");
+            }            
             //don't move this line. put additional updates after this so clients have their ui
             SendUpdate("INIT_UI", "");
-            
+
             int maxOwner = GetMaxOwner();
-            SendUpdate("HIDE_CHAR_IMAGES", maxOwner.ToString());
-
-            /*MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(0f, 0f, 0f), Quaternion.identity);
-            MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(-3f, 0f, 0f), Quaternion.identity);
-            MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(3, 0f, 0f), Quaternion.identity);
-            MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(5f, 0f, 0f), Quaternion.identity);
-            MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, new Vector3(-5f, 0f, 0f), Quaternion.identity);*/
-
+            SendUpdate("HIDE_CHAR_IMAGES", maxOwner.ToString());           
             SendUpdate("GAMESTART", "1");
             //stops server from listening, so nobody new can join.
             MyCore.NotifyGameStart();
-            SendUpdate("STOP_MENU_THEME", "GoodMorning");            
-            SendUpdate("HIDE_PLACE", "");
+            SendUpdate("STOP_MENU_THEME", "GoodMorning");
+            SendUpdate("HIDE_PLACE", "");           
 
-            /*while(!tutorialFinished)
-            {
-                yield return new WaitForSeconds(0.5f);
-            }
-            playersFinished.Clear();
-
-            SendUpdate("STOP_THEME", "");
-            SendUpdate("FADE_IN", "1");
-
-            yield return Wait(1f);
-            
-            //destroy tutorials in reverse to avoid concurrency issues
-            for(int i = createdTutorials.Count-1; i >= 0; i--)
-            {
-                int netID = createdTutorials[i].GetComponentInParent<NetworkID>().NetId;
-                MyCore.NetDestroyObject(netID);
-            }*/
-
-            //RandomizeLevel(5);
-            //SendUpdate("FADE_OUT", "1");
-            //MovePlayersToRound();
-            
             //so that the players don't see the default skybox the instant the npm panel disappears
             yield return Wait(0.5f);
             SendUpdate("HIDE_NPMS", "");
@@ -1213,7 +1178,7 @@ public class GameManager : NetworkComponent
                 player.playerFrozen = true;
             }
 
-            yield return Countdown();            
+            yield return Countdown();
 
             SendUpdate("PLAY_THEME", "GoodMorning");
             SendUpdate("SHOW_PLACE", "");
@@ -1221,11 +1186,11 @@ public class GameManager : NetworkComponent
             foreach (Player player in FindObjectsOfType<Player>())
             {
                 player.playerFrozen = false;
-            }            
+            }
 
             //this is basically our regular Update()
             while (!gameOver)
-            {                
+            {
                 //yield return is blocking, so the lines after it won't run until GameUpdate finishes
                 yield return GameUpdate();
             }

@@ -10,11 +10,11 @@ GameObject:
   m_Component:
   - component: {fileID: 8194096176259117141}
   - component: {fileID: 6711198667271264467}
-  - component: {fileID: 2883408301281918175}
   - component: {fileID: 387377968378072020}
   - component: {fileID: 7396391152547994967}
   - component: {fileID: 1785853260697363637}
   - component: {fileID: 5518089131873115359}
+  - component: {fileID: 4305381125466928630}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -57,26 +57,6 @@ MonoBehaviour:
   UseLobby: 0
   UpdateFrequency: 0.1
   MyCore: {fileID: 0}
---- !u!114 &2883408301281918175
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 128267753833506617}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71de6239130877e4d93fd23dbd73b6b5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  MyCore: {fileID: 0}
-  MyId: {fileID: 0}
-  IsDirty: 0
-  LOWEST_PIECE_Y: 2
-  theme: {fileID: 387377968378072020}
-  menuTheme: {fileID: 1785853260697363637}
-  winGameSfx: {fileID: 7396391152547994967}
-  countdownSfx: {fileID: 5518089131873115359}
 --- !u!82 &387377968378072020
 AudioSource:
   m_ObjectHideFlags: 0
@@ -461,3 +441,23 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &4305381125466928630
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 128267753833506617}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13cfcd5a814503149a0b9a39b73aa040, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MyCore: {fileID: 0}
+  MyId: {fileID: 0}
+  IsDirty: 0
+  LOWEST_PIECE_Y: 2
+  theme: {fileID: 387377968378072020}
+  menuTheme: {fileID: 1785853260697363637}
+  winGameSfx: {fileID: 7396391152547994967}
+  countdownSfx: {fileID: 5518089131873115359}
