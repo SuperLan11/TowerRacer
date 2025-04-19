@@ -897,9 +897,9 @@ public class GameManager : NetworkComponent
                 player.hasChicken = false;
                 player.hasSpeedBoost = false;
                 player.SendUpdate("IDLE_ANIM", "");
-                SendCommand("HAS_BOMB", false.ToString());
-                SendCommand("HAS_CHICKEN", false.ToString());
-                SendCommand("HAS_SPEED_BOOST", false.ToString());
+                SendUpdate("HAS_BOMB", false.ToString());
+                SendUpdate("HAS_CHICKEN", false.ToString());
+                SendUpdate("HAS_SPEED_BOOST", false.ToString());
 
                 player.currentRope = null;
                 player.currentLadder = null;
