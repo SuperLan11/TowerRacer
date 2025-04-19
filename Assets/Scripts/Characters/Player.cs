@@ -123,9 +123,9 @@ public class Player : Character
 
     //not const anymore cause we want to change it for speed boost powerup
     public float MAX_WALK_SPEED = 11f;
-    private const float GROUND_ACCELERATION = 15f, GROUND_DECELERATION = 20f;
+    private const float GROUND_ACCELERATION = 15f, GROUND_DECELERATION = 12f;
 
-    private const float AIR_ACCELERATION = 10f, AIR_DECELERATION = 5f;
+    private const float AIR_ACCELERATION = 15f, AIR_DECELERATION = 2f;
     private float WALL_JUMP_ACCELERATION;
 
     private float MAX_RUN_SPEED = 20f;
@@ -141,7 +141,7 @@ public class Player : Character
     private float JUMP_HEIGHT_COMPENSATION_FACTOR = 1.054f;
     //apex = max height of jump
     private float TIME_TILL_JUMP_APEX = 0.35f;
-    private float GRAVITY_RELEASE_MULTIPLIER = 2f;
+    private float GRAVITY_RELEASE_MULTIPLIER = 4f;
     private float MAX_FALL_SPEED = 26f;
     //no need to have canDoubleJump or anything like that since we have this int. Unfortunately can't be a const cause of double jumping
     public int MAX_JUMPS = 1;
@@ -156,7 +156,7 @@ public class Player : Character
 
     private float DASH_EFFECT_DURATION = 0.5f;
 
-    private float MAX_DASH_TIME = 0.5f;
+    private float MAX_DASH_TIME = 0.02f;
 
     private Coroutine dashCoroutine;
     private Coroutine stunCoroutine;
@@ -716,7 +716,7 @@ public class Player : Character
         {
             if (IsLocalPlayer)
             {
-                //StartCoroutine(LerpToGold());
+                StartCoroutine(LerpToGold());
             }
         }
         else if (flag == "START_HIT_EFFECT")
@@ -1118,9 +1118,9 @@ public class Player : Character
     public override void NetworkedStart()
     {
         CalculateInitialConditions();
-        dashSpeed = initialJumpVelocity;
-        knightDashSpeed = dashSpeed * 0.75f;
-        archerGrappleSpeed = dashSpeed / 2f;
+        dashSpeed = 19f;
+        knightDashSpeed = 20f;
+        archerGrappleSpeed = 17f;
         MAX_LAUNCH_SPEED = MAX_WALK_SPEED * 20f;
 
         startPos = this.transform.position;
@@ -1148,7 +1148,7 @@ public class Player : Character
         dashMaterial = new Material(dashMaterial);
         hitMaterial = new Material(hitMaterial);
         stunMaterial = new Material(stunMaterial);
-        //movementAbilityMaterial = new Material(movementAbilityMaterial);
+        movementAbilityMaterial = new Material(movementAbilityMaterial);
 
 
 
@@ -1159,12 +1159,12 @@ public class Player : Character
         switch (selectedCharacterClass)
         {
             case characterClass.ARCHER:
-                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 2f;
+                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 4f;
                 trailRenderer.startColor = Color.green;
                 trailRenderer.endColor = new Color(0f, 255f, 0f, 0f);
                 break;
             case characterClass.MAGE:
-                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 5f;
+                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 3.3f;
                 trailRenderer.startColor = Color.yellow;
                 trailRenderer.endColor = new Color(255f, 255f, 0f, 0f);
                 break;
@@ -1178,7 +1178,7 @@ public class Player : Character
                 //maybe increase movement speed as well?
                 break;
             case characterClass.KNIGHT:
-                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 7f;
+                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 1.5f;
                 trailRenderer.startColor = Color.red;
                 trailRenderer.endColor = new Color(255f, 0f, 0f, 0f);
                 break;
@@ -1212,7 +1212,8 @@ public class Player : Character
         //g = (-2 * h) / t^2
         gravity = -1 * (2f * adjustedJumpHeight) / Mathf.Pow(TIME_TILL_JUMP_APEX, 2f) * patrickBSAdjuster;
 
-        initialJumpVelocity = Mathf.Abs(gravity);
+        //initialJumpVelocity = Mathf.Abs(gravity);
+        initialJumpVelocity = Mathf.Abs(gravity) + 1.8f;
     }
 
     //wouldn't recommend changing this
@@ -2870,7 +2871,7 @@ public class Player : Character
 
                         //flip velocities but retain x velocity a little
                         float xVelocity = (isFacingRight ? (knightDashSpeed / 8f) : (-knightDashSpeed / 8f));
-                        float yVelocity = knightDashSpeed;
+                        float yVelocity = knightDashSpeed - 6f;
 
                         dashVelocity = new Vector2(xVelocity, yVelocity);
                         verticalVelocity = dashVelocity.y;
