@@ -893,6 +893,7 @@ public class GameManager : NetworkComponent
                 player.hasBomb = false;
                 player.hasChicken = false;
                 player.hasSpeedBoost = false;
+                player.SendUpdate("IDLE_ANIM", "");
                 SendCommand("HAS_BOMB", false.ToString());
                 SendCommand("HAS_CHICKEN", false.ToString());
                 SendCommand("HAS_SPEED_BOOST", false.ToString());
