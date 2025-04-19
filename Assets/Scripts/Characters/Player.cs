@@ -1120,7 +1120,7 @@ public class Player : Character
         CalculateInitialConditions();
         dashSpeed = 19f;
         knightDashSpeed = 20f;
-        archerGrappleSpeed = 17f;
+        archerGrappleSpeed = 22f;
         MAX_LAUNCH_SPEED = MAX_WALK_SPEED * 20f;
 
         startPos = this.transform.position;
@@ -1159,7 +1159,7 @@ public class Player : Character
         switch (selectedCharacterClass)
         {
             case characterClass.ARCHER:
-                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 2f;
+                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 1.15f;
                 trailRenderer.startColor = Color.green;
                 trailRenderer.endColor = new Color(0f, 255f, 0f, 0f);
                 break;
@@ -2611,7 +2611,7 @@ public class Player : Character
                 {
                     float yOffset = 2f;
                     Vector2 ropeArrowPos = new Vector2(this.transform.position.x, this.transform.position.y + yOffset);
-                    float ropeArrowSpeed = 10f;
+                    float ropeArrowSpeed = 22f;
                     Vector2 direction = new Vector2(0f, 1f);
                     Quaternion arrowDirection;
 
