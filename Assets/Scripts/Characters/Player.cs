@@ -137,12 +137,12 @@ public class Player : Character
     private const float ATTACK_RAYCAST_LENGTH = 2f;
 
 
-    private float JUMP_HEIGHT = 7f;
+    private float JUMP_HEIGHT = 6.5f;
     private float JUMP_HEIGHT_COMPENSATION_FACTOR = 1.054f;
     //apex = max height of jump
     private float TIME_TILL_JUMP_APEX = 0.35f;
     private float GRAVITY_RELEASE_MULTIPLIER = 4f;
-    private float MAX_FALL_SPEED = 26f;
+    private float MAX_FALL_SPEED = 20f;
     //no need to have canDoubleJump or anything like that since we have this int. Unfortunately can't be a const cause of double jumping
     public int MAX_JUMPS = 1;
     private const int MAX_WALL_JUMPS = 1;
@@ -1159,7 +1159,7 @@ public class Player : Character
         switch (selectedCharacterClass)
         {
             case characterClass.ARCHER:
-                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 4f;
+                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 2f;
                 trailRenderer.startColor = Color.green;
                 trailRenderer.endColor = new Color(0f, 255f, 0f, 0f);
                 break;
@@ -2635,7 +2635,7 @@ public class Player : Character
                 {
                     SendUpdate("DASH_SFX", "");
                     currentMovementState = movementState.DASHING;
-                    dashTimer = MAX_DASH_TIME;
+                    dashTimer = MAX_DASH_TIME;   
                     SendUpdate("START_DASH_EFFECT", "GoodMorning");
                     SendUpdate("RUMBLE", "GoodMorning");
 
@@ -2690,7 +2690,8 @@ public class Player : Character
                     currentMovementState = movementState.KNIGHT_DASHING;
                     SendUpdate("LUNGE_SFX", "");
                     //make these different variables if we want it to be different for the knight
-                    dashTimer = MAX_DASH_TIME;
+                    //!This is intentional! The knight has a special dash timer!
+                    dashTimer = 0.3f; 
                     //SendUpdate("START_KNIGHT_DASH_EFFECT", "GoodMorning");
                     SendUpdate("RUMBLE", "GoodMorning");
                     SendUpdate("LUNGE_ANIM", "");
@@ -2871,7 +2872,7 @@ public class Player : Character
 
                         //flip velocities but retain x velocity a little
                         float xVelocity = (isFacingRight ? (knightDashSpeed / 8f) : (-knightDashSpeed / 8f));
-                        float yVelocity = knightDashSpeed - 6f;
+                        float yVelocity = knightDashSpeed - 6;
 
                         dashVelocity = new Vector2(xVelocity, yVelocity);
                         verticalVelocity = dashVelocity.y;
@@ -3104,6 +3105,7 @@ public class Player : Character
             bool normalJump = (!held && jumpBufferTimer > 0f && IsFallingInTheAir() && (onGround || ((coyoteTimer > 0f) && JumpPressedAgainWhileFalling())));
 
             //make sure x input isn't 0
+            //remove !onGround if knight dashing still screws up
             bool wallJump = (wallsTimer > 0f && onWall && wallJumpPressed && CanWallJump() && (moveInput.x != 0f) && !onGround);
             //change these two as well to jumpBufferTimer > 0 if doesn't work
             bool extraJump = (jumpPressed && IsFastFalling() && (numJumpsUsed < MAX_JUMPS) && JumpPressedAgainWhileFalling());
