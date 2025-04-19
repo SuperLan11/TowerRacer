@@ -44,6 +44,8 @@ public class Idx : MonoBehaviour
     public const int MAGE_TUTORIAL = 25;
     public const int KNIGHT_TUTORIAL = 26;
 
+    public const int EMERGENCY_ZONE = 33;
+
     public const int FIRST_ENEMY_IDX = 9;
     public const int NUM_LEVEL_PIECES = 3;
     public const int NUM_ENEMIES = 3;

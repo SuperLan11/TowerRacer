@@ -18,7 +18,7 @@ public class GameManager : NetworkComponent
     //sync vars
     public static bool gameOver;
     private static bool gameStarted = false;
-    public static int playersReady = 0;
+    public int playersReady = 0;
     private List<GameObject> createdTutorials = new List<GameObject>();
     public static bool inCountdown = false;
     private Color32[] playerPanelColors;
@@ -355,12 +355,15 @@ public class GameManager : NetworkComponent
     // nice to have this as a wrapper function
     // so we can debug in the function to see its value no matter when or
     // where we change the variable
-    public static void AdjustReady(int change)
+    public void AdjustReady(int change)
     {
         playersReady += change;
         int numPlayers = FindObjectsOfType<NPM>().Length;
-        // change to numPlayers > 1 later
-        if (playersReady >= numPlayers && numPlayers >= 1)
+
+        Debug.Log("players ready: " + playersReady);
+        Debug.Log("num players: " + numPlayers);
+        // change to numPlayers >= 2 later
+        if (playersReady >= numPlayers && numPlayers >= 2)
         {
             gameStarted = true;
         }
@@ -386,6 +389,10 @@ public class GameManager : NetworkComponent
                 RandomlyPlaceEnemies(startPiece, 100);
                 RandomlyPlaceItemBoxes(startPiece, 100);
                 RandomlyPlaceLadders(startPiece, 100);
+
+                float zoneY = -startPieceHeight;
+                Vector2 zonePos = new Vector3(CENTER_PIECE_X, zoneY, 0);
+                MyCore.NetCreateObject(Idx.EMERGENCY_ZONE, this.Owner, zonePos, Quaternion.identity);
                 continue;
             }
 
@@ -893,10 +900,11 @@ public class GameManager : NetworkComponent
                 player.hasBomb = false;
                 player.hasChicken = false;
                 player.hasSpeedBoost = false;
+
                 player.SendUpdate("IDLE_ANIM", "");
-                SendCommand("HAS_BOMB", false.ToString());
-                SendCommand("HAS_CHICKEN", false.ToString());
-                SendCommand("HAS_SPEED_BOOST", false.ToString());
+                player.SendUpdate("HAS_BOMB", false.ToString());
+                player.SendUpdate("HAS_CHICKEN", false.ToString());
+                player.SendUpdate("HAS_SPEED_BOOST", false.ToString());
 
                 player.currentRope = null;
                 player.currentLadder = null;
@@ -937,6 +945,7 @@ public class GameManager : NetworkComponent
             placeLbl.enabled = true;
             SendUpdate("SHOW_PLACE", "");
             SendUpdate("SHOW_ITEM", "");
+            SendUpdate("CLEAR_ITEM", "");
 
             //wait to do this so that players forced to finish by the timer have the correct background color
             //and so that the timer resets correctly            
@@ -955,7 +964,7 @@ public class GameManager : NetworkComponent
             switch (player.Owner)
             {
                 case 0:
-                    player.transform.position = starts[0];
+                    player.transform.position = starts[0];                    
                     break;
                 case 1:
                     player.transform.position = starts[1];
@@ -967,6 +976,7 @@ public class GameManager : NetworkComponent
                     player.transform.position = starts[3];
                     break;
             }
+            player.startPos = player.transform.position;
         }
     }
 

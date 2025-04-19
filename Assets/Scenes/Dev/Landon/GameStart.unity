@@ -569,7 +569,7 @@ MonoBehaviour:
   AppNumber: 0
   conCounter: 0
   IP: 127.0.0.1
-  PortNumber: 9001
+  PortNumber: 9000
   MaxConnections: 0
   MasterTimer: 0.05
   LocalConnectionID: -1
@@ -611,6 +611,7 @@ MonoBehaviour:
   - {fileID: 8486975687503454159, guid: 3ecba809eadc80844ac75a6451f04363, type: 3}
   - {fileID: 8486975687503454159, guid: 86693d049ad0c3941b5d3f3dd82d3853, type: 3}
   - {fileID: 8486975687503454159, guid: ef6864ed46417f94297c876d67772404, type: 3}
+  - {fileID: 2120945218759239718, guid: 532515ea6804b584c91e73064e6fc775, type: 3}
   NetworkPlayerManager: {fileID: 1985349391537641156, guid: 03ec32c5e88b9da41af6ec3c9a89e3ff, type: 3}
   DefaultReturnScene: 0
 --- !u!4 &408156394
@@ -3038,54 +3039,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 167696149168103002, guid: fbbdc66098f6760449f140425e560b70, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -1
-      objectReference: {fileID: 0}
-    - target: {fileID: 850475345150080610, guid: fbbdc66098f6760449f140425e560b70, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1137634633914559420, guid: fbbdc66098f6760449f140425e560b70, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: -7.499977
-      objectReference: {fileID: 0}
-    - target: {fileID: 1846512697327191126, guid: fbbdc66098f6760449f140425e560b70, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -4.0996094
-      objectReference: {fileID: 0}
-    - target: {fileID: 2544326715593146569, guid: fbbdc66098f6760449f140425e560b70, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -0.7392578
-      objectReference: {fileID: 0}
-    - target: {fileID: 2987591672402838316, guid: fbbdc66098f6760449f140425e560b70, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3026432938374781353, guid: fbbdc66098f6760449f140425e560b70, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: -7.500023
-      objectReference: {fileID: 0}
-    - target: {fileID: 3864013271043390403, guid: fbbdc66098f6760449f140425e560b70, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 2.499939
-      objectReference: {fileID: 0}
-    - target: {fileID: 5953311035539651857, guid: fbbdc66098f6760449f140425e560b70, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: -0.43762207
-      objectReference: {fileID: 0}
-    - target: {fileID: 5953311035539651857, guid: fbbdc66098f6760449f140425e560b70, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -0.6000061
-      objectReference: {fileID: 0}
-    - target: {fileID: 6092046872272577450, guid: fbbdc66098f6760449f140425e560b70, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -0.7392578
-      objectReference: {fileID: 0}
-    - target: {fileID: 6734873685902278873, guid: fbbdc66098f6760449f140425e560b70, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 3.9999695
-      objectReference: {fileID: 0}
     - target: {fileID: 7332150844612644414, guid: fbbdc66098f6760449f140425e560b70, type: 3}
       propertyPath: m_Name
       value: GameUI
