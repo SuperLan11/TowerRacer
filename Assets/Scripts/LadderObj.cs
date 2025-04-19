@@ -111,6 +111,7 @@ public class LadderObj : NetworkComponent
     {		
 		//!Removing ladder SFX code I just spent 2 hours trying to debug why ladder SFX still plays when player hits up or down while they ARE NOT
 		//!on a ladder, and I don't want to waste more time on this.
+		/*
 		if (IsClient)
 		{
 			Debug.Log("ladder's attachedPlayer == null: " + (attachedPlayer == null));
@@ -133,5 +134,6 @@ public class LadderObj : NetworkComponent
 				ladderSfx.Pause();
 			}
 		}
+		*/
     }
 }
