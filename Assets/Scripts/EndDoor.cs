@@ -95,7 +95,7 @@ public class EndDoor : NetworkComponent
 
                 playerHit.playerFrozen = true;
                 //need to finalize place since place labels aren't always accurate                
-                playerHit.SendUpdate("PLACE", GameManager.playersFinished.Count.ToString());                
+                playerHit.SendUpdate("FINALIZE_COLOR", GameManager.playersFinished.Count.ToString());     
                                                 
                 playerHit.rigidbody.velocity = Vector2.zero;
 

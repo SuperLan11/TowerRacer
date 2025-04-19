@@ -94,8 +94,8 @@ public abstract class Enemy : Character
     }
 
     public override void TakeDamage(int damage){
-        health -= damage;        
-
+        health -= damage;
+        Debug.Log("ENEMY TOOK " + damage + " DAMAGE!");
         if (health <= 0){            
             //enemy drops item box on death
             MyCore.NetCreateObject(Idx.ITEM_BOX, Owner, this.transform.position, Quaternion.identity);

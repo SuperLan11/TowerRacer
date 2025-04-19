@@ -3038,6 +3038,54 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 167696149168103002, guid: fbbdc66098f6760449f140425e560b70, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 850475345150080610, guid: fbbdc66098f6760449f140425e560b70, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1137634633914559420, guid: fbbdc66098f6760449f140425e560b70, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -7.499977
+      objectReference: {fileID: 0}
+    - target: {fileID: 1846512697327191126, guid: fbbdc66098f6760449f140425e560b70, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -4.0996094
+      objectReference: {fileID: 0}
+    - target: {fileID: 2544326715593146569, guid: fbbdc66098f6760449f140425e560b70, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -0.7392578
+      objectReference: {fileID: 0}
+    - target: {fileID: 2987591672402838316, guid: fbbdc66098f6760449f140425e560b70, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3026432938374781353, guid: fbbdc66098f6760449f140425e560b70, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -7.500023
+      objectReference: {fileID: 0}
+    - target: {fileID: 3864013271043390403, guid: fbbdc66098f6760449f140425e560b70, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 2.499939
+      objectReference: {fileID: 0}
+    - target: {fileID: 5953311035539651857, guid: fbbdc66098f6760449f140425e560b70, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -0.43762207
+      objectReference: {fileID: 0}
+    - target: {fileID: 5953311035539651857, guid: fbbdc66098f6760449f140425e560b70, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -0.6000061
+      objectReference: {fileID: 0}
+    - target: {fileID: 6092046872272577450, guid: fbbdc66098f6760449f140425e560b70, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -0.7392578
+      objectReference: {fileID: 0}
+    - target: {fileID: 6734873685902278873, guid: fbbdc66098f6760449f140425e560b70, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 3.9999695
+      objectReference: {fileID: 0}
     - target: {fileID: 7332150844612644414, guid: fbbdc66098f6760449f140425e560b70, type: 3}
       propertyPath: m_Name
       value: GameUI

@@ -30,7 +30,7 @@ public class GameManager : NetworkComponent
     private Player[] overallPlayerLeaderboard;
     private Player[] currentPlayerLeaderboard;
     [SerializeField] private float LOWEST_PIECE_Y = -2f;
-    public static float CENTER_PIECE_X = 0f;
+    public static float CENTER_PIECE_X = 0f;    
 
     private Text placeLbl;
     private GameObject gameUI;
@@ -407,8 +407,11 @@ public class GameManager : NetworkComponent
                 RandomlyPlaceItemBoxes(endPiece, 100);
                 RandomlyPlaceLadders(endPiece, 100);
 
-                previousDoor = PlaceDoor(endPiece);
-                camEndY = previousDoor.transform.position.y;
+                GameObject door = PlaceDoor(endPiece);
+                camEndY = door.transform.position.y;
+                if (previousDoor == null)
+                    previousDoor = door;
+
                 break;
             }
 
@@ -496,8 +499,7 @@ public class GameManager : NetworkComponent
 
             if (child.tag == "ROPE_POS" && gotChance)
             {
-                GameObject rope = MyCore.NetCreateObject(Idx.ROPE, Owner, child.transform.position, Quaternion.identity);
-                Debug.Log("spawning rope at " + child.transform.position);
+                GameObject rope = MyCore.NetCreateObject(Idx.ROPE, Owner, child.transform.position, Quaternion.identity);                
                 //rope.transform.SetParent(levelPiece.transform);
             }
         }
@@ -512,8 +514,8 @@ public class GameManager : NetworkComponent
             GameObject child = levelPiece.transform.GetChild(i).gameObject;
 
             if (child.tag == "ENEMY_POS" && gotChance)
-            {
-                int randEnemy = Random.Range(Idx.FIRST_ENEMY_IDX, Idx.FIRST_ENEMY_IDX + Idx.NUM_ENEMIES);
+            {                
+                int randEnemy = Random.Range(Idx.SKELETON, Idx.SKELETON + Idx.NUM_ENEMIES);                
                 MyCore.NetCreateObject(randEnemy, Owner, child.transform.position, Quaternion.identity);
                 //MyCore.NetCreateObject(Idx.SKELETON, Owner, child.transform.position, Quaternion.identity);
             }
@@ -565,14 +567,6 @@ public class GameManager : NetworkComponent
     public Enemy[] GetAllEnemies()
     {
         return GameObject.FindObjectsOfType<Enemy>();
-    }
-
-    public void DestroyAllEnemies(Enemy[] enemies)
-    {
-        foreach (Enemy enemy in enemies)
-        {
-            MyCore.NetDestroyObject(enemy.NetId);
-        }
     }
 
     public void BackBtnClick()
@@ -862,7 +856,6 @@ public class GameManager : NetworkComponent
             DestroyAllItemBoxes();
             DestroyAllRopes();
             DestroyAllLadders();
-            //THIS WAS CAUSING ISSUE            
 
             //yield return prevents the following lines from running until the coroutine is done
             yield return FadeScorePanelIn(1f, 0.5f);
@@ -871,7 +864,8 @@ public class GameManager : NetworkComponent
             foreach (TilemapCollider2D piece in pieces)
             {
                 MyCore.NetDestroyObject(piece.GetComponentInParent<NetworkID>().NetId);
-            }
+            }            
+
             GameObject startPiece = RandomizeLevel(3);
             AssignStarts(startPiece);
             MovePlayersToStart();
@@ -948,8 +942,8 @@ public class GameManager : NetworkComponent
             playersFinished.Clear();
             everyoneFinished = false;
 
-            //was causing issues when put earlier in function before
-            DestroyDoor();
+            //destroying an object that started a coroutine will end the coroutine, so do this last so resetround can finish
+            MyCore.NetDestroyObject(previousDoor.GetComponent<NetworkComponent>().NetId);
         }
     }
 
@@ -998,6 +992,7 @@ public class GameManager : NetworkComponent
     private void DestroyAllEnemies()
     {
         Enemy[] enemies = FindObjectsOfType<Enemy>();
+        Debug.Log("destroying enemies!");
         for (int i = enemies.Length - 1; i >= 0; i--)
         {
             MyCore.NetDestroyObject(enemies[i].NetId);
@@ -1029,16 +1024,12 @@ public class GameManager : NetworkComponent
         {
             MyCore.NetDestroyObject(ladders[i].NetId);
         }
-    }
+    }    
 
     private void DestroyDoor()
     {
-        EndDoor[] doors = FindObjectsOfType<EndDoor>();
-        for (int i = doors.Length - 1; i >= 0; i--)
-        {
-            if(doors[i] == previousDoor)
-                MyCore.NetDestroyObject(doors[i].NetId);
-        }
+        EndDoor door = FindObjectOfType<EndDoor>();        
+        MyCore.NetDestroyObject(door.NetId);
     }
 
     private void InitUI()

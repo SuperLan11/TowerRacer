@@ -81,12 +81,7 @@ public class ItemBox : NetworkComponent
 	private void OnCollisionEnter2D(Collision2D collision)
     {		
 		if (IsServer)
-		{
-			if (itemUI == null)
-			{				
-				return;
-			}
-
+		{				
 			Player playerHit = collision.gameObject.GetComponentInParent<Player>();
 			bool enemyHit = collision.gameObject.GetComponent<Enemy>() != null;
 
@@ -128,12 +123,30 @@ public class ItemBox : NetworkComponent
 		}
 	}
 
-	//need two collision functions for chest since it changes to a trigger when it hits the ground
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        if(IsServer)
+        {
+			Player playerHit = collision.gameObject.GetComponentInParent<Player>();
+			bool enemyHit = collision.gameObject.GetComponent<Enemy>() != null;
+
+			if (playerHit != null || enemyHit)
+			{
+				GetComponent<Collider2D>().isTrigger = true;
+				GetComponent<Rigidbody2D>().gravityScale = 0f;
+				GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+				GetComponent<Rigidbody2D>().bodyType = RigidbodyType2D.Static;
+				SendUpdate("TRIGGER", "");
+			}
+		}
+    }
+
+    //need two collision functions for chest since it changes to a trigger when it hits the ground
     private void OnTriggerEnter2D(Collider2D collision)
     {
 		if (IsServer)
 		{			
-			Player playerHit = collision.gameObject.GetComponentInParent<Player>();
+			Player playerHit = collision.gameObject.GetComponentInParent<Player>();			
 
 			if (playerHit == null)
 				return;
