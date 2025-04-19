@@ -100,10 +100,13 @@ public class Player : Character {
 
     [SerializeField] private Material dashMaterial;
     [SerializeField] private Material stunMaterial;
+    [SerializeField] private Material movementAbilityMaterial;
 
     [SerializeField] private Color dashColor;
     [SerializeField] private Color knightDashColor;
     protected Color stunColor = Color.yellow;
+    //used for lerping between normal material and gold material
+    private const float MOVEMENT_ABILITY_FLASH_DURATION = 0.75f;
 
 
     [SerializeField] private AudioSource winRoundSfx;
@@ -288,68 +291,45 @@ public class Player : Character {
     //!For the else {} debug to work, you NEED to check IsServer or IsClient INSIDE of the flag if statement!
     public override void HandleMessage(string flag, string value)
     {
-        if (flag == "INIT_NAME")
-        {
-            if (IsClient)
-            {
+        if (flag == "INIT_NAME") {
+            if (IsClient) {
                 playerName = value;
                 //set name above opposing players' heads
-                if (!IsLocalPlayer)
+                if(!IsLocalPlayer)
                     transform.GetChild(2).GetComponentInChildren<Text>().text = playerName;
                 //put name in results later
             }
         }
-        else if (flag == "PLACE")
-        {
-            if (IsLocalPlayer)
-            {
-                if (value == "1")
-                {
+        else if (flag == "PLACE") {
+            if (IsLocalPlayer) {
+                if (value == "1") {
                     placeLbl.text = "1st";
                 }
-                else if (value == "2")
-                {
+                else if (value == "2") {
                     placeLbl.text = "2nd";
                 }
-                else if (value == "3")
-                {
+                else if (value == "3") {
                     placeLbl.text = "3rd";
                 }
-                else if (value == "4")
-                {
+                else if (value == "4") {
                     placeLbl.text = "4th";
                 }
                 int place = (int)char.GetNumericValue(value[0]);
                 placeLbl.color = placeColors[place - 1];
 
                 //don't keep changing player's score background after they have finished
-                SendCommand("CHECK_SCORE_COLOR", value);                
-            }
-        }
-        else if (flag == "CHECK_SCORE_COLOR"){
-            if (IsServer) {
-                if (GameManager.playersFinished.Contains(this))
+                if (!playerFrozen)
                 {
-                    int place = int.Parse(value);
-                    SendUpdate("FINALIZE_COLOR", place.ToString());
-                }                
+                    Image playerScorePanel = scorePanel.transform.GetChild(Owner).GetComponent<Image>();
+                    Color placeColor = playerScorePanel.color;                    
+                    placeColor = placeColors[place - 1];
+                    
+                    placeColor.a = 0;
+                    playerScorePanel.color = placeColor;
+                }
             }
-        }
-        else if(flag == "FINALIZE_COLOR"){
-            if(IsClient){
-                int place = int.Parse(value);
-                Image playerScorePanel = scorePanel.transform.GetChild(Owner).GetComponent<Image>();
-                Color32 placeColor = placeColors[place - 1];
-                Debug.Log("set " + name + " score color to " + placeColor);
-
-                placeColor.a = 0;
-                playerScorePanel.color = placeColor;
-            }
-        }
-        else if (flag == "ITEM")
-        {
-            if (IsLocalPlayer)
-            {
+        }else if (flag == "ITEM"){
+            if (IsLocalPlayer){
                 int itemIdx = int.Parse(value);
 
                 ShowItem();
@@ -357,75 +337,54 @@ public class Player : Character {
 
                 //GameObject itemImage = Instantiate(itemPrefabs[itemIdx], itemUI.transform.position, Quaternion.identity);                
 
-                if (itemIdx == 0)
-                {
+                if (itemIdx == 0) {
                     hasChicken = true;
                     SendCommand("HAS_CHICKEN", hasChicken.ToString());
-                }
-                else if (itemIdx == 1)
-                {
+                }else if (itemIdx == 1){
                     hasSpeedBoost = true;
                     SendCommand("HAS_SPEED_BOOST", hasSpeedBoost.ToString());
-                }
-                else if (itemIdx == 2)
-                {
+                }else if (itemIdx == 2){
                     hasBomb = true;
                     SendCommand("HAS_BOMB", hasBomb.ToString());
                 }
             }
-        }
-        else if (flag == "HAS_CHICKEN")
-        {
+        }else if (flag == "HAS_CHICKEN"){
 
             hasChicken = bool.Parse(value);
 
-        }
-        else if (flag == "HAS_SPEED_BOOST")
-        {
+        }else if (flag == "HAS_SPEED_BOOST"){
 
             hasSpeedBoost = bool.Parse(value);
 
-        }
-        else if (flag == "HAS_BOMB")
-        {
+        }else if (flag == "HAS_BOMB"){
 
             hasBomb = bool.Parse(value);
 
-        }
-        else if (flag == "CAM_FREEZE")
-        {
-            if (IsClient)
-            {
+        }                     
+        else if (flag == "CAM_FREEZE"){
+            if (IsClient){                
                 camFrozen = true;
             }
         }
-        else if (flag == "CAM_UNFREEZE")
-        {
-            if (IsClient)
-            {
+        else if (flag == "CAM_UNFREEZE") {
+            if (IsClient) {
                 camFrozen = false;
             }
         }
-        else if (flag == "CAM_END")
-        {
-            if (IsClient)
-            {
+        else if (flag == "CAM_END") {
+            if (IsClient) {
                 //Debug.Log("set highest cam y to " + float.Parse(value));
                 Player.highestCamY = float.Parse(value);
             }
         }
-        else if (flag == "SHOOT_ANIM")
-        {
-            if (IsClient)
-            {
+        else if(flag == "SHOOT_ANIM"){
+            if(IsClient){
                 if (!anim.GetCurrentAnimatorStateInfo(0).IsName("ArcherShoot"))
                     anim.Play("ArcherShoot", -1, 0f);
             }
         }
-        else if (flag == "HIT_DOOR")
-        {
-            if (IsClient)
-            {
+        else if (flag == "HIT_DOOR") {
+            if (IsClient) {
                 GetComponent<TrailRenderer>().enabled = false;
 
                 this.transform.position = startPos;
@@ -433,7 +392,7 @@ public class Player : Character {
 
                 int place = int.Parse(value.Split(";")[0]);
                 int owner = int.Parse(value.Split(";")[1]);
-
+                                
                 Color32 placeColor = placeColors[place - 1];
                 placeColor.a = 0;
                 //make score panel color correct for player's place
@@ -441,10 +400,8 @@ public class Player : Character {
                 scorePanel.transform.GetChild(owner).GetComponent<Image>().color = placeColor;
             }
         }
-        else if (flag == "TIMED_OUT")
-        {
-            if (IsClient)
-            {
+        else if (flag == "TIMED_OUT") {
+            if (IsClient) {
                 this.transform.position = startPos;
             }
         }
@@ -453,7 +410,7 @@ public class Player : Character {
             if (IsServer)
             {
                 //not a sync var, but still needs to be set on the server
-                moveInput = Player.Vector2FromString(value);
+                moveInput = Player.Vector2FromString(value);                
             }
         }
         else if (flag == "JUMP_PRESSED")
@@ -487,44 +444,33 @@ public class Player : Character {
                 SendUpdate("JUMP_RELEASED", "GoodMorning");
             }
         }
-        else if (flag == "JUMP_SFX")
-        {
+        else if (flag == "JUMP_SFX") {
             if (IsClient)
                 jumpSfx.Play();
         }
-        else if (flag == "DOUBLE_JUMP_SFX")
-        {
-            if (IsClient)
-            {
+        else if (flag == "DOUBLE_JUMP_SFX") {
+            if (IsClient) {
                 doubleJumpSfx.Play();
             }
         }
-        else if (flag == "LUNGE_SFX")
-        {
-            if (IsClient)
-            {
+        else if(flag == "LUNGE_SFX"){
+            if (IsClient){
                 lungeSfx.Play();
             }
         }
-        else if (flag == "LUNGE_HIT_SFX")
-        {
-            if (IsClient)
-            {
+        else if (flag == "LUNGE_HIT_SFX"){
+            if (IsClient){
                 lungeSfx.Stop();
                 lungeHitSfx.Play();
             }
         }
-        else if (flag == "ATTACK_SFX")
-        {
-            if (IsClient)
-            {
+        else if (flag == "ATTACK_SFX"){
+            if (IsClient){
                 attackSfx.Play();
             }
         }
-        else if (flag == "ATTACK_ANIM")
-        {
-            if (IsClient)
-            {
+        else if(flag == "ATTACK_ANIM"){
+            if(IsClient){
                 if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Stab"))
                     anim.Play("Stab", -1, 0f);
             }
@@ -568,13 +514,10 @@ public class Player : Character {
             {
                 SendUpdate("MOVEMENT_ABILITY_PRESSED", value);
             }
-        }
-        else if (flag == "ATTACK_PRESSED")
-        {
+        }else if (flag == "ATTACK_PRESSED"){
             attackPressed = bool.Parse(value);
 
-            if (IsServer)
-            {
+            if (IsServer){                
                 SendUpdate("ATTACK_PRESSED", value);
             }
         }
@@ -599,26 +542,20 @@ public class Player : Character {
                 bomb.currentPlayer = this;
                 bomb.launchVec = lastAimDir * bomb.launchSpeed;
             }
-        }
-        else if (flag == "USE_ITEM")
-        {
-            if (IsServer)
-            {
+        }else if (flag == "USE_ITEM") {
+            if (IsServer) {
                 useItemSfx.Play();
-                if (hasChicken)
-                {
+                if (hasChicken) {
                     UseChickenItem();
-                }
-                else if (hasSpeedBoost)
-                {
+                }else if (hasSpeedBoost) {
                     UseSpeedBoostItem();
+                }else if (hasBomb){
+                    Use8DirectionalBomb();
                 }
             }
         }
-        else if (flag == "PARENT_TO_ROPE")
-        {
-            if (IsClient)
-            {
+        else if(flag == "PARENT_TO_ROPE"){
+            if(IsClient){
                 Vector2 pos = Vector2FromString(value);
                 Rope closestRope = ClosestRopeToPos(pos);
                 Debug.Log("parenting to " + closestRope.transform.parent);
@@ -627,10 +564,8 @@ public class Player : Character {
                 rigidbody.freezeRotation = false;
             }
         }
-        else if (flag == "UNPARENT")
-        {
-            if (IsClient)
-            {
+        else if (flag == "UNPARENT"){
+            if (IsClient){
                 transform.SetParent(null);
                 transform.eulerAngles = Vector3.zero;
                 rigidbody.freezeRotation = true;
@@ -643,18 +578,13 @@ public class Player : Character {
                 Vector2 dismountPos = Vector2FromString(value);
                 transform.position = dismountPos;
             }
-        }
-        else if (flag == "TELEPORT")
-        {    //not necessary, but here to smooth out client teleportation just in case
-            if (IsClient)
-            {
+        } else if (flag == "TELEPORT") {    //not necessary, but here to smooth out client teleportation just in case
+            if (IsClient) {
                 transform.position = Vector2FromString(value);
             }
         }
-        else if (flag == "LOCAL_POS")
-        {
-            if (IsClient)
-            {
+        else if(flag == "LOCAL_POS"){
+            if(IsClient){
                 transform.localPosition = Vector2FromString(value);
             }
         }
@@ -686,10 +616,8 @@ public class Player : Character {
                     anim.Play("Climb", -1, 0f);
             }
         }
-        else if (flag == "LUNGE_ANIM")
-        {
-            if (IsClient)
-            {
+        else if(flag == "LUNGE_ANIM"){
+            if(IsClient){
                 if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Lunge"))
                     anim.Play("Lunge", -1, 0f);
             }
@@ -706,175 +634,124 @@ public class Player : Character {
                 spriteRender.flipX = true;
                 //transform.Rotate(0f, -180f, 0f);
             }
-        }
-        else if (flag == "START_DASH_EFFECT")
-        {
-            if (IsClient)
-            {
+        }else if (flag == "START_DASH_EFFECT"){
+            if (IsClient){
                 StartDashEffect(dashColor);
             }
-        }
-        else if (flag == "START_KNIGHT_DASH_EFFECT")
-        {
-            if (IsClient)
-            {
+        }else if (flag == "START_KNIGHT_DASH_EFFECT"){
+            if (IsClient){
                 StartDashEffect(knightDashColor);
             }
         }
-        else if (flag == "START_HIT_EFFECT")
-        {
-            if (IsClient)
-            {
+        else if (flag == "LERP_GOLD"){
+            if (IsLocalPlayer){
+                StartCoroutine(LerpToGold());
+            }
+        }else if (flag == "START_HIT_EFFECT"){
+            if (IsClient){
                 StartHitEffect(hitColor);
             }
-        }
-        else if (flag == "START_STUN_EFFECT")
-        {
-            if (IsClient)
-            {
+        }else if (flag == "START_STUN_EFFECT"){
+            if (IsClient){
                 isStunned = true;
                 StartStunEffect(stunColor);
-            }
-        }
-        else if (flag == "RUMBLE")
-        {
-            if (IsLocalPlayer)
-            {
+            }  
+        }else if (flag == "RUMBLE"){
+            if (IsLocalPlayer){
                 //these will need to be variables if rumble will be used for multiple actions
                 Rumble(0.25f, 1f, DASH_EFFECT_DURATION);
             }
-        }
-        else if (flag == "ENABLE_COLLIDERS")
-        {
-            if (IsClient)
-            {
+        }else if (flag == "ENABLE_COLLIDERS"){
+            if (IsClient){
                 feetCollider.enabled = true;
                 bodyCollider.enabled = true;
             }
-        }
-        else if (flag == "DISABLE_COLLIDERS")
-        {
-            if (IsClient)
-            {
+        }else if (flag == "DISABLE_COLLIDERS") {
+            if (IsClient) {
                 feetCollider.enabled = false;
                 bodyCollider.enabled = false;
             }
-        }
-        else if (flag == "ENABLE_TRAIL")
-        {
-            if (IsClient)
-            {
+        }else if (flag == "ENABLE_TRAIL"){
+            if (IsClient){
                 transform.GetChild(3).GetComponent<TrailRenderer>().enabled = true;
             }
-        }
-        else if (flag == "DISABLE_TRAIL")
-        {
-            if (IsClient)
-            {
+        }else if (flag == "DISABLE_TRAIL") {
+            if (IsClient) {
                 transform.GetChild(3).GetComponent<TrailRenderer>().enabled = true;
             }
-        }
-        else if (flag == "INIT_SCORE_PANEL")
-        {
-            if (IsClient)
-            {
+        }else if (flag == "INIT_SCORE_PANEL") {
+            if (IsClient) {
                 //need to assign ui here because Start doesn't always run before sending handle msg on a newly instantiated object
                 GameObject scorePanel = GameObject.FindGameObjectWithTag("SCORE");
                 NPM[] playerNPMs = FindObjectsOfType<NPM>();
                 //iterate over npms instead of players so you have the owner and character chosen
-                foreach (NPM npm in playerNPMs)
-                {
+                foreach (NPM npm in playerNPMs) {
                     int owner = npm.Owner;
                     int charChosen = npm.CharSelected;
 
                     Image charImage = scorePanel.transform.GetChild(owner).GetChild(0).GetComponent<Image>();
                     Text nameLbl = scorePanel.transform.GetChild(owner).GetComponentInChildren<Text>();
-
+                    
                     Debug.Log("setting " + nameLbl.name + " to " + npm.PName);
                     nameLbl.text = npm.PName;
                     charImage.sprite = heroSprites[charChosen];
                 }
             }
         }
-        else if (flag == "ENABLE_JUMP_THRU_COLLISION")
-        {
-            if (IsClient)
-            {
+        else if (flag == "ENABLE_JUMP_THRU_COLLISION") {
+            if (IsClient) {
                 this.gameObject.layer = normalLayer;
             }
         }
-        else if (flag == "DISABLE_JUMP_THRU_COLLISION")
-        {
-            if (IsClient)
-            {
+        else if (flag == "DISABLE_JUMP_THRU_COLLISION") {
+            if (IsClient) {
                 this.gameObject.layer = noJumpThruLayer;
             }
         }
-        else if (flag == "WIN_ROUND_SFX")
-        {
+        else if (flag == "WIN_ROUND_SFX") {
             if (IsLocalPlayer)
             {
                 winRoundSfx.Play();
             }
-        }
-        else if (flag == "DASH_SFX")
-        {
-            if (IsClient)
-            {
+        }        
+        else if(flag == "DASH_SFX"){
+            if(IsClient){
                 dashSfx.Play();
             }
         }
-        else if (flag == "WINNING_PLAYER")
-        {
-            if (IsClient)
-            {
+        else if(flag == "WINNING_PLAYER"){
+            if(IsClient){
                 int winningOwner = int.Parse(value);
-                foreach (Player player in FindObjectsOfType<Player>())
+                foreach(Player player in FindObjectsOfType<Player>())
                 {
                     if (player.Owner == winningOwner)
                         winningPlayer = player;
                 }
             }
         }
-        else if (flag == "STUN_SFX")
-        {
-            if (IsClient)
-            {
+        else if(flag == "STUN_SFX"){
+            if(IsClient){
                 stunSfx.Play();
             }
         }
-        else if (flag == "STOP_STUN_SFX")
-        {
-            if (IsClient)
-            {
+        else if(flag == "STOP_STUN_SFX"){
+            if(IsClient){
                 stunSfx.Stop();
             }
-        }
-        else if (flag == "MOVEMENT_RECHARGE_SFX")
-        {
-            if (IsLocalPlayer)
-            {
+        }else if (flag == "MOVEMENT_RECHARGE_SFX"){
+            if (IsLocalPlayer){
                 movementRechargeSfx.Play();
             }
-        }
-        else if (flag == "SET_GROUND_POS")
-        {
-            if (IsClient)
-            {
+        }else if (flag == "SET_GROUND_POS"){
+            if (IsClient){
                 this.transform.position = Vector2FromString(value);
             }
-        }
-        else if (flag == "ENABLE_CLIENT_GRAVITY")
-        {
-            if (IsClient)
-            {
+        }else if (flag == "ENABLE_CLIENT_GRAVITY"){
+            if (IsClient){
                 rigidbody.gravityScale = 15f;
             }
-        }
-        else if (flag == "DISABLE_CLIENT_GRAVITY")
-        {
-            if (IsClient)
-            {
+        }else if (flag == "DISABLE_CLIENT_GRAVITY"){
+            if (IsClient){
                 rigidbody.gravityScale = 0f;
             }
         }
@@ -1063,7 +940,7 @@ public class Player : Character {
         anim = GetComponent<Animator>();
         cam = Camera.main;
 
-        //Cursor.visible = false;
+        Cursor.visible = false;
 
         if(GameObject.FindGameObjectWithTag("QUIT") != null)
             GameObject.FindGameObjectWithTag("QUIT").SetActive(false);
@@ -1137,6 +1014,7 @@ public class Player : Character {
         dashMaterial = new Material(dashMaterial);
         hitMaterial = new Material(hitMaterial);
         stunMaterial = new Material(stunMaterial);
+        movementAbilityMaterial = new Material(movementAbilityMaterial);
 
         
        
@@ -1795,7 +1673,9 @@ public class Player : Character {
     //not used for bombs, those are different!
     public void UseItemAction(InputAction.CallbackContext context)
     {
-        bool hasExactlyOneItem = ((hasChicken && !hasSpeedBoost) || (!hasChicken && hasSpeedBoost));
+        bool hasExactlyOneItem = ((hasChicken && !hasSpeedBoost && !hasBomb)
+                                 || (!hasChicken && hasSpeedBoost && !hasBomb) 
+                                 || ((!hasChicken && !hasSpeedBoost && hasBomb)));
         if (!hasExactlyOneItem){
             return;
         }
@@ -1814,6 +1694,9 @@ public class Player : Character {
                 }else if (hasSpeedBoost){
                     hasSpeedBoost = false;
                     SendCommand("HAS_SPEED_BOOST", hasSpeedBoost.ToString());
+                }else if (hasBomb){
+                    hasBomb = false;
+                    SendCommand("HAS_BOMB", hasBomb.ToString());
                 }
             }
         }
@@ -1899,6 +1782,53 @@ public class Player : Character {
         //MAX_WALK_SPEED *= 2;
         initialJumpVelocity *= 1.5f;
         StartCoroutine(SpeedBoostCooldown(SPEED_BOOST_TIME));
+    }
+
+    private void Use8DirectionalBomb(){
+        float xDirection = 0f, yDirection = 0f;
+        float xOffset = 2f;
+        float yOffset = 2f;
+        GameObject bombObj;
+        Bomb bomb;
+        Vector2 bombPos;
+        
+        bool noInput = (moveInput.x > -0.01f && moveInput.x < 0.01f && moveInput.y > -0.01f && moveInput.y < 0.01f);
+        if (noInput){
+            xDirection = (isFacingRight ? 1f : -1f);
+            yDirection = 0f;
+
+            bombPos = transform.position;
+            bombPos.x += (isFacingRight ? xOffset : -xOffset);
+            bombPos.y += yOffset / 2f;
+
+            bombObj = MyCore.NetCreateObject(BOMB_SPAWN_PREFAB_INDEX, Owner, bombPos, Quaternion.identity);
+            bomb = bombObj.GetComponent<Bomb>();
+            bomb.currentPlayer = this;
+            bomb.launchVec = new Vector2(xDirection * bomb.launchSpeed, yDirection);
+
+            return;
+        }
+        
+        if (moveInput.x > 0.01f){
+            xDirection = 1f;
+        }else if (moveInput.x < -0.01f){
+            xDirection = -1f;
+        }
+
+        if (moveInput.y > 0.01f){
+            yDirection = 1f;
+        }else if (moveInput.y < -0.01f){
+            yDirection = -1f;
+        }
+
+        bombPos = transform.position;
+        bombPos.y += ((bodyCollider.bounds.size.y / 2) + (feetCollider.bounds.size.y / 2) + yOffset);
+
+        bombObj = MyCore.NetCreateObject(BOMB_SPAWN_PREFAB_INDEX, Owner, bombPos, Quaternion.identity);
+        bomb = bombObj.GetComponent<Bomb>();
+        bomb.currentPlayer = this;
+        Vector2 bombVelocity = new Vector2(xDirection, yDirection).normalized * bomb.launchSpeed;
+        bomb.launchVec = bombVelocity;
     }
 
     public bool HasItem(){
@@ -2025,6 +1955,47 @@ public class Player : Character {
 
         spriteRender.material = regularMaterial;
         dashCoroutine = null;
+    }
+
+    //this is gippity slop, but we've got 8 hours till expo
+    private IEnumerator LerpToGold(){
+        Material matInstance = new Material(regularMaterial);
+        spriteRender.material = matInstance;
+
+        Vector2 origTiling = matInstance.GetTextureScale("_MainTex");
+        Vector2 origOffset = matInstance.GetTextureOffset("_MainTex");
+
+        float halfDur = MOVEMENT_ABILITY_FLASH_DURATION * 0.5f;
+        float timer = 0f;
+
+        //first half
+        while (timer < halfDur)
+        {
+            timer += Time.deltaTime;
+            float t = Mathf.Clamp01(timer / halfDur);
+            matInstance.Lerp(regularMaterial, movementAbilityMaterial, t);
+            yield return null;
+        }
+
+        matInstance.Lerp(regularMaterial, movementAbilityMaterial, 1f);
+        timer = 0f;
+
+        //second half
+        while (timer < halfDur)
+        {
+            timer += Time.deltaTime;
+            float t = Mathf.Clamp01(timer / halfDur);
+            matInstance.Lerp(movementAbilityMaterial, regularMaterial, t);
+            yield return null;
+        }
+
+        matInstance.Lerp(movementAbilityMaterial, regularMaterial, 1f);
+
+        matInstance.SetTextureScale("_MainTex", origTiling);
+        matInstance.SetTextureOffset("_MainTex", origOffset);
+
+        Destroy(matInstance);
+        spriteRender.material = regularMaterial;
     }
 
     private IEnumerator ChangeMovementState(){
@@ -2286,6 +2257,9 @@ public class Player : Character {
                     if (selectedCharacterClass != characterClass.BANDIT){
                         SendUpdate("MOVEMENT_RECHARGE_SFX", "");
                     }
+
+                    SendUpdate("LERP_GOLD", "");
+                    //StartCoroutine(LerpToGold());
                 }
             }
 
@@ -2711,7 +2685,7 @@ public class Player : Character {
             bool normalJump = (!held && jumpBufferTimer > 0f && IsFallingInTheAir() && (onGround || ((coyoteTimer > 0f) && JumpPressedAgainWhileFalling())));
 
             //make sure x input isn't 0
-            bool wallJump = (wallsTimer > 0f && onWall && wallJumpPressed && CanWallJump() && (moveInput.x != 0f));
+            bool wallJump = (wallsTimer > 0f && onWall && wallJumpPressed && CanWallJump() && (moveInput.x != 0f) && !onGround);
             //change these two as well to jumpBufferTimer > 0 if doesn't work
             bool extraJump = (jumpPressed && IsFastFalling() && (numJumpsUsed < MAX_JUMPS) && JumpPressedAgainWhileFalling());
             bool airJump = (jumpPressed && IsFallingInTheAir() && (numJumpsUsed < MAX_JUMPS - 1));

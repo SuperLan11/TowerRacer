@@ -642,6 +642,7 @@ MonoBehaviour:
   playerName: 
   dashMaterial: {fileID: 2100000, guid: aa1d87d25dc5d894b8e6c3a4b269b704, type: 2}
   stunMaterial: {fileID: 2100000, guid: cf29321fa4104e644b6bf001e7da0048, type: 2}
+  movementAbilityMaterial: {fileID: 2100000, guid: 05132a1b18958f44ba2d91e7148d4015, type: 2}
   dashColor: {r: 0.039793417, g: 0.79736537, b: 0.9169811, a: 1}
   knightDashColor: {r: 0.9169811, g: 0.46687636, b: 0.060555227, a: 1}
   winRoundSfx: {fileID: 4332348190425518370}
