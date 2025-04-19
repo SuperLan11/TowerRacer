@@ -78,7 +78,7 @@ public class Player : Character
     private LayerMask floorLayer;
     //don't need to worry about this in the inspector
     Tilemap tilemap;
-    private Gamepad gamepad;
+    [System.NonSerialized] public Gamepad gamepad;
 
     private Camera cam;
     public static float highestCamY;
@@ -625,6 +625,11 @@ public class Player : Character
                 rigidbody.freezeRotation = false;
             }
         }
+        else if (flag == "PLAYER_FROZEN"){
+            if (IsClient){
+                playerFrozen = bool.Parse(value);
+            }
+        }
         else if (flag == "UNPARENT")
         {
             if (IsClient)
@@ -732,6 +737,21 @@ public class Player : Character
             {
                 isStunned = true;
                 StartStunEffect(stunColor);
+            }
+        }
+        else if (flag == "GAMEPAD"){
+            bool hasGamepad = bool.Parse(value);
+            if (hasGamepad){
+                GetCurrentGamepad();
+            }else{
+                gamepad = null;
+            }
+        }
+        else if (flag == "CURSOR_VISIBLE")
+        {
+            if (IsLocalPlayer)
+            {
+                Cursor.visible = bool.Parse(value);
             }
         }
         else if (flag == "RUMBLE")
@@ -1137,6 +1157,9 @@ public class Player : Character
             if (gamepad == null)
             {
                 Debug.LogWarning("gamepad not detected");
+                SendCommand("GAMEPAD", false.ToString());
+            }else{
+                SendCommand("GAMEPAD", true.ToString());
             }
         }
 
@@ -2492,6 +2515,18 @@ public class Player : Character
         //smooth movement
         if (IsLocalPlayer)
         {
+            //really should be in game manager, but I don't know how to do that and game expo starts in 3 hours
+            if (playerFrozen){
+                GetCurrentGamepad();
+
+                
+                if (gamepad == null){
+                    Cursor.visible = true;
+                }else{
+                    Cursor.visible = false;
+                }
+            }
+            
             //Debug.Log("currentLadder == null: " + (currentLadder == null));
             bool regularMovementState = (IsGrounded() || IsFallingInTheAir());
             if (regularMovementState)
@@ -2553,6 +2588,9 @@ public class Player : Character
             if (playerFrozen)
             {
                 rigidbody.velocity = Vector2.zero;
+
+                //this is some fucking terrible code, but game expo starts soon
+                SendUpdate("PLAYER_FROZEN", playerFrozen.ToString());
                 return;
             }
 
