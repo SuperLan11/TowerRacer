@@ -100,10 +100,13 @@ public class Player : Character {
 
     [SerializeField] private Material dashMaterial;
     [SerializeField] private Material stunMaterial;
+    [SerializeField] private Material movementAbilityMaterial;
 
     [SerializeField] private Color dashColor;
     [SerializeField] private Color knightDashColor;
     protected Color stunColor = Color.yellow;
+    //used for lerping between normal material and gold material
+    private const float MOVEMENT_ABILITY_FLASH_DURATION = 0.75f;
 
 
     [SerializeField] private AudioSource winRoundSfx;
@@ -637,6 +640,11 @@ public class Player : Character {
             if (IsClient){
                 StartDashEffect(knightDashColor);
             }
+        }
+        else if (flag == "LERP_GOLD"){
+            if (IsLocalPlayer){
+                StartCoroutine(LerpToGold());
+            }
         }else if (flag == "START_HIT_EFFECT"){
             if (IsClient){
                 StartHitEffect(hitColor);
@@ -1004,6 +1012,7 @@ public class Player : Character {
         dashMaterial = new Material(dashMaterial);
         hitMaterial = new Material(hitMaterial);
         stunMaterial = new Material(stunMaterial);
+        movementAbilityMaterial = new Material(movementAbilityMaterial);
 
         
        
@@ -1894,6 +1903,47 @@ public class Player : Character {
         dashCoroutine = null;
     }
 
+    //this is gippity slop, but we've got 8 hours till expo
+    private IEnumerator LerpToGold(){
+        Material matInstance = new Material(regularMaterial);
+        spriteRender.material = matInstance;
+
+        Vector2 origTiling = matInstance.GetTextureScale("_MainTex");
+        Vector2 origOffset = matInstance.GetTextureOffset("_MainTex");
+
+        float halfDur = MOVEMENT_ABILITY_FLASH_DURATION * 0.5f;
+        float timer = 0f;
+
+        //first half
+        while (timer < halfDur)
+        {
+            timer += Time.deltaTime;
+            float t = Mathf.Clamp01(timer / halfDur);
+            matInstance.Lerp(regularMaterial, movementAbilityMaterial, t);
+            yield return null;
+        }
+
+        matInstance.Lerp(regularMaterial, movementAbilityMaterial, 1f);
+        timer = 0f;
+
+        //second half
+        while (timer < halfDur)
+        {
+            timer += Time.deltaTime;
+            float t = Mathf.Clamp01(timer / halfDur);
+            matInstance.Lerp(movementAbilityMaterial, regularMaterial, t);
+            yield return null;
+        }
+
+        matInstance.Lerp(movementAbilityMaterial, regularMaterial, 1f);
+
+        matInstance.SetTextureScale("_MainTex", origTiling);
+        matInstance.SetTextureOffset("_MainTex", origOffset);
+
+        Destroy(matInstance);
+        spriteRender.material = regularMaterial;
+    }
+
     private IEnumerator ChangeMovementState(){
         while (IsConnected){
             yield return new WaitUntil(() => currentMovementState != lastMovementState);
@@ -2153,6 +2203,9 @@ public class Player : Character {
                     if (selectedCharacterClass != characterClass.BANDIT){
                         SendUpdate("MOVEMENT_RECHARGE_SFX", "");
                     }
+
+                    SendUpdate("LERP_GOLD", "");
+                    //StartCoroutine(LerpToGold());
                 }
             }
 
