@@ -547,8 +547,10 @@ public class Player : Character {
                 useItemSfx.Play();
                 if (hasChicken) {
                     UseChickenItem();
-                } else if (hasSpeedBoost) {
+                }else if (hasSpeedBoost) {
                     UseSpeedBoostItem();
+                }else if (hasBomb){
+                    Use8DirectionalBomb();
                 }
             }
         }
@@ -1671,7 +1673,9 @@ public class Player : Character {
     //not used for bombs, those are different!
     public void UseItemAction(InputAction.CallbackContext context)
     {
-        bool hasExactlyOneItem = ((hasChicken && !hasSpeedBoost) || (!hasChicken && hasSpeedBoost));
+        bool hasExactlyOneItem = ((hasChicken && !hasSpeedBoost && !hasBomb)
+                                 || (!hasChicken && hasSpeedBoost && !hasBomb) 
+                                 || ((!hasChicken && !hasSpeedBoost && hasBomb)));
         if (!hasExactlyOneItem){
             return;
         }
@@ -1690,6 +1694,9 @@ public class Player : Character {
                 }else if (hasSpeedBoost){
                     hasSpeedBoost = false;
                     SendCommand("HAS_SPEED_BOOST", hasSpeedBoost.ToString());
+                }else if (hasBomb){
+                    hasBomb = false;
+                    SendCommand("HAS_BOMB", hasBomb.ToString());
                 }
             }
         }
@@ -1775,6 +1782,53 @@ public class Player : Character {
         //MAX_WALK_SPEED *= 2;
         initialJumpVelocity *= 1.5f;
         StartCoroutine(SpeedBoostCooldown(SPEED_BOOST_TIME));
+    }
+
+    private void Use8DirectionalBomb(){
+        float xDirection = 0f, yDirection = 0f;
+        float xOffset = 2f;
+        float yOffset = 2f;
+        GameObject bombObj;
+        Bomb bomb;
+        Vector2 bombPos;
+        
+        bool noInput = (moveInput.x > -0.01f && moveInput.x < 0.01f && moveInput.y > -0.01f && moveInput.y < 0.01f);
+        if (noInput){
+            xDirection = (isFacingRight ? 1f : -1f);
+            yDirection = 0f;
+
+            bombPos = transform.position;
+            bombPos.x += (isFacingRight ? xOffset : -xOffset);
+            bombPos.y += yOffset / 2f;
+
+            bombObj = MyCore.NetCreateObject(BOMB_SPAWN_PREFAB_INDEX, Owner, bombPos, Quaternion.identity);
+            bomb = bombObj.GetComponent<Bomb>();
+            bomb.currentPlayer = this;
+            bomb.launchVec = new Vector2(xDirection * bomb.launchSpeed, yDirection);
+
+            return;
+        }
+        
+        if (moveInput.x > 0.01f){
+            xDirection = 1f;
+        }else if (moveInput.x < -0.01f){
+            xDirection = -1f;
+        }
+
+        if (moveInput.y > 0.01f){
+            yDirection = 1f;
+        }else if (moveInput.y < -0.01f){
+            yDirection = -1f;
+        }
+
+        bombPos = transform.position;
+        bombPos.y += ((bodyCollider.bounds.size.y / 2) + (feetCollider.bounds.size.y / 2) + yOffset);
+
+        bombObj = MyCore.NetCreateObject(BOMB_SPAWN_PREFAB_INDEX, Owner, bombPos, Quaternion.identity);
+        bomb = bombObj.GetComponent<Bomb>();
+        bomb.currentPlayer = this;
+        Vector2 bombVelocity = new Vector2(xDirection, yDirection).normalized * bomb.launchSpeed;
+        bomb.launchVec = bombVelocity;
     }
 
     public bool HasItem(){
