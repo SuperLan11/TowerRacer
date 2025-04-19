@@ -147,7 +147,7 @@ public class FastGM : NetworkComponent
         for (int i = 0; i < Idx.NUM_LEVEL_PIECES; i++)
         {
             int randIdx = Random.Range(0, Idx.NUM_LEVEL_PIECES);            
-            GameObject piece = MyCore.NetCreateObject(Idx.FIRST_LEVEL_PIECE_IDX + randIdx, this.Owner,
+            GameObject piece = MyCore.NetCreateObject(Idx.FIRST_MIDDLE_PIECE + randIdx, this.Owner,
                 new Vector3(CENTER_PIECE_X, LOWEST_PIECE_Y + i * 15, 0), Quaternion.identity);
 
             RandomlyPlaceRope(piece);

@@ -374,8 +374,11 @@ public class GameManager : NetworkComponent
         {
             if(i == 0)
             {
-                startPiece = MyCore.NetCreateObject(Idx.START_LEVEL_PIECE, this.Owner,
-                    new Vector3(CENTER_PIECE_X, 0, 0), Quaternion.identity);
+                int lastPieceIdx = Idx.LAST_START_PIECE + 1;
+                int randStartPiece = Random.Range(Idx.FIRST_START_PIECE, lastPieceIdx);
+
+                startPiece = MyCore.NetCreateObject(randStartPiece, this.Owner,
+                    new Vector3(CENTER_PIECE_X, 0, 0), Quaternion.identity);             
 
                 RandomlyPlaceRopes(startPiece, 100);
                 RandomlyPlaceEnemies(startPiece, 100);
@@ -406,12 +409,11 @@ public class GameManager : NetworkComponent
                 camEndY = door.transform.position.y;
                 break;
             }
-
-            //exclude start piece and end piece
-            int randIdx = Random.Range(1, Idx.NUM_LEVEL_PIECES - 1);            
+            
+            int randIdx = Random.Range(Idx.FIRST_MIDDLE_PIECE, Idx.LAST_MIDDLE_PIECE + 1);
             float pieceY = startPieceHeight / 2 + (middlePieceHeight / 2) + middlePieceHeight * (i-1);
 
-            GameObject piece = MyCore.NetCreateObject(Idx.FIRST_LEVEL_PIECE_IDX + randIdx, this.Owner,
+            GameObject piece = MyCore.NetCreateObject(randIdx, this.Owner,
                 new Vector3(CENTER_PIECE_X, pieceY, 0), Quaternion.identity);
 
             RandomlyPlaceRopes(piece, 100);
@@ -876,6 +878,7 @@ public class GameManager : NetworkComponent
             DestroyAllItemBoxes();
             DestroyAllRopes();
             DestroyAllLadders();
+            DestroyDoor();
 
             //yield return prevents the following lines from running until the coroutine is done
             yield return FadeScorePanelIn(1f, 0.5f);
@@ -987,6 +990,12 @@ public class GameManager : NetworkComponent
         {
             MyCore.NetDestroyObject(enemies[i].NetId);
         }
+    }
+
+    private void DestroyDoor()
+    {
+        EndDoor door = FindObjectOfType<EndDoor>();
+        MyCore.NetDestroyObject(door.NetId);
     }
 
     private void DestroyAllItemBoxes()

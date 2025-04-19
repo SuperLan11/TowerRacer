@@ -6,40 +6,43 @@ public class Idx : MonoBehaviour
 {    
     //const variables are also static!
     public const int GAME_MANAGER = 0;
-    public const int NPM = 1;
-    
-    public const int START_LEVEL_PIECE = 23;
-    public const int FIRST_LEVEL_PIECE_IDX = 2;    
+    public const int NPM = 1;        
 
-    public const int BONE = 6;
-    public const int ROPE = 7;
-    public const int LADDER = 8;
-    public const int SKELETON = 9;
-    public const int SLIME = 10;    
-    public const int VAMPIRE = 11;
-    public const int DISMOUNT = 12;
-    public const int ITEM_BOX = 13;
-    public const int BOMB = 14;
-    public const int END_DOOR = 15;
-    public const int EXPLOSION = 16;
-    public const int ROPE_ARROW = 17;
+    public const int FIRST_START_PIECE = 27;
+    public const int LAST_START_PIECE = 28;
 
-    public const int ARCHER = 18;
-    public const int BANDIT = 19;
-    public const int MAGE = 20;
-    public const int KNIGHT = 21;
+    public const int FIRST_MIDDLE_PIECE = 29;
+    public const int LAST_MIDDLE_PIECE = 30;
 
-    public const int GAME_UI = 22;
+    public const int FIRST_END_PIECE = 31;
+    public const int LAST_END_PIECE = 32;
 
-    public const int LEFT_SWORD = 24, RIGHT_SWORD = 25;
+    public const int BONE = 3;
+    public const int ROPE = 4;
+    public const int LADDER = 5;
+    public const int SKELETON = 6;
+    public const int SLIME = 7;    
+    public const int VAMPIRE = 8;
+    public const int DISMOUNT = 9;
+    public const int ITEM_BOX = 10;
+    public const int BOMB = 11;
+    public const int END_DOOR = 12;
+    public const int EXPLOSION = 13;
+    public const int ROPE_ARROW = 14;
 
-    public const int ARCHER_TUTORIAL = 26;
-    public const int BANDIT_TUTORIAL = 27;
-    public const int MAGE_TUTORIAL = 28;
-    public const int KNIGHT_TUTORIAL = 29;
+    public const int ARCHER = 15;
+    public const int BANDIT = 16;
+    public const int MAGE = 17;
+    public const int KNIGHT = 18;
 
-    public const int FIRST_END_PIECE = 30;
-    public const int LAST_END_PIECE = 31;
+    public const int GAME_UI = 19;
+
+    public const int LEFT_SWORD = 21, RIGHT_SWORD = 22;
+
+    public const int ARCHER_TUTORIAL = 23;
+    public const int BANDIT_TUTORIAL = 24;
+    public const int MAGE_TUTORIAL = 25;
+    public const int KNIGHT_TUTORIAL = 26;
 
     public const int FIRST_ENEMY_IDX = 9;
     public const int NUM_LEVEL_PIECES = 3;

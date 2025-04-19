@@ -592,7 +592,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -0.489, z: 0}
-  m_LocalScale: {x: 0.06, y: 0.06, z: 0.06}
+  m_LocalScale: {x: 0.05, y: 0.05, z: 0.05}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 3856937525898656780}
@@ -658,7 +658,6 @@ MonoBehaviour:
   TIME_FOR_UP_CANCEL: 0.027
   APEX_THRESHOLD: 0.97
   APEX_HANG_TIME: 0.075
-  MAX_JUMP_BUFFER_TIME: 0.125
   MAX_JUMP_COYOTE_TIME: 0.1
   MAX_WALL_JUMP_TIME: 0.2
   MAX_WALL_STICK_TIME: 3
