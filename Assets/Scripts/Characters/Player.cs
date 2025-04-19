@@ -2631,7 +2631,7 @@ public class Player : Character {
             bool normalJump = (!held && jumpBufferTimer > 0f && IsFallingInTheAir() && (onGround || ((coyoteTimer > 0f) && JumpPressedAgainWhileFalling())));
 
             //make sure x input isn't 0
-            bool wallJump = (wallsTimer > 0f && onWall && wallJumpPressed && CanWallJump() && (moveInput.x != 0f));
+            bool wallJump = (wallsTimer > 0f && onWall && wallJumpPressed && CanWallJump() && (moveInput.x != 0f) && !onGround);
             //change these two as well to jumpBufferTimer > 0 if doesn't work
             bool extraJump = (jumpPressed && IsFastFalling() && (numJumpsUsed < MAX_JUMPS) && JumpPressedAgainWhileFalling());
             bool airJump = (jumpPressed && IsFallingInTheAir() && (numJumpsUsed < MAX_JUMPS - 1));
