@@ -100,7 +100,7 @@ MonoBehaviour:
   MyId: {fileID: 0}
   IsDirty: 0
   attachedPlayer: {fileID: 0}
-  ladderSpeed: 10
+  ladderSpeed: 6
 --- !u!212 &1571682205157156946
 SpriteRenderer:
   m_ObjectHideFlags: 0
