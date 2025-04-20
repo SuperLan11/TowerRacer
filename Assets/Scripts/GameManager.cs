@@ -292,13 +292,13 @@ public class GameManager : NetworkComponent
                 }
             }
         }
-        else if (flag == "CURSOR_VISIBLE")
+        /*else if (flag == "CURSOR_VISIBLE")
         {
             if (IsClient)
             {
                 Cursor.visible = bool.Parse(value);
             }
-        }
+        }*/
         //for objects in scene before clients connect, can't use SendCommand because
         //SendCommand only works if IsLocalPlayer and it's impossible to determine IsLocalPlayer
         //for an object already in the scene
@@ -340,6 +340,9 @@ public class GameManager : NetworkComponent
 
     public override void NetworkedStart()
     {
+        //hopefully it will get reset every time player gets booted back to main menu
+        //Cursor.visible = true;
+        
         if (IsServer)
         {
             levelTime = 0;
@@ -355,15 +358,22 @@ public class GameManager : NetworkComponent
     // nice to have this as a wrapper function
     // so we can debug in the function to see its value no matter when or
     // where we change the variable
-    public void AdjustReady(int change)
-    {
-        playersReady += change;
-        int numPlayers = FindObjectsOfType<NPM>().Length;
+    public void CheckReady()
+    {                
+        Toggle[] toggles = FindObjectsOfType<Toggle>();
+        int numPlayersReady = 0;
+        foreach(Toggle toggle in toggles)
+        {
+            if(toggle.isOn)
+            {
+                numPlayersReady++;
+            }
+        }
+        Debug.Log("players ready: " + numPlayersReady);
 
-        Debug.Log("players ready: " + playersReady);
-        Debug.Log("num players: " + numPlayers);
+        int numPlayers = FindObjectsOfType<NPM>().Length;
         // change to numPlayers >= 2 later
-        if (playersReady >= numPlayers && numPlayers >= 2)
+        if (numPlayersReady >= numPlayers && numPlayers >= 2)
         {
             gameStarted = true;
         }
@@ -902,9 +912,14 @@ public class GameManager : NetworkComponent
                 player.hasSpeedBoost = false;
 
                 player.SendUpdate("IDLE_ANIM", "");
-                player.SendUpdate("HAS_BOMB", false.ToString());
-                player.SendUpdate("HAS_CHICKEN", false.ToString());
-                player.SendUpdate("HAS_SPEED_BOOST", false.ToString());
+
+                player.feetCollider.enabled = true;
+                player.bodyCollider.enabled = true;
+                player.SendUpdate("ENABLE_COLLIDERS", "");
+
+                SendCommand("HAS_BOMB", false.ToString());
+                SendCommand("HAS_CHICKEN", false.ToString());
+                SendCommand("HAS_SPEED_BOOST", false.ToString());
 
                 player.currentRope = null;
                 player.currentLadder = null;
@@ -932,8 +947,17 @@ public class GameManager : NetworkComponent
             StartCoroutine(FadeScorePanelOut(1f));
             yield return Wait(1f);
 
+            foreach (Player player in players)
+            {
+                //if (player.gamepad != null){
+                    //SendUpdate("CURSOR_VISIBLE", false.ToString());
+                    Debug.Log("disabling cursor");
+                    player.SendUpdate("CURSOR_VISIBLE", false.ToString());
+                //}
+            }
+            
             yield return Countdown();
-
+            
             foreach (Player player in players)
             {
                 player.playerFrozen = false;
@@ -1180,6 +1204,15 @@ public class GameManager : NetworkComponent
                 player.playerFrozen = true;
             }
 
+            /*
+            foreach (Player player in players)
+            {
+                if (player.gamepad != null){
+                    SendUpdate("CURSOR_VISIBLE", false.ToString());
+                }
+            }
+            */
+            
             yield return Countdown();
 
             SendUpdate("PLAY_THEME", "GoodMorning");
@@ -1201,6 +1234,7 @@ public class GameManager : NetworkComponent
             foreach (Player player in FindObjectsOfType<Player>())
             {
                 player.SendUpdate("WINNING_PLAYER", winningPlayer.Owner.ToString());
+                player.SendUpdate("CURSOR_VISIBLE", true.ToString());
             }
 
             yield return new WaitForSeconds(4f);
@@ -1208,7 +1242,8 @@ public class GameManager : NetworkComponent
             //make sure to reset all stats on game over!!!
             ResetVariables();
             SendUpdate("CLEAR_ITEM", "");
-            SendUpdate("CURSOR_VISIBLE", true.ToString());
+            
+            //SendUpdate("CURSOR_VISIBLE", true.ToString());
 
             MyId.NotifyDirty();
             MyCore.UI_Quit();

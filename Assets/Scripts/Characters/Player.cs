@@ -67,8 +67,8 @@ public class Player : Character
     #region NonSync Vars
 
     [SerializeField] private LayerMask groundLayer;
-    [SerializeField] private BoxCollider2D feetCollider;
-    [SerializeField] private BoxCollider2D bodyCollider;
+    [SerializeField] public BoxCollider2D feetCollider;
+    [SerializeField] public BoxCollider2D bodyCollider;
     [System.NonSerialized] public Rope currentRope = null;
     [System.NonSerialized] public LadderObj currentLadder = null;
     public bool inDismountTrigger = false;
@@ -2370,9 +2370,11 @@ public class Player : Character
     }
 
     private IEnumerator EnsureEnabledColliders(){
-        yield return new WaitForSeconds(0.3f);
+        yield return new WaitForSeconds(0.05f);
 
         if (!IsSwinging()){
+            feetCollider.enabled = true;
+            bodyCollider.enabled = true;
             SendUpdate("ENABLE_COLLIDERS", "GoodMorning");
         }
     }
@@ -2846,7 +2848,10 @@ public class Player : Character
                 else
                 {
                     //don't worry about horizontal movement cause it's already taken care of in the rope script
-                    rigidbody.velocity = (swingPos.position - transform.position) * currentRope.swingSnapMult;
+                    if (swingPos != null)
+                        rigidbody.velocity = (swingPos.position - transform.position) * currentRope.swingSnapMult;
+                    else
+                        rigidbody.velocity = Vector2.zero;
                     //rigidbody.velocity = Vector2.zero;
                 }
 
@@ -3205,8 +3210,12 @@ public class Player : Character
             {
                 currentMovementState = movementState.GROUND;
                 SendUpdate("IDLE_ANIM", "GoodMorning");
+                
                 clientCollidersEnabled = true;
+                feetCollider.enabled = true;
+                bodyCollider.enabled = true;
                 SendUpdate("ENABLE_COLLIDERS", "GoodMorning");
+
                 jumpReleasedDuringJump = false;
                 //held = false;
                 JumpVariableCleanup();

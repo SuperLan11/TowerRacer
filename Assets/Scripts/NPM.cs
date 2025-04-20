@@ -52,15 +52,8 @@ public class NPM : NetworkComponent
             readyToggle.isOn = IsReady;                        
 
             if (IsServer)
-            {
-                if (IsReady)
-                {
-                    gm.AdjustReady(1);             
-                }
-                else
-                {
-                    gm.AdjustReady(-1);
-                }
+            {                
+                gm.CheckReady();               
                 SendUpdate("READY", value);
 
                 //clients will hear the ready sfx of other players
