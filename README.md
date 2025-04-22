@@ -9,8 +9,8 @@ At the end of the semester, we deployed the Unity project onto a Linux server to
 wip
 
 ## Team Contributions
-Landon Johnson: Wrote scripts for game manager, enemies, ladders, ropes, end doors, item boxes, the NPM, and dismount triggers. Designed the level pieces, and put in sprites for the NPM and score panel ui, deployed our build to a Linux server. 
-Patrick Mayer: Wrote the arrow script and player script, which included player movement, abilities, attacking, wall jumps, and jump buffering, and code for the turkey and jump boost. Made the trail renderers for the characters
-Jacob Paccione : Made the ui for the main menu and the WAN scene, created the options menu, and created the main menu script.
-Rafael Casanova: Playtested the character abilities and refined values for ability timers and movement stats. Gave corrective feedback on Landon's level design.
-MiLk: Created art and animations for the characters, enemies, the skeleton bone, and the arrow.
+- Landon Johnson: Wrote scripts for game manager, enemies, ladders, ropes, end doors, item boxes, the NPM, and dismount triggers. Designed the level pieces, and put in sprites for the NPM and score panel ui, deployed our build to a Linux server. 
+- Patrick Mayer: Wrote the arrow script and player script, which included player movement, abilities, attacking, wall jumps, and jump buffering, and code for the turkey and jump boost. Made the trail renderers for the characters
+- Jacob Paccione : Made the ui for the main menu and the WAN scene, created the options menu, and created the main menu script.
+- Rafael Casanova: Playtested the character abilities and refined values for ability timers and movement stats. Gave corrective feedback on Landon's level design.
+- MiLk: Created art and animations for the characters, enemies, the skeleton bone, and the arrow.
