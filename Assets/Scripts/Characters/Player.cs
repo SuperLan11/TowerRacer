@@ -67,8 +67,8 @@ public class Player : Character
     #region NonSync Vars
 
     [SerializeField] private LayerMask groundLayer;
-    [SerializeField] private BoxCollider2D feetCollider;
-    [SerializeField] private BoxCollider2D bodyCollider;
+    [SerializeField] public BoxCollider2D feetCollider;
+    [SerializeField] public BoxCollider2D bodyCollider;
     [System.NonSerialized] public Rope currentRope = null;
     [System.NonSerialized] public LadderObj currentLadder = null;
     public bool inDismountTrigger = false;
@@ -78,7 +78,7 @@ public class Player : Character
     private LayerMask floorLayer;
     //don't need to worry about this in the inspector
     Tilemap tilemap;
-    private Gamepad gamepad;
+    [System.NonSerialized] public Gamepad gamepad;
 
     private Camera cam;
     public static float highestCamY;
@@ -625,6 +625,11 @@ public class Player : Character
                 rigidbody.freezeRotation = false;
             }
         }
+        else if (flag == "PLAYER_FROZEN"){
+            if (IsClient){
+                playerFrozen = bool.Parse(value);
+            }
+        }
         else if (flag == "UNPARENT")
         {
             if (IsClient)
@@ -732,6 +737,21 @@ public class Player : Character
             {
                 isStunned = true;
                 StartStunEffect(stunColor);
+            }
+        }
+        else if (flag == "GAMEPAD"){
+            bool hasGamepad = bool.Parse(value);
+            if (hasGamepad){
+                GetCurrentGamepad();
+            }else{
+                gamepad = null;
+            }
+        }
+        else if (flag == "CURSOR_VISIBLE")
+        {
+            if (IsLocalPlayer)
+            {
+                Cursor.visible = bool.Parse(value);
             }
         }
         else if (flag == "RUMBLE")
@@ -1120,7 +1140,7 @@ public class Player : Character
         CalculateInitialConditions();
         dashSpeed = 19f;
         knightDashSpeed = 20f;
-        archerGrappleSpeed = 17f;
+        archerGrappleSpeed = 22f;
         MAX_LAUNCH_SPEED = MAX_WALK_SPEED * 20f;
 
         startPos = this.transform.position;
@@ -1137,6 +1157,9 @@ public class Player : Character
             if (gamepad == null)
             {
                 Debug.LogWarning("gamepad not detected");
+                SendCommand("GAMEPAD", false.ToString());
+            }else{
+                SendCommand("GAMEPAD", true.ToString());
             }
         }
 
@@ -1159,7 +1182,7 @@ public class Player : Character
         switch (selectedCharacterClass)
         {
             case characterClass.ARCHER:
-                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 2f;
+                movementAbilityCooldownTimer = MAX_MOVEMENT_ABILITY_COOLDOWN = 1.15f;
                 trailRenderer.startColor = Color.green;
                 trailRenderer.endColor = new Color(0f, 255f, 0f, 0f);
                 break;
@@ -2347,9 +2370,11 @@ public class Player : Character
     }
 
     private IEnumerator EnsureEnabledColliders(){
-        yield return new WaitForSeconds(0.3f);
+        yield return new WaitForSeconds(0.05f);
 
         if (!IsSwinging()){
+            feetCollider.enabled = true;
+            bodyCollider.enabled = true;
             SendUpdate("ENABLE_COLLIDERS", "GoodMorning");
         }
     }
@@ -2492,6 +2517,18 @@ public class Player : Character
         //smooth movement
         if (IsLocalPlayer)
         {
+            //really should be in game manager, but I don't know how to do that and game expo starts in 3 hours
+            if (playerFrozen){
+                GetCurrentGamepad();
+
+                
+                if (gamepad == null){
+                    Cursor.visible = true;
+                }else{
+                    Cursor.visible = false;
+                }
+            }
+            
             //Debug.Log("currentLadder == null: " + (currentLadder == null));
             bool regularMovementState = (IsGrounded() || IsFallingInTheAir());
             if (regularMovementState)
@@ -2553,6 +2590,9 @@ public class Player : Character
             if (playerFrozen)
             {
                 rigidbody.velocity = Vector2.zero;
+
+                //this is some fucking terrible code, but game expo starts soon
+                SendUpdate("PLAYER_FROZEN", playerFrozen.ToString());
                 return;
             }
 
@@ -2611,7 +2651,7 @@ public class Player : Character
                 {
                     float yOffset = 2f;
                     Vector2 ropeArrowPos = new Vector2(this.transform.position.x, this.transform.position.y + yOffset);
-                    float ropeArrowSpeed = 10f;
+                    float ropeArrowSpeed = 22f;
                     Vector2 direction = new Vector2(0f, 1f);
                     Quaternion arrowDirection;
 
@@ -2808,7 +2848,10 @@ public class Player : Character
                 else
                 {
                     //don't worry about horizontal movement cause it's already taken care of in the rope script
-                    rigidbody.velocity = (swingPos.position - transform.position) * currentRope.swingSnapMult;
+                    if (swingPos != null)
+                        rigidbody.velocity = (swingPos.position - transform.position) * currentRope.swingSnapMult;
+                    else
+                        rigidbody.velocity = Vector2.zero;
                     //rigidbody.velocity = Vector2.zero;
                 }
 
@@ -3167,8 +3210,12 @@ public class Player : Character
             {
                 currentMovementState = movementState.GROUND;
                 SendUpdate("IDLE_ANIM", "GoodMorning");
+                
                 clientCollidersEnabled = true;
+                feetCollider.enabled = true;
+                bodyCollider.enabled = true;
                 SendUpdate("ENABLE_COLLIDERS", "GoodMorning");
+
                 jumpReleasedDuringJump = false;
                 //held = false;
                 JumpVariableCleanup();

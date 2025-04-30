@@ -278,7 +278,7 @@ MonoBehaviour:
   xJumpForce: 0.1
   extraYJumpForce: 0.07
   baseYJumpForce: 4
-  swingSnapMult: 50
+  swingSnapMult: 30
   dirChangeTorque: 6
 --- !u!114 &5496633899286058446
 MonoBehaviour:

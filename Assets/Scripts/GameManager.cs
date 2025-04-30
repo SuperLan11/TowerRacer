@@ -18,7 +18,7 @@ public class GameManager : NetworkComponent
     //sync vars
     public static bool gameOver;
     private static bool gameStarted = false;
-    public static int playersReady = 0;
+    public int playersReady = 0;
     private List<GameObject> createdTutorials = new List<GameObject>();
     public static bool inCountdown = false;
     private Color32[] playerPanelColors;
@@ -292,13 +292,13 @@ public class GameManager : NetworkComponent
                 }
             }
         }
-        else if (flag == "CURSOR_VISIBLE")
+        /*else if (flag == "CURSOR_VISIBLE")
         {
             if (IsClient)
             {
                 Cursor.visible = bool.Parse(value);
             }
-        }
+        }*/
         //for objects in scene before clients connect, can't use SendCommand because
         //SendCommand only works if IsLocalPlayer and it's impossible to determine IsLocalPlayer
         //for an object already in the scene
@@ -340,6 +340,9 @@ public class GameManager : NetworkComponent
 
     public override void NetworkedStart()
     {
+        //hopefully it will get reset every time player gets booted back to main menu
+        //Cursor.visible = true;
+        
         if (IsServer)
         {
             levelTime = 0;
@@ -355,12 +358,22 @@ public class GameManager : NetworkComponent
     // nice to have this as a wrapper function
     // so we can debug in the function to see its value no matter when or
     // where we change the variable
-    public static void AdjustReady(int change)
-    {
-        playersReady += change;
+    public void CheckReady()
+    {                
+        Toggle[] toggles = FindObjectsOfType<Toggle>();
+        int numPlayersReady = 0;
+        foreach(Toggle toggle in toggles)
+        {
+            if(toggle.isOn)
+            {
+                numPlayersReady++;
+            }
+        }
+        Debug.Log("players ready: " + numPlayersReady);
+
         int numPlayers = FindObjectsOfType<NPM>().Length;
-        // change to numPlayers > 1 later
-        if (playersReady >= numPlayers && numPlayers >= 1)
+        // change to numPlayers >= 2 later
+        if (numPlayersReady >= numPlayers && numPlayers >= 2)
         {
             gameStarted = true;
         }
@@ -386,6 +399,10 @@ public class GameManager : NetworkComponent
                 RandomlyPlaceEnemies(startPiece, 100);
                 RandomlyPlaceItemBoxes(startPiece, 100);
                 RandomlyPlaceLadders(startPiece, 100);
+
+                float zoneY = -startPieceHeight;
+                Vector2 zonePos = new Vector3(CENTER_PIECE_X, zoneY, 0);
+                MyCore.NetCreateObject(Idx.EMERGENCY_ZONE, this.Owner, zonePos, Quaternion.identity);
                 continue;
             }
 
@@ -893,7 +910,13 @@ public class GameManager : NetworkComponent
                 player.hasBomb = false;
                 player.hasChicken = false;
                 player.hasSpeedBoost = false;
+
                 player.SendUpdate("IDLE_ANIM", "");
+
+                player.feetCollider.enabled = true;
+                player.bodyCollider.enabled = true;
+                player.SendUpdate("ENABLE_COLLIDERS", "");
+
                 SendCommand("HAS_BOMB", false.ToString());
                 SendCommand("HAS_CHICKEN", false.ToString());
                 SendCommand("HAS_SPEED_BOOST", false.ToString());
@@ -924,8 +947,17 @@ public class GameManager : NetworkComponent
             StartCoroutine(FadeScorePanelOut(1f));
             yield return Wait(1f);
 
+            foreach (Player player in players)
+            {
+                //if (player.gamepad != null){
+                    //SendUpdate("CURSOR_VISIBLE", false.ToString());
+                    Debug.Log("disabling cursor");
+                    player.SendUpdate("CURSOR_VISIBLE", false.ToString());
+                //}
+            }
+            
             yield return Countdown();
-
+            
             foreach (Player player in players)
             {
                 player.playerFrozen = false;
@@ -937,6 +969,7 @@ public class GameManager : NetworkComponent
             placeLbl.enabled = true;
             SendUpdate("SHOW_PLACE", "");
             SendUpdate("SHOW_ITEM", "");
+            SendUpdate("CLEAR_ITEM", "");
 
             //wait to do this so that players forced to finish by the timer have the correct background color
             //and so that the timer resets correctly            
@@ -955,7 +988,7 @@ public class GameManager : NetworkComponent
             switch (player.Owner)
             {
                 case 0:
-                    player.transform.position = starts[0];
+                    player.transform.position = starts[0];                    
                     break;
                 case 1:
                     player.transform.position = starts[1];
@@ -967,6 +1000,7 @@ public class GameManager : NetworkComponent
                     player.transform.position = starts[3];
                     break;
             }
+            player.startPos = player.transform.position;
         }
     }
 
@@ -1170,6 +1204,15 @@ public class GameManager : NetworkComponent
                 player.playerFrozen = true;
             }
 
+            /*
+            foreach (Player player in players)
+            {
+                if (player.gamepad != null){
+                    SendUpdate("CURSOR_VISIBLE", false.ToString());
+                }
+            }
+            */
+            
             yield return Countdown();
 
             SendUpdate("PLAY_THEME", "GoodMorning");
@@ -1191,6 +1234,7 @@ public class GameManager : NetworkComponent
             foreach (Player player in FindObjectsOfType<Player>())
             {
                 player.SendUpdate("WINNING_PLAYER", winningPlayer.Owner.ToString());
+                player.SendUpdate("CURSOR_VISIBLE", true.ToString());
             }
 
             yield return new WaitForSeconds(4f);
@@ -1198,7 +1242,8 @@ public class GameManager : NetworkComponent
             //make sure to reset all stats on game over!!!
             ResetVariables();
             SendUpdate("CLEAR_ITEM", "");
-            SendUpdate("CURSOR_VISIBLE", true.ToString());
+            
+            //SendUpdate("CURSOR_VISIBLE", true.ToString());
 
             MyId.NotifyDirty();
             MyCore.UI_Quit();

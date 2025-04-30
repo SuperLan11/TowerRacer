@@ -268,17 +268,6 @@
                 },
                 {
                     "name": "",
-                    "id": "d83b63ac-8f5f-4b92-9b75-4d24da6c48c7",
-                    "path": "<Keyboard>/j",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Jump",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "5c1f06af-1721-481b-b211-624c68f04c80",
                     "path": "<Keyboard>/space",
                     "interactions": "",
@@ -378,6 +367,17 @@
                 },
                 {
                     "name": "",
+                    "id": "06821556-c0fb-4106-9ab4-03031f7ef929",
+                    "path": "<Keyboard>/i",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "MoveAbility",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "773b4c00-4d62-448a-a70f-5c45667186d3",
                     "path": "<Keyboard>/q",
                     "interactions": "",
@@ -411,6 +411,17 @@
                 },
                 {
                     "name": "",
+                    "id": "b2b11e7a-58d4-4544-91aa-764a9a6de569",
+                    "path": "<Keyboard>/j",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "UseItem",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "d87680e3-5fd7-4b8b-83e9-a20922076faa",
                     "path": "<Keyboard>/r",
                     "interactions": "",
@@ -424,6 +435,17 @@
                     "name": "",
                     "id": "cdcbfbbb-6c8f-4fd4-ac0f-1df733f4ad00",
                     "path": "<Gamepad>/buttonNorth",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "AttackAction",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "98ad620b-3fa3-4376-9fa6-6e7f5ddeaaae",
+                    "path": "<Keyboard>/l",
                     "interactions": "",
                     "processors": "",
                     "groups": "",

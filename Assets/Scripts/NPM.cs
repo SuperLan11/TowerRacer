@@ -31,6 +31,7 @@ public class NPM : NetworkComponent
     //client-side variable for overriding late localplayer assignments
     private bool panelEnabled = true;
     private bool ranStart = false;
+    private GameManager gm;
 
     /*
      * NOTE TO JACOB OR ANYONE ELSE DOING UI
@@ -51,19 +52,12 @@ public class NPM : NetworkComponent
             readyToggle.isOn = IsReady;                        
 
             if (IsServer)
-            {
-                if (IsReady)
-                {
-                    GameManager.AdjustReady(1);                    
-                }
-                else
-                {
-                    GameManager.AdjustReady(-1);
-                }
+            {                
+                gm.CheckReady();               
                 SendUpdate("READY", value);
 
                 //clients will hear the ready sfx of other players
-                if (GameManager.playersReady == FindObjectsOfType<NPM>().Length)
+                if (gm.playersReady == FindObjectsOfType<NPM>().Length)
                     SendUpdate("ALL_READY_SFX", "");
                 else
                     SendUpdate("READY_SFX", "");
@@ -152,6 +146,7 @@ public class NPM : NetworkComponent
     // Start is called before the first frame update
     void Start()
     {
+        gm = FindObjectOfType<GameManager>();
         //owner is set as soon as npm spawns, so you can access it before networked start
         string npmStr = "NPM" + Owner;
         npmPanel = GameObject.Find(npmStr);        
